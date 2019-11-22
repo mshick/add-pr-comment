@@ -1,0 +1,27 @@
+{
+  "name": "add-pr-comment-action",
+  "version": "0.0.1",
+  "description": "github action which adds a comment to a PR",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mshick/add-pr-comment.git"
+  },
+  "keywords": [
+    "github",
+    "actions",
+    "pr"
+  ],
+  "author": "Michael Shick <m@shick.us>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mshick/add-pr-comment/issues"
+  },
+  "homepage": "https://github.com/mshick/add-pr-comment#readme",
+  "dependencies": {
+    "actions-toolkit": "^2.1.0"
+  }
+}

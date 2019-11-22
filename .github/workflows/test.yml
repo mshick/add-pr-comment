@@ -1,0 +1,15 @@
+name: "test-local"
+on:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+
+      - run: npm ci
+      - run: npm test
+      - uses: ./
+        with:
+          msg: Hello!

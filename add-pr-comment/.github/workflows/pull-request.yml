@@ -1,0 +1,13 @@
+on: pull_request
+name: Run Add PR Comment
+jobs:
+  add-pr-comment-actions:
+    name: Add PR Comment Actions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+
+      - name: Add PR Comment Actions
+        uses: ./
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
