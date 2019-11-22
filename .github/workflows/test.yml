@@ -9,7 +9,7 @@ jobs:
       - uses: actions/checkout@v1
 
       - run: npm ci
-      - run: npm test
+      # - run: npm test
       - uses: ./
         with:
           msg: Hello!
