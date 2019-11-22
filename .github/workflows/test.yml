@@ -13,3 +13,4 @@ jobs:
       - uses: ./
         with:
           msg: Hello!
+          repo-token: ${{ secrets.GITHUB_TOKEN }}

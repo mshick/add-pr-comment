@@ -24,7 +24,8 @@
   },
   "homepage": "https://github.com/actions/javascript-action#readme",
   "dependencies": {
-    "@actions/core": "^1.1.1"
+    "@actions/core": "^1.1.1",
+    "@actions/github": "^1.1.0"
   },
   "devDependencies": {
     "@zeit/ncc": "^0.20.5",
