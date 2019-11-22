@@ -18,7 +18,7 @@ async function run() {
     //   repo: "rest.js",
     //   pull_number: 123,
     // });
-
+    //
     // console.log(pullRequest);
   } catch (error) {
     core.setFailed(error.message);
