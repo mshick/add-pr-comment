@@ -12,6 +12,10 @@ jobs:
       # - run: npm test
       - uses: ./
         with:
-          msg: Hello!
+          msg: |
+            Hello!
+            🌏
+            **bold**
+            !
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           allow-repeats: false
