@@ -1,7 +1,7 @@
 name: "Add PR Comment"
 description: "Add a comment to a PR"
 inputs:
-  msg:
+  message:
     description: "the message to print"
     required: true
   repo-token:
@@ -13,4 +13,4 @@ inputs:
     default: false
 runs:
   using: "node12"
-  main: "index.js"
+  main: "dist/index.js"
