@@ -11,12 +11,17 @@ async function run() {
     core.debug(`input allow-repeats: ${allowRepeats}`);
 
     const {
-      payload: {
-        pull_request: { number: issueNumber },
-        repository: { full_name: repoFullName }
-      }
+      payload: { pull_request: pullRequest, repository }
     } = github.context;
 
+    if (!pullRequest) {
+      core.error("this action only works on pull_request events");
+      core.setOutput("comment-created", "false");
+      return;
+    }
+
+    const { number: issueNumber } = pullRequest;
+    const { full_name: repoFullName } = repository;
     const [owner, repo] = repoFullName.split("/");
 
     const octokit = new github.GitHub(repoToken);
