@@ -23,7 +23,7 @@ async function run() {
     console.log(repoOwner);
 
     const { data: pr } = await octokit.pulls.get({
-      owner: repoOwner,
+      owner: repoOwner.login,
       repo: repoFullName,
       pull_number: pullNumber
     });
