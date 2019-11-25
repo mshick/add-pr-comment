@@ -11,6 +11,8 @@ async function run() {
     const octokit = new github.GitHub(repoToken);
     const context = github.context;
 
+    console.log(context);
+
     core.debug(context);
 
     // const { data: pullRequest } = await octokit.pulls.get({
