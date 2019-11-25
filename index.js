@@ -9,19 +9,20 @@ async function run() {
     core.debug(`Input message: ${msg}`);
 
     const octokit = new github.GitHub(repoToken);
-    const context = github.context;
+    const {
+      payload: {
+        pull_request: pullRequestPayload
+        // respository: repositoryPayload
+      }
+    } = github.context;
 
-    console.log(context);
+    const { data: pullRequest } = await octokit.pulls.get({
+      owner: "mshick",
+      repo: "add-pr-comment",
+      pull_number: pullRequestPayload.number
+    });
 
-    core.debug(context);
-
-    // const { data: pullRequest } = await octokit.pulls.get({
-    //   owner: "octokit",
-    //   repo: "rest.js",
-    //   pull_number: 123,
-    // });
-
-    // console.log(pullRequest);
+    console.log(pullRequest);
   } catch (error) {
     core.setFailed(error.message);
   }
