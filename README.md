@@ -8,7 +8,7 @@
 uses: mshick/add-pr-comment@v1
 with:
   message: |
-    **Hello!**
+    **Hello**
     🌏
     !
   repo-token: ${{ secrets.GITHUB_TOKEN }}
