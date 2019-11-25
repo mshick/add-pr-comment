@@ -7,18 +7,16 @@ async function run() {
     const repoToken = core.getInput("repo-token");
     const allowRepeats = Boolean(core.getInput("allow-repeats") === "true");
 
-    core.debug(`msg: ${msg}`);
-    core.debug(`allow-repeats: ${allowRepeats}`);
+    core.debug(`input msg: ${msg}`);
+    core.debug(`input allow-repeats: ${allowRepeats}`);
 
     const {
       payload: {
-        pull_request: pullRequestPayload,
-        repository: repositoryPayload
+        pull_request: { number: issueNumber },
+        repository: { full_name: repoFullName }
       }
     } = github.context;
 
-    const { number: pullNumber } = pullRequestPayload;
-    const { full_name: repoFullName } = repositoryPayload;
     const [owner, repo] = repoFullName.split("/");
 
     const octokit = new github.GitHub(repoToken);
@@ -29,26 +27,28 @@ async function run() {
       const { data: comments } = await octokit.issues.listComments({
         owner,
         repo,
-        issue_number: pullNumber
+        issue_number: issueNumber
       });
 
-      console.log(comments);
+      const filteredComments = comments.filter(
+        c => c.body === msg && c.user.login === "github-actions[bot]"
+      );
+
+      if (filteredComments.length) {
+        core.warning(`the issue already contains this message`);
+        core.setOutput("commented-created", "false");
+        return;
+      }
     }
 
-    //   duplicate = coms.find { | c | c["user"]["login"] == "github-actions[bot]" && c["body"] == message }
-    //   if duplicate
-    // puts "The PR already contains a database change notification"
-    //   exit(0)
-    //   end
+    await octokit.issues.createComment({
+      owner,
+      repo,
+      issue_number: issueNumber,
+      body: msg
+    });
 
-    // await octokit.issues.createComment({
-    //   owner,
-    //   repo,
-    //   issue_number: pullNumber,
-    //   body: msg
-    // });
-
-    core.debug(`DONE`);
+    core.setOutput("commented-created", "true");
   } catch (error) {
     core.setFailed(error.message);
   }
