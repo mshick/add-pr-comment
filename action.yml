@@ -11,6 +11,9 @@ inputs:
     description: "allow messages to be repeated"
     required: false
     default: false
+branding:
+  icon: message-circle
+  color: purple
 runs:
   using: "node12"
   main: "dist/index.js"
