@@ -12,7 +12,7 @@ async function run() {
     const {
       payload: {
         pull_request: pullRequestPayload,
-        respository: repositoryPayload
+        repository: repositoryPayload
       }
     } = github.context;
 
