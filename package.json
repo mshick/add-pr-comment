@@ -1,7 +1,7 @@
 {
-  "name": "add-pr-comment",
+  "name": "@mshick/add-pr-comment",
   "version": "1.0.0",
-  "description": "JavaScript Action Template",
+  "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
   "main": "index.js",
   "scripts": {
     "lint": "eslint index.js",
@@ -10,19 +10,21 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/actions/javascript-action.git"
+    "url": "git+https://github.com/mshick/add-pr-comment.git"
   },
   "keywords": [
     "GitHub",
     "Actions",
-    "JavaScript"
+    "javascript",
+    "pull request",
+    "comments"
   ],
   "author": "GitHub",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/actions/javascript-action/issues"
+    "url": "https://github.com/mshick/add-pr-comment/issues"
   },
-  "homepage": "https://github.com/actions/javascript-action#readme",
+  "homepage": "https://github.com/mshick/add-pr-comment#readme",
   "dependencies": {
     "@actions/core": "^1.1.1",
     "@actions/github": "^1.1.0"
