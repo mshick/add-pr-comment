@@ -18,13 +18,14 @@ async function run() {
 
     const { number: pullNumber } = pullRequestPayload;
     const { owner: repoOwner, full_name: repoFullName } = repositoryPayload;
+    const [owner, repo] = repoFullName.split("/");
 
     core.debug(`OWNER-------------------------------`);
     console.log(repoOwner);
 
     const { data: pr } = await octokit.pulls.get({
-      owner: repoOwner.login,
-      repo: repoFullName,
+      owner,
+      repo,
       pull_number: pullNumber
     });
 
@@ -33,8 +34,8 @@ async function run() {
 
     core.debug(`COMMENTS-------------------------------`);
     const { data: comments } = await octokit.pulls.listComments({
-      owner: repoOwner,
-      repo: repoFullName,
+      owner,
+      repo,
       pull_number: pullNumber
     });
 
