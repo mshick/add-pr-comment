@@ -5,18 +5,13 @@ async function run() {
   try {
     const msg = core.getInput("msg");
     const repoToken = core.getInput("repo-token");
-    const allowRepeats = core.getInput("allow-repeats");
+    const allowRepeats = Boolean(core.getInput("allow-repeats") === "true");
 
-    console.log(
-      `allow repeats: ${allowRepeats}, typeof ${typeof allowRepeats}`
-    );
+    core.debug(`msg: ${msg}`);
+    core.debug(`allow-repeats: ${allowRepeats}`);
 
-    core.debug(`Input message: ${msg}`);
-
-    const octokit = new github.GitHub(repoToken);
     const {
       payload: {
-        after: commitSha,
         pull_request: pullRequestPayload,
         repository: repositoryPayload
       }
@@ -26,29 +21,18 @@ async function run() {
     const { full_name: repoFullName } = repositoryPayload;
     const [owner, repo] = repoFullName.split("/");
 
-    // core.debug(`OWNER-------------------------------`);
-    // console.log(repoOwner);
-
-    const { data: pr } = await octokit.pulls.get({
-      owner,
-      repo,
-      pull_number: pullNumber
-    });
-
-    core.debug(`PR-------------------------------`);
-    console.log(pr);
-
-    core.debug(`COMMENTS-------------------------------`);
-    const { data: comments } = await octokit.pulls.listComments({
-      owner,
-      repo,
-      pull_number: pullNumber
-    });
-
-    console.log(comments);
+    const octokit = new github.GitHub(repoToken);
 
     if (allowRepeats === false) {
-      core.debug(`NOT ALLOWING REPEATS, CHECK FOR DUPES`);
+      core.debug(`repeat comments are disallowed, checking for existing`);
+
+      const { data: comments } = await octokit.pulls.listComments({
+        owner,
+        repo,
+        pull_number: pullNumber
+      });
+
+      console.log(comments);
     }
 
     //   duplicate = coms.find { | c | c["user"]["login"] == "github-actions[bot]" && c["body"] == message }
@@ -57,12 +41,14 @@ async function run() {
     //   exit(0)
     //   end
 
-    octokit.issues.createComment({
+    await octokit.issues.createComment({
       owner,
       repo,
       issue_number: pullNumber,
       body: msg
     });
+
+    core.debug(`DONE`);
   } catch (error) {
     core.setFailed(error.message);
   }
