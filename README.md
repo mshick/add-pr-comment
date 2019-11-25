@@ -1,6 +1,6 @@
 # add-pr-comment
 
-> A GitHub Action to add a comment to a PR's associated issue
+> A GitHub Action which adds a comment to a Pull Request Issue.
 
 ## Usage
 
