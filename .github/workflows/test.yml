@@ -14,3 +14,4 @@ jobs:
         with:
           msg: Hello!
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-repeats: false

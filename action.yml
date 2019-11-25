@@ -7,6 +7,10 @@ inputs:
   repo-token:
     description: "a github token for API access"
     required: true
+  allow-repeats:
+    description: "allow messages to be repeated"
+    required: false
+    default: false
 runs:
   using: "node12"
   main: "index.js"
