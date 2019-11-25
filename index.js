@@ -26,10 +26,10 @@ async function run() {
     if (allowRepeats === false) {
       core.debug(`repeat comments are disallowed, checking for existing`);
 
-      const { data: comments } = await octokit.pulls.listComments({
+      const { data: comments } = await octokit.issues.listComments({
         owner,
         repo,
-        pull_number: pullNumber
+        issue_number: pullNumber
       });
 
       console.log(comments);
@@ -41,12 +41,12 @@ async function run() {
     //   exit(0)
     //   end
 
-    await octokit.issues.createComment({
-      owner,
-      repo,
-      issue_number: pullNumber,
-      body: msg
-    });
+    // await octokit.issues.createComment({
+    //   owner,
+    //   repo,
+    //   issue_number: pullNumber,
+    //   body: msg
+    // });
 
     core.debug(`DONE`);
   } catch (error) {
