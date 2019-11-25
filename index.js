@@ -11,18 +11,34 @@ async function run() {
     const octokit = new github.GitHub(repoToken);
     const {
       payload: {
-        pull_request: pullRequestPayload
-        // respository: repositoryPayload
+        pull_request: pullRequestPayload,
+        respository: repositoryPayload
       }
     } = github.context;
 
-    const { data: pullRequest } = await octokit.pulls.get({
-      owner: "mshick",
-      repo: "add-pr-comment",
-      pull_number: pullRequestPayload.number
+    const { pullNumber } = pullRequestPayload;
+    const { repoOwner, full_name: repoFullName } = respositoryPayload;
+
+    core.debug(`OWNER-------------------------------`);
+    console.log(repoOwner);
+
+    const { data: pr } = await octokit.pulls.get({
+      owner: repoOwner,
+      repo: repoFullName,
+      pull_number: pullNumber
     });
 
-    console.log(pullRequest);
+    core.debug(`PR-------------------------------`);
+    console.log(pr);
+
+    core.debug(`COMMENTS-------------------------------`);
+    const { data: comments } = await octokit.pulls.listComments({
+      owner: repoOwner,
+      repo: repoFullName,
+      pull_number: pullNumber
+    });
+
+    console.log(comments);
   } catch (error) {
     core.setFailed(error.message);
   }
