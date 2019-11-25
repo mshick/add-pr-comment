@@ -17,7 +17,7 @@ async function run() {
     } = github.context;
 
     const { pullNumber } = pullRequestPayload;
-    const { repoOwner, full_name: repoFullName } = repositoryPayload;
+    const { owner: repoOwner, full_name: repoFullName } = repositoryPayload;
 
     core.debug(`OWNER-------------------------------`);
     console.log(repoOwner);
