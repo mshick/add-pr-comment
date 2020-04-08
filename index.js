@@ -37,6 +37,8 @@ async function run() {
       payload: { pull_request: pullRequest, sha, repository },
     } = github.context;
 
+    core.debug(github.context);
+
     const { full_name: repoFullName } = repository;
 
     let issueNumber;
