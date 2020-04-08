@@ -10,7 +10,7 @@ inputs:
   allow-repeats:
     description: "allow messages to be repeated"
     required: false
-    default: false
+    default: "false"
 branding:
   icon: message-circle
   color: purple

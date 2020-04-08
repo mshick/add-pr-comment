@@ -7,13 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-
-      - run: npm ci
-
       - uses: ./
         with:
           message: |
-            **Hello!**
+            **Hello PULL!**
             🌏
             !
           repo-token: ${{ secrets.GITHUB_TOKEN }}

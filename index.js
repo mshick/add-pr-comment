@@ -1,5 +1,26 @@
 const core = require("@actions/core");
 const github = require("@actions/github");
+const { HttpClient, Headers } = require("@actions/http-client");
+
+const getPulls = async (repoToken, repo, commitSha) => {
+  const http = new HttpClient("http-client-add-pr-comment");
+
+  const additionalHeaders = {
+    [Headers.Accept]: "application/vnd.github.sailor-v-preview+json",
+    [Headers.Authorization]: `token ${repoToken}`,
+  };
+
+  const response = await http.getJson(
+    `https://api.github.com/repos/${repo}/commits/${commitSha}/pulls`,
+    additionalHeaders
+  );
+
+  const body = await response.readBody();
+
+  core.debug(body);
+
+  return body;
+};
 
 async function run() {
   try {
@@ -11,17 +32,29 @@ async function run() {
     core.debug(`input allow-repeats: ${allowRepeats}`);
 
     const {
-      payload: { pull_request: pullRequest, repository }
+      payload: { pull_request: pullRequest, sha, repository },
     } = github.context;
 
-    if (!pullRequest) {
-      core.error("this action only works on pull_request events");
+    const { full_name: repoFullName } = repository;
+
+    let issueNumber;
+
+    if (pullRequest && pullRequest.number) {
+      issueNumber = pullRequest.number;
+    } else {
+      // If this is not a pull request, attempt to find a PR matching the sha
+      const pulls = await getPulls(repoToken, repoFullName, sha);
+      issueNumber = pulls.length ? pulls[0].number : null;
+    }
+
+    if (!issueNumber) {
+      core.warning(
+        "this action only works on pull_request events or other commits associated with a pull"
+      );
       core.setOutput("comment-created", "false");
       return;
     }
 
-    const { number: issueNumber } = pullRequest;
-    const { full_name: repoFullName } = repository;
     const [owner, repo] = repoFullName.split("/");
 
     const octokit = new github.GitHub(repoToken);
@@ -32,11 +65,11 @@ async function run() {
       const { data: comments } = await octokit.issues.listComments({
         owner,
         repo,
-        issue_number: issueNumber
+        issue_number: issueNumber,
       });
 
       const filteredComments = comments.filter(
-        c => c.body === message && c.user.login === "github-actions[bot]"
+        (c) => c.body === message && c.user.login === "github-actions[bot]"
       );
 
       if (filteredComments.length) {
@@ -50,7 +83,7 @@ async function run() {
       owner,
       repo,
       issue_number: issueNumber,
-      body: message
+      body: message,
     });
 
     core.setOutput("comment-created", "true");
