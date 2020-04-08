@@ -2006,7 +2006,7 @@ const getPulls = async (repoToken, repo, commitSha) => {
 
   const body = await response.readBody();
 
-  core.debug(body);
+  core.debug(JSON.stringify(body));
 
   return body;
 };
@@ -2024,7 +2024,7 @@ async function run() {
       payload: { pull_request: pullRequest, sha, repository },
     } = github.context;
 
-    core.debug(github.context);
+    core.debug(JSON.stringify(github.context));
 
     const { full_name: repoFullName } = repository;
 
