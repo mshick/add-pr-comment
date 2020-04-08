@@ -1989,11 +1989,13 @@ const core = __webpack_require__(470);
 const github = __webpack_require__(469);
 const { HttpClient, Headers } = __webpack_require__(539);
 
+const previewHeader = "application/vnd.github.groot-preview+json";
+
 const getPulls = async (repoToken, repo, commitSha) => {
   const http = new HttpClient("http-client-add-pr-comment");
 
   const additionalHeaders = {
-    [Headers.Accept]: "application/vnd.github.sailor-v-preview+json",
+    [Headers.Accept]: previewHeader,
     [Headers.Authorization]: `token ${repoToken}`,
   };
 
