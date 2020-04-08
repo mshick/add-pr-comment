@@ -1999,6 +1999,8 @@ const getPulls = async (repoToken, repo, commitSha) => {
     [Headers.Authorization]: `token ${repoToken}`,
   };
 
+  core.debug(`https://api.github.com/repos/${repo}/commits/${commitSha}/pulls`);
+
   const response = await http.getJson(
     `https://api.github.com/repos/${repo}/commits/${commitSha}/pulls`,
     additionalHeaders
@@ -2025,6 +2027,8 @@ async function run() {
     } = github.context;
 
     core.debug(JSON.stringify(github.context));
+    core.debug(JSON.stringify(pullRequest));
+    core.debug(`sha: ${sha}`);
 
     const { full_name: repoFullName } = repository;
 
