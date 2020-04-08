@@ -12,12 +12,10 @@ const getPulls = async (repoToken, repo, commitSha) => {
     [Headers.Authorization]: `token ${repoToken}`,
   };
 
-  const response = await http.getJson(
+  const body = await http.getJson(
     `https://api.github.com/repos/${repo}/commits/${commitSha}/pulls`,
     additionalHeaders
   );
-
-  const body = await response.readBody();
 
   core.debug(JSON.stringify(body));
 
