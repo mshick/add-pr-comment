@@ -12,8 +12,6 @@ const getPulls = async (repoToken, repo, commitSha) => {
     [Headers.Authorization]: `token ${repoToken}`,
   };
 
-  core.debug(`https://api.github.com/repos/${repo}/commits/${commitSha}/pulls`);
-
   const response = await http.getJson(
     `https://api.github.com/repos/${repo}/commits/${commitSha}/pulls`,
     additionalHeaders
@@ -36,12 +34,9 @@ async function run() {
     core.debug(`input allow-repeats: ${allowRepeats}`);
 
     const {
-      payload: { pull_request: pullRequest, sha, repository },
+      payload: { pull_request: pullRequest, repository },
+      sha: commitSha,
     } = github.context;
-
-    core.debug(JSON.stringify(github.context));
-    core.debug(JSON.stringify(pullRequest));
-    core.debug(`sha: ${sha}`);
 
     const { full_name: repoFullName } = repository;
 
@@ -51,7 +46,7 @@ async function run() {
       issueNumber = pullRequest.number;
     } else {
       // If this is not a pull request, attempt to find a PR matching the sha
-      const pulls = await getPulls(repoToken, repoFullName, sha);
+      const pulls = await getPulls(repoToken, repoFullName, commitSha);
       issueNumber = pulls.length ? pulls[0].number : null;
     }
 
