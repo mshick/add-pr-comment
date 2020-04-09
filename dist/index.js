@@ -2004,8 +2004,6 @@ const getPulls = async (repoToken, repo, commitSha) => {
     additionalHeaders
   );
 
-  core.debug(JSON.stringify(body));
-
   return body.result;
 };
 
@@ -2022,8 +2020,6 @@ async function run() {
       payload: { pull_request: pullRequest, repository },
       sha: commitSha,
     } = github.context;
-
-    core.debug(JSON.stringify(github.context));
 
     const { full_name: repoFullName } = repository;
 
