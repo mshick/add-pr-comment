@@ -19,7 +19,7 @@ const getPulls = async (repoToken, repo, commitSha) => {
 
   core.debug(JSON.stringify(body));
 
-  return body;
+  return body.result;
 };
 
 async function run() {
