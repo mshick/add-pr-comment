@@ -2034,7 +2034,7 @@ async function run() {
     }
 
     if (!issueNumber) {
-      core.warning(
+      core.info(
         "this action only works on pull_request events or other commits associated with a pull"
       );
       core.setOutput("comment-created", "false");
@@ -2059,7 +2059,7 @@ async function run() {
       );
 
       if (filteredComments.length) {
-        core.warning("the issue already contains this message");
+        core.info("the issue already contains this message");
         core.setOutput("comment-created", "false");
         return;
       }
