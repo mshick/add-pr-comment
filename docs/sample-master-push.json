@@ -177,5 +177,5 @@
   "ref": "refs/heads/master",
   "workflow": "test-local",
   "action": "self",
-  "actor": "mshick."
+  "actor": "mshick"
 }
