@@ -2023,6 +2023,8 @@ async function run() {
       sha: commitSha,
     } = github.context;
 
+    core.debug(JSON.stringify(github.context));
+
     const { full_name: repoFullName } = repository;
 
     let issueNumber;
