@@ -6,8 +6,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: ./
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Add Comment
+        uses: ./
         with:
           message: |
             **Hello PULL!**
