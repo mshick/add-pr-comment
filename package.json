@@ -29,7 +29,7 @@
   "dependencies": {
     "@actions/core": "^1.2.3",
     "@actions/github": "^2.1.1",
-    "@actions/http-client": "^1.0.7"
+    "@actions/http-client": "^1.0.8"
   },
   "devDependencies": {
     "@zeit/ncc": "^0.22.1",
