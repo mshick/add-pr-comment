@@ -68,11 +68,19 @@ async function run() {
       });
 
       core.debug("DUMP FOLLOWS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..");
-      core.debug(JSON.stringify(comments.map((c) => c.body)));
-      core.debug(message);
+
+      const spacesRe = new RegExp("\\s", "g");
+      const messageClean = message.replace(spacesRe, "");
+
+      core.debug(
+        JSON.stringify(comments.map((c) => c.body.replace(spacesRe, "")))
+      );
+      core.debug(messageClean);
 
       const commentExists = comments.includes(
-        (c) => c.body === message && c.user.login === "github-actions[bot]"
+        (c) =>
+          c.body.replace(spacesRe, "") === messageClean &&
+          c.user.login === "github-actions[bot]"
       );
 
       core.debug(`comment exists: ${commentExists}`);
