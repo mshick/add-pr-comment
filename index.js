@@ -83,9 +83,7 @@ async function run() {
           `${i}::${c.user.login}::${c.user.login === "github-actions[bot]"}`
         );
         core.debug(
-          `${i}::${c.body.replace(spacesRe, "")}::${
-            c.body.replace(spacesRe, "") === messageClean
-          }`
+          `${i}::${c.body.replace(spacesRe, "")}::${c.body === message}`
         );
         return (
           c.user.login === "github-actions[bot]" &&
