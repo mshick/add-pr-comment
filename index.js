@@ -67,11 +67,17 @@ async function run() {
         issue_number: issueNumber,
       });
 
-      const filteredComments = comments.filter(
-        (c) => c.body === message && c.user.login === "github-actions[bot]"
+      const spacesRe = new RegExp("\\s", "g");
+      const messageClean = message.replace(spacesRe, "");
+
+      const commentExists = comments.some(
+        (c) =>
+          // First find candidate bot messages to avoid extra processing(
+          c.user.login === "github-actions[bot]" &&
+          c.body.replace(spacesRe, "") === messageClean
       );
 
-      if (filteredComments.length) {
+      if (commentExists) {
         core.info("the issue already contains this message");
         core.setOutput("comment-created", "false");
         return;
