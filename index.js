@@ -67,6 +67,7 @@ async function run() {
         issue_number: issueNumber,
       });
 
+      core.debug("DUMP FOLLOWS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..");
       core.debug(JSON.stringify(comments.map((c) => c.body)));
       core.debug(message);
 
