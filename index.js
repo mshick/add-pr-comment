@@ -67,11 +67,16 @@ async function run() {
         issue_number: issueNumber,
       });
 
-      const filteredComments = comments.filter(
+      core.debug(JSON.stringify(comments.map((c) => c.body)));
+      core.debug(message);
+
+      const commentExists = comments.includes(
         (c) => c.body === message && c.user.login === "github-actions[bot]"
       );
 
-      if (filteredComments.length) {
+      core.debug(`comment exists: ${commentExists}`);
+
+      if (commentExists) {
         core.info("the issue already contains this message");
         core.setOutput("comment-created", "false");
         return;
