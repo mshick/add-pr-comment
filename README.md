@@ -19,7 +19,7 @@ jobs:
           🌏
           !
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        allow-repeats: false
+        allow-repeats: false # This is the default
 ```
 
 You can even use it on PR Issues that are related to PRs that were merged into master, for example:
@@ -39,6 +39,7 @@ jobs:
         message: |
           **Hello MASTER**
         repo-token: ${{ secrets.GITHUB_TOKEN }}
+        allow-repeats: true
 ```
 
 ## Features
