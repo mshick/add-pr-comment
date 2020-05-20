@@ -72,16 +72,26 @@ async function run() {
       const spacesRe = new RegExp("\\s", "g");
       const messageClean = message.replace(spacesRe, "");
 
-      core.debug(
-        JSON.stringify(comments.map((c) => c.body.replace(spacesRe, "")))
-      );
-      core.debug(messageClean);
+      // core.debug(
+      //   JSON.stringify(comments.map((c) => c.body.replace(spacesRe, "")))
+      // );
+      // core.debug(messageClean);
 
-      const commentExists = comments.includes(
-        (c) =>
-          c.body.replace(spacesRe, "") === messageClean &&
-          c.user.login === "github-actions[bot]"
-      );
+      const commentExists = comments.includes((c, i) => {
+        // First find candidate bot messages to avoid extra processing
+        core.debug(
+          `${i}::${c.user.login}::${c.user.login === "github-actions[bot]"}`
+        );
+        core.debug(
+          `${i}::${c.body.replace(spacesRe, "")}::${
+            c.body.replace(spacesRe, "") === messageClean
+          }`
+        );
+        return (
+          c.user.login === "github-actions[bot]" &&
+          c.body.replace(spacesRe, "") === messageClean
+        );
+      });
 
       core.debug(`comment exists: ${commentExists}`);
 
