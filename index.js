@@ -77,7 +77,7 @@ async function run() {
       // );
       // core.debug(messageClean);
 
-      const commentExists = comments.includes((c, i) => {
+      const commentExists = comments.some((c, i) => {
         // First find candidate bot messages to avoid extra processing
         core.debug(
           `${i}::${c.user.login}::${c.user.login === "github-actions[bot]"}`
