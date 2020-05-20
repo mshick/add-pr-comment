@@ -67,31 +67,15 @@ async function run() {
         issue_number: issueNumber,
       });
 
-      core.debug("DUMP FOLLOWS>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>..");
-
       const spacesRe = new RegExp("\\s", "g");
       const messageClean = message.replace(spacesRe, "");
 
-      // core.debug(
-      //   JSON.stringify(comments.map((c) => c.body.replace(spacesRe, "")))
-      // );
-      // core.debug(messageClean);
-
-      const commentExists = comments.some((c, i) => {
-        // First find candidate bot messages to avoid extra processing
-        core.debug(
-          `${i}::${c.user.login}::${c.user.login === "github-actions[bot]"}`
-        );
-        core.debug(
-          `${i}::${c.body.replace(spacesRe, "")}::${c.body === message}`
-        );
-        return (
+      const commentExists = comments.some(
+        (c) =>
+          // First find candidate bot messages to avoid extra processing(
           c.user.login === "github-actions[bot]" &&
           c.body.replace(spacesRe, "") === messageClean
-        );
-      });
-
-      core.debug(`comment exists: ${commentExists}`);
+      );
 
       if (commentExists) {
         core.info("the issue already contains this message");
