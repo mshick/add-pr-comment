@@ -14,7 +14,7 @@ jobs:
       - name: Setup node.js
         uses: actions/setup-node@v1
         with:
-          node-version: '12.x'
+          node-version: "12.x"
 
       - name: Install dependencies
         run: |
@@ -24,6 +24,17 @@ jobs:
         run: |
           npm run lint
 
+      - name: Build action
+        run: |
+          npm run build
+
       - name: Run tests
         run: |
           npm test
+
+      - name: Add Comment
+        uses: ./
+        with:
+          message: |
+            **It works!**
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
