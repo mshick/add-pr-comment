@@ -1,12 +1,11 @@
-name: CI
+name: Integration
 
 on:
-  push:
-    branches:
-      - master
+  pull_request:
 
 jobs:
   test:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
