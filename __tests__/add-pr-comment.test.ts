@@ -8,6 +8,8 @@ import run from '../add-pr-comment'
 
 const repoFullName = 'foo/bar'
 const repoToken = '12345'
+const commitSha = 'abc123'
+const issueNumber = 1
 const simpleMessage = 'hello world'
 const multilineMessage = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
 const multilineMessageWindows = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
@@ -33,10 +35,12 @@ beforeEach(() => {
     }
   })
 
+  github.context.sha = commitSha
+
   // https://developer.github.com/webhooks/event-payloads/#issues
   github.context.payload = {
     pull_request: {
-      number: 1,
+      number: issueNumber,
     },
     repository: {
       full_name: repoFullName,
@@ -45,7 +49,6 @@ beforeEach(() => {
         login: 'bar',
       },
     },
-    sha: 'abc123',
   } as WebhookPayload
 })
 
@@ -73,12 +76,39 @@ describe('add-pr-comment action', () => {
     })
 
     nock('https://api.github.com')
-      .post(`/repos/${repoFullName}/issues/1/comments`, ({body}) => body === simpleMessage)
+      .post(`/repos/${repoFullName}/issues/${issueNumber}/comments`, ({body}) => body === simpleMessage)
       .reply(200, {
         url: 'https://github.com/#example',
       })
 
     await expect(run()).resolves.not.toThrow()
+  })
+
+  it('safely exits when no issue can be found', async () => {
+    inputs.message = simpleMessage
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'true'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: {
+        number: 0,
+      },
+    } as WebhookPayload
+
+    const originalSetOutput = core.setOutput
+
+    jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
+      if (key === 'comment-created') {
+        expect(value).toBe('false')
+      }
+
+      return originalSetOutput(key, value)
+    })
+
+    nock('https://api.github.com').get(`/repos/${repoFullName}/commits/${commitSha}/pulls`).reply(200, [])
+
+    await run()
   })
 
   it('identifies repeat messages and does not create a comment', async () => {
