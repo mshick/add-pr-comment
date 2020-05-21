@@ -38,7 +38,7 @@ const listCommitPulls = async (params: ListCommitPullsParams): Promise<ListCommi
 }
 
 const getIssueNumberFromCommitPullsList = (commitPullsList: ListCommitPullsResponse): number | null =>
-  commitPullsList.data.length ? commitPullsList.data[0].number : null
+  commitPullsList.data && commitPullsList.data.length ? commitPullsList.data[0].number : null
 
 const isMessagePresent = (
   message: AddPrCommentInputs['message'],
