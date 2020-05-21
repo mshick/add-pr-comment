@@ -67,7 +67,7 @@ async function run() {
         issue_number: issueNumber,
       });
 
-      const spacesRe = new RegExp("\\s", "g");
+      const spacesRe = new RegExp("\\R|\\s", "g");
       const messageClean = message.replace(spacesRe, "");
 
       const commentExists = comments.some(
