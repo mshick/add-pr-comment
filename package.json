@@ -2,11 +2,12 @@
   "name": "@mshick/add-pr-comment",
   "version": "1.0.0",
   "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "lint": "eslint index.js",
-    "package": "ncc build index.js -o dist",
-    "test": "eslint index.js"
+    "build": "tsc --noEmit && ncc build add-pr-comment.ts -o dist -m",
+    "lint": "eslint . --ext .ts",
+    "test": "tsc --noEmit && jest",
+    "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*"
   },
   "repository": {
     "type": "git",
@@ -32,7 +33,18 @@
     "@actions/http-client": "^1.0.8"
   },
   "devDependencies": {
-    "@zeit/ncc": "^0.22.1",
-    "eslint": "^6.8.0"
+    "@octokit/types": "^4.0.1",
+    "@types/jest": "^25.2.1",
+    "@types/node": "^13.11.1",
+    "@typescript-eslint/eslint-plugin": "^2.27.0",
+    "@typescript-eslint/parser": "^2.27.0",
+    "@zeit/ncc": "^0.22.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.1",
+    "eslint-plugin-prettier": "^3.1.2",
+    "jest": "^25.3.0",
+    "prettier": "^2.0.4",
+    "ts-jest": "^25.3.1",
+    "typescript": "^3.8.3"
   }
 }

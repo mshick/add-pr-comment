@@ -1,3 +1,8 @@
+
+# Ignore test runner output
+__tests__/runner/*
+!__tests__/runner/.gitkeep
+
 node_modules/
 
 # Editors
