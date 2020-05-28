@@ -4,7 +4,7 @@ import {HttpClient} from '@actions/http-client'
 import {Endpoints, RequestHeaders} from '@octokit/types'
 import {Octokit} from '@octokit/rest'
 
-// debug a
+// debug b
 
 type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']
 
