@@ -7,9 +7,10 @@ import {Octokit} from '@octokit/rest'
 type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']
 
 interface AddPrCommentInputs {
-  message: string
-  repoToken: string
   allowRepeats: boolean
+  message: string
+  repoToken?: string
+  repoTokenUserLogin?: string
 }
 
 interface ListCommitPullsParams {
@@ -43,31 +44,37 @@ const getIssueNumberFromCommitPullsList = (commitPullsList: ListCommitPullsRespo
 const isMessagePresent = (
   message: AddPrCommentInputs['message'],
   comments: Octokit.IssuesListCommentsResponse,
+  login?: string,
 ): boolean => {
   const cleanRe = new RegExp('\\R|\\s', 'g')
   const messageClean = message.replace(cleanRe, '')
 
-  return comments.some(
-    ({user, body}) =>
-      // First find candidate bot messages to avoid extra processing
-      user.login === 'github-actions[bot]' && body.replace(cleanRe, '') === messageClean,
-  )
+  return comments.some(({user, body}) => {
+    // If a username is provided we can save on a bit of processing
+    if (login && user.login !== login) {
+      return false
+    }
+
+    return body.replace(cleanRe, '') === messageClean
+  })
 }
 
 const getInputs = (): AddPrCommentInputs => {
   return {
-    message: core.getInput('message'),
-    repoToken: core.getInput('repo-token'),
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
+    message: core.getInput('message'),
+    repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
+    repoTokenUserLogin: core.getInput('repo-token-user-login'),
   }
 }
 
 const run = async (): Promise<void> => {
   try {
-    const {message, repoToken, allowRepeats} = getInputs()
+    const {allowRepeats, message, repoToken, repoTokenUserLogin} = getInputs()
 
-    core.debug(`input message: ${message}`)
-    core.debug(`input allow-repeats: ${allowRepeats}`)
+    if (!repoToken) {
+      throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable')
+    }
 
     const {
       payload: {pull_request: pullRequest, repository},
@@ -112,7 +119,7 @@ const run = async (): Promise<void> => {
         issue_number: issueNumber,
       })
 
-      if (isMessagePresent(message, comments)) {
+      if (isMessagePresent(message, comments, repoTokenUserLogin)) {
         core.info('the issue already contains an identical message')
         shouldCreateComment = false
       }

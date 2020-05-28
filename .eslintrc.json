@@ -20,12 +20,7 @@
       }
     ],
     "camelcase": "off",
-    "@typescript-eslint/camelcase": [
-      "error",
-      {
-        "properties": "never"
-      }
-    ],
+    "@typescript-eslint/camelcase": "off",
     "@typescript-eslint/no-non-null-assertion": "off"
   },
   "env": {

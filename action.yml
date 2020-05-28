@@ -1,14 +1,17 @@
 name: "Add PR Comment"
-description: "Add a comment to a PR"
+description: "Add a comment to a pull request"
 inputs:
   message:
-    description: "the message to print"
+    description: "The message to print."
     required: true
   repo-token:
-    description: "a github token for API access"
-    required: true
+    description: "A GitHub token for API access."
+    required: false
+  repo-token-user-login:
+    description: "A user login associated with your token, for temporary repo tokens this is `github-actions[bot]`."
+    required: false
   allow-repeats:
-    description: "allow messages to be repeated"
+    description: "Allow messages to be repeated."
     required: false
     default: "false"
 branding:

@@ -8,6 +8,7 @@ import run from '../add-pr-comment'
 
 const repoFullName = 'foo/bar'
 const repoToken = '12345'
+const userLogin = 'github-actions[bot]'
 const commitSha = 'abc123'
 const issueNumber = 1
 const simpleMessage = 'hello world'
@@ -17,6 +18,7 @@ const multilineMessageWindows = fs.readFileSync(path.resolve(__dirname, './messa
 const inputs = {
   message: '',
   'repo-token': '',
+  'repo-token-user-login': '',
   'allow-repeats': 'false',
 }
 
@@ -84,9 +86,10 @@ describe('add-pr-comment action', () => {
     await expect(run()).resolves.not.toThrow()
   })
 
-  it('safely exits when no issue can be found', async () => {
+  it('safely exits when no issue can be found [using GITHUB_TOKEN in env]', async () => {
+    process.env['GITHUB_TOKEN'] = repoToken
+
     inputs.message = simpleMessage
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
 
     github.context.payload = {
@@ -111,9 +114,10 @@ describe('add-pr-comment action', () => {
     await run()
   })
 
-  it('identifies repeat messages and does not create a comment', async () => {
+  it('identifies repeat messages and does not create a comment [user login provided]', async () => {
     inputs.message = simpleMessage
     inputs['repo-token'] = repoToken
+    inputs['repo-token-user-login'] = userLogin
     inputs['allow-repeats'] = 'false'
 
     const originalSetOutput = core.setOutput
@@ -126,21 +130,21 @@ describe('add-pr-comment action', () => {
       return originalSetOutput(key, value)
     })
 
-    nock('https://api.github.com')
-      .get(`/repos/${repoFullName}/issues/1/comments`)
-      .reply(200, [
-        {
-          body: simpleMessage,
-          user: {
-            login: 'github-actions[bot]',
-          },
+    const replyBody = [
+      {
+        body: simpleMessage,
+        user: {
+          login: userLogin,
         },
-      ])
+      },
+    ]
+
+    nock('https://api.github.com').get(`/repos/${repoFullName}/issues/1/comments`).reply(200, replyBody)
 
     await run()
   })
 
-  it('matches multiline messages with windows line feeds against api responses with unix linefeeds', async () => {
+  it('matches multiline messages with windows line feeds against api responses with unix linefeeds [no user login provided]', async () => {
     inputs.message = multilineMessageWindows
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
@@ -155,16 +159,16 @@ describe('add-pr-comment action', () => {
       return originalSetOutput(key, value)
     })
 
-    nock('https://api.github.com')
-      .get(`/repos/${repoFullName}/issues/1/comments`)
-      .reply(200, [
-        {
-          body: multilineMessage,
-          user: {
-            login: 'github-actions[bot]',
-          },
+    const replyBody = [
+      {
+        body: multilineMessage,
+        user: {
+          login: userLogin,
         },
-      ])
+      },
+    ]
+
+    nock('https://api.github.com').get(`/repos/${repoFullName}/issues/1/comments`).reply(200, replyBody)
 
     await run()
   })
