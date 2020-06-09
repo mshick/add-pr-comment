@@ -21,7 +21,7 @@
     "comments",
     "pr"
   ],
-  "author": "GitHub",
+  "author": "Michael Shick <m@shick.us>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/mshick/add-pr-comment/issues"
