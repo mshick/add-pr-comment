@@ -81,7 +81,7 @@ const run = async (): Promise<void> => {
       sha: commitSha,
     } = github.context
 
-    core.debug(pullRequest)
+    core.info(JSON.stringify(pullRequest, null, 2))
 
     if (!repository) {
       core.info('unable to determine repository from request type')
@@ -99,9 +99,9 @@ const run = async (): Promise<void> => {
     // } else {
     // If this is not a pull request, attempt to find a PR matching the sha
     const commitPullsList = await listCommitPulls({repoToken, owner, repo, commitSha})
-    core.debug(commitPullsList)
+    core.info(JSON.stringify(commitPullsList, null, 2))
     const issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
-    core.debug(issueNumber)
+    core.debug(String(issueNumber))
     // }
 
     if (!issueNumber) {
