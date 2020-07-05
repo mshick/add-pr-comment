@@ -1,10 +1,11 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {HttpClient} from '@actions/http-client'
-import {Endpoints, RequestHeaders} from '@octokit/types'
+import {RequestHeaders, ReposListPullRequestsAssociatedWithCommitResponseData} from '@octokit/types'
 import {Octokit} from '@octokit/rest'
 
-type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']
+// type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']
+type ListCommitPullsResponse = ReposListPullRequestsAssociatedWithCommitResponseData
 
 interface AddPrCommentInputs {
   allowRepeats: boolean
@@ -39,7 +40,7 @@ const listCommitPulls = async (params: ListCommitPullsParams): Promise<ListCommi
 }
 
 const getIssueNumberFromCommitPullsList = (commitPullsList: ListCommitPullsResponse): number | null =>
-  commitPullsList.data && commitPullsList.data.length ? commitPullsList.data[0].number : null
+  commitPullsList.length ? commitPullsList[0].number : null
 
 const isMessagePresent = (
   message: AddPrCommentInputs['message'],
