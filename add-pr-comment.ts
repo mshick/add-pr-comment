@@ -81,6 +81,8 @@ const run = async (): Promise<void> => {
       sha: commitSha,
     } = github.context
 
+    core.debug(pullRequest)
+
     if (!repository) {
       core.info('unable to determine repository from request type')
       core.setOutput('comment-created', 'false')
@@ -90,15 +92,17 @@ const run = async (): Promise<void> => {
     const {full_name: repoFullName} = repository!
     const [owner, repo] = repoFullName!.split('/')
 
-    let issueNumber
+    // let issueNumber
 
-    if (pullRequest && pullRequest.number) {
-      issueNumber = pullRequest.number
-    } else {
-      // If this is not a pull request, attempt to find a PR matching the sha
-      const commitPullsList = await listCommitPulls({repoToken, owner, repo, commitSha})
-      issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
-    }
+    // if (pullRequest && pullRequest.number) {
+    // issueNumber = pullRequest.number
+    // } else {
+    // If this is not a pull request, attempt to find a PR matching the sha
+    const commitPullsList = await listCommitPulls({repoToken, owner, repo, commitSha})
+    core.debug(commitPullsList)
+    const issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
+    core.debug(issueNumber)
+    // }
 
     if (!issueNumber) {
       core.info('this action only works on pull_request events or other commits associated with a pull')
