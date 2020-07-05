@@ -102,7 +102,7 @@ const run = async (): Promise<void> => {
     const commitPullsList = await listCommitPulls({repoToken, owner, repo, commitSha})
     core.info(JSON.stringify(commitPullsList, null, 2))
     const issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
-    core.debug(String(issueNumber))
+    core.info(String(issueNumber))
     // }
 
     if (!issueNumber) {
