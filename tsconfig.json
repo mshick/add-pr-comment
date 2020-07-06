@@ -10,7 +10,8 @@
     "noUnusedParameters": true,
     "noImplicitAny": true,
     "removeComments": false,
-    "preserveConstEnums": true
+    "preserveConstEnums": true,
+    "resolveJsonModule": true
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules"]

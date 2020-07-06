@@ -5,12 +5,13 @@ import * as github from '@actions/github'
 import {WebhookPayload} from '@actions/github/lib/interfaces'
 import nock from 'nock'
 import run from '../add-pr-comment'
+import apiResponse from '../docs/sample-pulls-api-response.json'
 
 const repoFullName = 'foo/bar'
 const repoToken = '12345'
 const userLogin = 'github-actions[bot]'
 const commitSha = 'abc123'
-const issueNumber = 1
+let issueNumber = 1
 const simpleMessage = 'hello world'
 const multilineMessage = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
 const multilineMessageWindows = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
@@ -23,6 +24,7 @@ const inputs = {
 }
 
 beforeEach(() => {
+  issueNumber = 1
   jest.resetModules()
   jest.spyOn(core, 'getInput').mockImplementation((name: string): string => {
     switch (name) {
@@ -76,6 +78,44 @@ describe('add-pr-comment action', () => {
 
       return originalSetOutput(key, value)
     })
+
+    nock('https://api.github.com')
+      .post(`/repos/${repoFullName}/issues/${issueNumber}/comments`, ({body}) => body === simpleMessage)
+      .reply(200, {
+        url: 'https://github.com/#example',
+      })
+
+    await expect(run()).resolves.not.toThrow()
+  })
+
+  it('creates a comment in an existing PR', async () => {
+    process.env['GITHUB_TOKEN'] = repoToken
+
+    inputs.message = simpleMessage
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'true'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: {
+        number: 0,
+      },
+    } as WebhookPayload
+
+    const originalSetOutput = core.setOutput
+
+    jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
+      if (key === 'comment-created') {
+        expect(value).toBe('true')
+      }
+
+      return originalSetOutput(key, value)
+    })
+
+    issueNumber = apiResponse.result[0].number
+    nock('https://api.github.com')
+      .get(`/repos/${repoFullName}/commits/${commitSha}/pulls`)
+      .reply(200, apiResponse.result)
 
     nock('https://api.github.com')
       .post(`/repos/${repoFullName}/issues/${issueNumber}/comments`, ({body}) => body === simpleMessage)
