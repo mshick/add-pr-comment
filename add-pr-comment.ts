@@ -1,11 +1,10 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {HttpClient} from '@actions/http-client'
-import {RequestHeaders, ReposListPullRequestsAssociatedWithCommitResponseData} from '@octokit/types'
+import {Endpoints, RequestHeaders} from '@octokit/types'
 import {Octokit} from '@octokit/rest'
 
-// type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']
-type ListCommitPullsResponse = ReposListPullRequestsAssociatedWithCommitResponseData
+type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']['data']
 
 interface AddPrCommentInputs {
   allowRepeats: boolean
@@ -82,8 +81,6 @@ const run = async (): Promise<void> => {
       sha: commitSha,
     } = github.context
 
-    core.info(JSON.stringify(pullRequest, null, 2))
-
     if (!repository) {
       core.info('unable to determine repository from request type')
       core.setOutput('comment-created', 'false')
@@ -93,17 +90,15 @@ const run = async (): Promise<void> => {
     const {full_name: repoFullName} = repository!
     const [owner, repo] = repoFullName!.split('/')
 
-    // let issueNumber
+    let issueNumber
 
-    // if (pullRequest && pullRequest.number) {
-    // issueNumber = pullRequest.number
-    // } else {
-    // If this is not a pull request, attempt to find a PR matching the sha
-    const commitPullsList = await listCommitPulls({repoToken, owner, repo, commitSha})
-    core.info(JSON.stringify(commitPullsList, null, 2))
-    const issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
-    core.info(String(issueNumber))
-    // }
+    if (pullRequest && pullRequest.number) {
+      issueNumber = pullRequest.number
+    } else {
+      // If this is not a pull request, attempt to find a PR matching the sha
+      const commitPullsList = await listCommitPulls({repoToken, owner, repo, commitSha})
+      issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
+    }
 
     if (!issueNumber) {
       core.info('this action only works on pull_request events or other commits associated with a pull')
