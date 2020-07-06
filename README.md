@@ -2,6 +2,12 @@
 
 > A GitHub Action which adds a comment to a pull request's issue.
 
+## Limitations
+
+Due to how GitHub handles permissions in PRs coming from forks, this action is limited to PRs based on branches. See this issue: https://github.community/t/github-actions-are-severely-limited-on-prs/18179/4 for more detail.
+
+I'm currently investigating a workaround via a simple bot you can easily deploy. More soon...
+
 ## Usage
 
 ```yaml
@@ -12,15 +18,15 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: mshick/add-pr-comment@v1
-      with:
-        message: |
-          **Hello**
-          🌏
-          !
-        repo-token: ${{ secrets.GITHUB_TOKEN }}
-        repo-token-user-login: 'github-actions[bot]' # The user.login for temporary GitHub tokens
-        allow-repeats: false # This is the default
+      - uses: mshick/add-pr-comment@v1
+        with:
+          message: |
+            **Hello**
+            🌏
+            !
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]' # The user.login for temporary GitHub tokens
+          allow-repeats: false # This is the default
 ```
 
 You can even use it on PR Issues that are related to PRs that were merged into master, for example:
@@ -35,13 +41,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: mshick/add-pr-comment@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        message: |
-          **Hello MASTER**
-        allow-repeats: true
+      - uses: mshick/add-pr-comment@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          message: |
+            **Hello MASTER**
+          allow-repeats: true
 ```
 
 ## Configuration options
