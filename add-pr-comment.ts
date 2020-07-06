@@ -1,8 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {HttpClient} from '@actions/http-client'
-import {Endpoints, RequestHeaders} from '@octokit/types'
-import {Octokit} from '@octokit/rest'
+import {Endpoints, RequestHeaders, IssuesListCommentsResponseData} from '@octokit/types'
 
 type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']['data']
 
@@ -43,7 +42,7 @@ const getIssueNumberFromCommitPullsList = (commitPullsList: ListCommitPullsRespo
 
 const isMessagePresent = (
   message: AddPrCommentInputs['message'],
-  comments: Octokit.IssuesListCommentsResponse,
+  comments: IssuesListCommentsResponseData,
   login?: string,
 ): boolean => {
   const cleanRe = new RegExp('\\R|\\s', 'g')
@@ -106,7 +105,7 @@ const run = async (): Promise<void> => {
       return
     }
 
-    const octokit = new github.GitHub(repoToken)
+    const octokit = github.getOctokit(repoToken)
 
     let shouldCreateComment = true
 
