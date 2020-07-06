@@ -160,18 +160,6 @@ describe('add-pr-comment action', () => {
     inputs['repo-token-user-login'] = userLogin
     inputs['allow-repeats'] = 'false'
 
-    github.context.payload = {
-      pull_request: {
-        number: issueNumber,
-      },
-      repository: {
-        full_name: repoFullName,
-        name: 'bar',
-        owner: {
-          login: 'bar',
-        },
-      },
-    } as WebhookPayload
     const originalSetOutput = core.setOutput
 
     jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
