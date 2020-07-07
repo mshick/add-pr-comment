@@ -79,7 +79,6 @@ jobs:
           message: |
             **Howdie!**
           proxy-url: https://add-pr-comment-proxy-94idvmwyie-uc.a.run.app
-          proxy-secret: foobar
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 ```
 

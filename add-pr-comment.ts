@@ -41,23 +41,19 @@ interface CreateCommentProxyParams {
   repo: string
   issueNumber: number
   proxyUrl: string
-  proxySecret: string
 }
 
 const createCommentProxy = async (params: CreateCommentProxyParams): Promise<CreateIssueCommentResponseData | null> => {
-  const {repoToken, owner, repo, issueNumber, body, proxyUrl, proxySecret} = params
+  const {repoToken, owner, repo, issueNumber, body, proxyUrl} = params
 
   const http = new HttpClient('http-client-add-pr-comment')
-
-  const additionalHeaders: RequestHeaders = {
-    authorization: `basic ${Buffer.from(proxySecret + ':').toString('base64')}`,
-    ['temporary-github-token']: repoToken,
-  }
 
   const response = await http.postJson<CreateIssueCommentResponseData>(
     `${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
     {body},
-    additionalHeaders,
+    {
+      ['temporary-github-token']: repoToken,
+    },
   )
 
   return response.result
@@ -84,7 +80,6 @@ const isMessagePresent = (
 interface AddPrCommentInputs {
   allowRepeats: boolean
   message: string
-  proxySecret?: string
   proxyUrl?: string
   repoToken?: string
   repoTokenUserLogin?: string
@@ -94,7 +89,6 @@ const getInputs = (): AddPrCommentInputs => {
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
     message: core.getInput('message'),
-    proxySecret: core.getInput('proxy-secret'),
     proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
     repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
     repoTokenUserLogin: core.getInput('repo-token-user-login'),
@@ -103,7 +97,7 @@ const getInputs = (): AddPrCommentInputs => {
 
 const run = async (): Promise<void> => {
   try {
-    const {allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl, proxySecret} = getInputs()
+    const {allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl} = getInputs()
 
     if (!repoToken) {
       throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable')
@@ -160,10 +154,6 @@ const run = async (): Promise<void> => {
 
     if (shouldCreateComment) {
       if (proxyUrl) {
-        if (!proxySecret) {
-          throw new Error('proxy-url defined, but proxy-secret is missing')
-        }
-
         await createCommentProxy({
           owner,
           repo,
@@ -171,7 +161,6 @@ const run = async (): Promise<void> => {
           body: message,
           repoToken,
           proxyUrl,
-          proxySecret,
         })
       } else {
         await octokit.issues.createComment({

@@ -57,7 +57,6 @@ jobs:
         with:
           message: |
             **It works!**
-          proxy-url: https://add-pr-comment-bot-73luvmwygq-uc.a.run.app
-          proxy-secret: I636uHaB/NpwKMSyMjwsfmdabBE5Khjgh2po9oSy49TOa9eQwsQhEDRY9MLoGo9I9UtvftJgmxPJl1g0RjX1sA==
+          proxy-url: https://add-pr-comment-proxy-73luvmwygq-uc.a.run.app
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           repo-token-user-login: "github-actions[bot]"
