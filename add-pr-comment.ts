@@ -4,13 +4,7 @@ import {HttpClient} from '@actions/http-client'
 import {Endpoints, RequestHeaders, IssuesListCommentsResponseData} from '@octokit/types'
 
 type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']['data']
-
-interface AddPrCommentInputs {
-  allowRepeats: boolean
-  message: string
-  repoToken?: string
-  repoTokenUserLogin?: string
-}
+type CreateIssueCommentResponseData = Endpoints['POST /repos/:owner/:repo/issues/:issue_number/comments']['response']['data']
 
 interface ListCommitPullsParams {
   repoToken: string
@@ -40,6 +34,35 @@ const listCommitPulls = async (params: ListCommitPullsParams): Promise<ListCommi
 const getIssueNumberFromCommitPullsList = (commitPullsList: ListCommitPullsResponse): number | null =>
   commitPullsList.length ? commitPullsList[0].number : null
 
+interface CreateCommentProxyParams {
+  repoToken: string
+  body: string
+  owner: string
+  repo: string
+  issueNumber: number
+  proxyUrl: string
+  proxySecret: string
+}
+
+const createCommentProxy = async (params: CreateCommentProxyParams): Promise<CreateIssueCommentResponseData | null> => {
+  const {repoToken, owner, repo, issueNumber, body, proxyUrl, proxySecret} = params
+
+  const http = new HttpClient('http-client-add-pr-comment')
+
+  const additionalHeaders: RequestHeaders = {
+    authorization: `basic ${Buffer.from(proxySecret + ':').toString('base64')}`,
+    ['temporary-github-token']: repoToken,
+  }
+
+  const response = await http.postJson<CreateIssueCommentResponseData>(
+    `${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+    {body},
+    additionalHeaders,
+  )
+
+  return response.result
+}
+
 const isMessagePresent = (
   message: AddPrCommentInputs['message'],
   comments: IssuesListCommentsResponseData,
@@ -58,10 +81,21 @@ const isMessagePresent = (
   })
 }
 
+interface AddPrCommentInputs {
+  allowRepeats: boolean
+  message: string
+  proxySecret?: string
+  proxyUrl?: string
+  repoToken?: string
+  repoTokenUserLogin?: string
+}
+
 const getInputs = (): AddPrCommentInputs => {
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
     message: core.getInput('message'),
+    proxySecret: core.getInput('proxy-secret'),
+    proxyUrl: core.getInput('proxy-url'),
     repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
     repoTokenUserLogin: core.getInput('repo-token-user-login'),
   }
@@ -69,7 +103,7 @@ const getInputs = (): AddPrCommentInputs => {
 
 const run = async (): Promise<void> => {
   try {
-    const {allowRepeats, message, repoToken, repoTokenUserLogin} = getInputs()
+    const {allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl, proxySecret} = getInputs()
 
     if (!repoToken) {
       throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable')
@@ -125,12 +159,28 @@ const run = async (): Promise<void> => {
     }
 
     if (shouldCreateComment) {
-      await octokit.issues.createComment({
-        owner,
-        repo,
-        issue_number: issueNumber,
-        body: message,
-      })
+      if (proxyUrl) {
+        if (!proxySecret) {
+          throw new Error('proxy-url defined, but proxy-secret is missing')
+        }
+
+        await createCommentProxy({
+          owner,
+          repo,
+          issueNumber,
+          body: message,
+          repoToken,
+          proxyUrl,
+          proxySecret,
+        })
+      } else {
+        await octokit.issues.createComment({
+          owner,
+          repo,
+          issue_number: issueNumber,
+          body: message,
+        })
+      }
 
       core.setOutput('comment-created', 'true')
     } else {

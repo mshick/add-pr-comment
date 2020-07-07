@@ -4,9 +4,7 @@
 
 ## Limitations
 
-Due to how GitHub handles permissions in PRs coming from forks, this action is limited to PRs based on branches. See this issue: https://github.community/t/github-actions-are-severely-limited-on-prs/18179/4 for more detail.
-
-I'm currently investigating a workaround via a simple bot you can easily deploy. More soon...
+Due to how GitHub handles permissions in PRs coming from forks you will need to deploy an app if you want to post comments in those situations. [See below](#proxy-for-fork-based-prs).
 
 ## Usage
 
@@ -59,6 +57,31 @@ jobs:
 | repo-token-user-login | with     | Define this to save on comment processing time when checking for repeats. GitHub's default token uses `github-actions[bot]` | no       |         |
 | allow-repeats         | with     | A boolean flag to allow identical messages to be posted each time this action is run                                        | no       | false   |
 | GITHUB_TOKEN          | env      | A valid GitHub token, can alternatively be defined in the env                                                               | maybe    |         |
+
+## Proxy for Fork-based PRs
+
+GitHub limits `GITHUB_TOKEN` and other API access token permissions when creating a PR from a fork. This makes it impossible to add comments when your PRs are coming from forks, which is the norm for open source projects. To work around this situation I've created a simple companion app you can deploy to Cloud Run or another environment to proxy the create comment requests and escalate the token privileges.
+
+See this issue: https://github.community/t/github-actions-are-severely-limited-on-prs/18179/4 for more detail.
+
+**Example**
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mshick/add-pr-comment@v1
+        with:
+          message: |
+            **Howdie!**
+          proxy-url: https://add-pr-comment-proxy-94idvmwyie-uc.a.run.app/
+          proxy-secret: foobar
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+```
 
 ## Features
 

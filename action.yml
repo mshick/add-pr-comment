@@ -14,6 +14,12 @@ inputs:
     description: "Allow messages to be repeated."
     required: false
     default: "false"
+  proxy-url:
+    description: "Proxy URL for comment creation"
+    required: false
+  proxy-secret:
+    description: "A secret to use for authenticating against the proxy"
+    required: false
 branding:
   icon: message-circle
   color: purple
