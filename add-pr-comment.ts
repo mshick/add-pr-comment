@@ -95,7 +95,7 @@ const getInputs = (): AddPrCommentInputs => {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
     message: core.getInput('message'),
     proxySecret: core.getInput('proxy-secret'),
-    proxyUrl: core.getInput('proxy-url'),
+    proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
     repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
     repoTokenUserLogin: core.getInput('repo-token-user-login'),
   }
