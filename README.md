@@ -1,3 +1,5 @@
+TEST
+
 # add-pr-comment
 
 > A GitHub Action which adds a comment to a pull request's issue.
