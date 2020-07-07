@@ -3,7 +3,7 @@ import * as github from '@actions/github'
 import {HttpClient} from '@actions/http-client'
 import {Endpoints, RequestHeaders, IssuesListCommentsResponseData} from '@octokit/types'
 
-type ListCommitPullsResponse = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']['data']
+type ListCommitPullsResponseData = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']['data']
 type CreateIssueCommentResponseData = Endpoints['POST /repos/:owner/:repo/issues/:issue_number/comments']['response']['data']
 
 interface ListCommitPullsParams {
@@ -13,7 +13,9 @@ interface ListCommitPullsParams {
   commitSha: string
 }
 
-const listCommitPulls = async (params: ListCommitPullsParams): Promise<ListCommitPullsResponse | null> => {
+const listCommitPulls = async (
+  params: ListCommitPullsParams
+): Promise<ListCommitPullsResponseData | null> => {
   const {repoToken, owner, repo, commitSha} = params
 
   const http = new HttpClient('http-client-add-pr-comment')
@@ -23,16 +25,17 @@ const listCommitPulls = async (params: ListCommitPullsParams): Promise<ListCommi
     authorization: `token ${repoToken}`,
   }
 
-  const body = await http.getJson<ListCommitPullsResponse>(
+  const body = await http.getJson<ListCommitPullsResponseData>(
     `https://api.github.com/repos/${owner}/${repo}/commits/${commitSha}/pulls`,
-    additionalHeaders,
+    additionalHeaders
   )
 
   return body.result
 }
 
-const getIssueNumberFromCommitPullsList = (commitPullsList: ListCommitPullsResponse): number | null =>
-  commitPullsList.length ? commitPullsList[0].number : null
+const getIssueNumberFromCommitPullsList = (
+  commitPullsList: ListCommitPullsResponseData
+): number | null => (commitPullsList.length ? commitPullsList[0].number : null)
 
 interface CreateCommentProxyParams {
   repoToken: string
@@ -43,7 +46,9 @@ interface CreateCommentProxyParams {
   proxyUrl: string
 }
 
-const createCommentProxy = async (params: CreateCommentProxyParams): Promise<CreateIssueCommentResponseData | null> => {
+const createCommentProxy = async (
+  params: CreateCommentProxyParams
+): Promise<CreateIssueCommentResponseData | null> => {
   const {repoToken, owner, repo, issueNumber, body, proxyUrl} = params
 
   const http = new HttpClient('http-client-add-pr-comment')
@@ -53,7 +58,7 @@ const createCommentProxy = async (params: CreateCommentProxyParams): Promise<Cre
     {body},
     {
       ['temporary-github-token']: repoToken,
-    },
+    }
   )
 
   return response.result
@@ -62,7 +67,7 @@ const createCommentProxy = async (params: CreateCommentProxyParams): Promise<Cre
 const isMessagePresent = (
   message: AddPrCommentInputs['message'],
   comments: IssuesListCommentsResponseData,
-  login?: string,
+  login?: string
 ): boolean => {
   const cleanRe = new RegExp('\\R|\\s', 'g')
   const messageClean = message.replace(cleanRe, '')
@@ -100,7 +105,9 @@ const run = async (): Promise<void> => {
     const {allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl} = getInputs()
 
     if (!repoToken) {
-      throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable')
+      throw new Error(
+        'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable'
+      )
     }
 
     const {
@@ -128,7 +135,9 @@ const run = async (): Promise<void> => {
     }
 
     if (!issueNumber) {
-      core.info('this action only works on pull_request events or other commits associated with a pull')
+      core.info(
+        'this action only works on pull_request events or other commits associated with a pull'
+      )
       core.setOutput('comment-created', 'false')
       return
     }

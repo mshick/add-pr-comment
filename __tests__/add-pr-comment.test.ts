@@ -4,17 +4,18 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {WebhookPayload} from '@actions/github/lib/interfaces'
 import nock from 'nock'
-import run from '../add-pr-comment'
-import apiResponse from '../docs/sample-pulls-api-response.json'
+import run from '../src/main'
+import apiResponse from './sample-pulls-api-response.json'
 
 const repoFullName = 'foo/bar'
 const repoToken = '12345'
 const userLogin = 'github-actions[bot]'
 const commitSha = 'abc123'
-let issueNumber = 1
 const simpleMessage = 'hello world'
 const multilineMessage = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
 const multilineMessageWindows = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
+
+let issueNumber = 1
 
 const inputs = {
   message: '',

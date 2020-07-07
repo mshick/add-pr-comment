@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "esnext",
-    "lib": ["es2015", "es2017"],
+    "target": "ES2018",
+    "lib": ["ES2020"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -11,8 +11,9 @@
     "noImplicitAny": true,
     "removeComments": false,
     "preserveConstEnums": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "rootDir": "./src",
+    "outDir": "./lib"
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "**/*.test.ts"]
 }

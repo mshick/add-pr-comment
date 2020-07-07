@@ -2,11 +2,11 @@
   "name": "@mshick/add-pr-comment",
   "version": "1.0.0",
   "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
-  "main": "dist/index.js",
+  "main": "lib/main.js",
   "scripts": {
-    "build": "tsc --noEmit && ncc build add-pr-comment.ts -o dist -m",
+    "build": "tsc && ncc build lib/main.js",
     "lint": "eslint . --ext .ts",
-    "test": "tsc --noEmit && jest",
+    "test": "jest",
     "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*"
   },
   "repository": {
@@ -43,6 +43,7 @@
     "eslint-config-prettier": "^6.11.0",
     "eslint-plugin-prettier": "^3.1.4",
     "jest": "^26.1.0",
+    "jest-circus": "^26.1.0",
     "nock": "^13.0.2",
     "prettier": "^2.0.5",
     "ts-jest": "^26.1.1",
