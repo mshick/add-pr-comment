@@ -111,7 +111,7 @@ const run = async (): Promise<void> => {
     }
 
     const {
-      payload: {pull_request: pullRequest, repository},
+      payload: {pull_request: pullRequest, issue, repository},
       sha: commitSha,
     } = github.context
 
@@ -121,12 +121,14 @@ const run = async (): Promise<void> => {
       return
     }
 
-    const {full_name: repoFullName} = repository!
+    const {full_name: repoFullName} = repository
     const [owner, repo] = repoFullName!.split('/')
 
     let issueNumber
 
-    if (pullRequest && pullRequest.number) {
+    if (issue && issue.number) {
+      issueNumber = issue.number
+    } else if (pullRequest && pullRequest.number) {
       issueNumber = pullRequest.number
     } else {
       // If this is not a pull request, attempt to find a PR matching the sha
@@ -136,7 +138,7 @@ const run = async (): Promise<void> => {
 
     if (!issueNumber) {
       core.info(
-        'this action only works on pull_request events or other commits associated with a pull'
+        'this action only works on issues and pull_request events or other commits associated with a pull'
       )
       core.setOutput('comment-created', 'false')
       return
