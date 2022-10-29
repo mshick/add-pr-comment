@@ -1,6 +1,6 @@
 {
   "name": "@mshick/add-pr-comment",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
   "main": "lib/main.js",
   "scripts": {
@@ -28,14 +28,14 @@
   },
   "homepage": "https://github.com/mshick/add-pr-comment#readme",
   "dependencies": {
-    "@actions/core": "^1.2.4",
+    "@actions/core": "^1.10.0",
     "@actions/github": "^4.0.0",
     "@actions/http-client": "^1.0.8"
   },
   "devDependencies": {
     "@octokit/types": "^5.4.0",
     "@types/jest": "^26.0.9",
-    "@types/node": "^12.12.42",
+    "@types/node": "^16.11.65",
     "@typescript-eslint/eslint-plugin": "^3.9.0",
     "@typescript-eslint/parser": "^3.9.0",
     "@zeit/ncc": "^0.22.3",
