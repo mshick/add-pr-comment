@@ -1,9 +1,9 @@
-import * as fs from 'fs'
-import * as path from 'path'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {WebhookPayload} from '@actions/github/lib/interfaces'
+import { WebhookPayload } from '@actions/github/lib/interfaces'
+import * as fs from 'fs'
 import nock from 'nock'
+import * as path from 'path'
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
 
@@ -12,8 +12,12 @@ const repoToken = '12345'
 const userLogin = 'github-actions[bot]'
 const commitSha = 'abc123'
 const simpleMessage = 'hello world'
-const multilineMessage = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
-const multilineMessageWindows = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
+const multilineMessage = fs
+  .readFileSync(path.resolve(__dirname, './message-windows.txt'))
+  .toString()
+const multilineMessageWindows = fs
+  .readFileSync(path.resolve(__dirname, './message-windows.txt'))
+  .toString()
 
 let issueNumber = 1
 
@@ -81,7 +85,10 @@ describe('add-pr-comment action', () => {
     })
 
     nock('https://api.github.com')
-      .post(`/repos/${repoFullName}/issues/${issueNumber}/comments`, ({body}) => body === simpleMessage)
+      .post(
+        `/repos/${repoFullName}/issues/${issueNumber}/comments`,
+        ({ body }) => body === simpleMessage,
+      )
       .reply(200, {
         url: 'https://github.com/#example',
       })
@@ -119,7 +126,10 @@ describe('add-pr-comment action', () => {
       .reply(200, apiResponse.result)
 
     nock('https://api.github.com')
-      .post(`/repos/${repoFullName}/issues/${issueNumber}/comments`, ({body}) => body === simpleMessage)
+      .post(
+        `/repos/${repoFullName}/issues/${issueNumber}/comments`,
+        ({ body }) => body === simpleMessage,
+      )
       .reply(200, {
         url: 'https://github.com/#example',
       })
@@ -150,7 +160,9 @@ describe('add-pr-comment action', () => {
       return originalSetOutput(key, value)
     })
 
-    nock('https://api.github.com').get(`/repos/${repoFullName}/commits/${commitSha}/pulls`).reply(200, [])
+    nock('https://api.github.com')
+      .get(`/repos/${repoFullName}/commits/${commitSha}/pulls`)
+      .reply(200, [])
 
     await run()
   })
@@ -180,7 +192,9 @@ describe('add-pr-comment action', () => {
       },
     ]
 
-    nock('https://api.github.com').get(`/repos/${repoFullName}/issues/1/comments`).reply(200, replyBody)
+    nock('https://api.github.com')
+      .get(`/repos/${repoFullName}/issues/1/comments`)
+      .reply(200, replyBody)
 
     await run()
   })
@@ -209,7 +223,9 @@ describe('add-pr-comment action', () => {
       },
     ]
 
-    nock('https://api.github.com').get(`/repos/${repoFullName}/issues/1/comments`).reply(200, replyBody)
+    nock('https://api.github.com')
+      .get(`/repos/${repoFullName}/issues/1/comments`)
+      .reply(200, replyBody)
 
     await run()
   })

@@ -1,10 +1,14 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {HttpClient} from '@actions/http-client'
-import {Endpoints, RequestHeaders, IssuesListCommentsResponseData} from '@octokit/types'
+import { HttpClient } from '@actions/http-client'
+import { Endpoints, RequestHeaders } from '@octokit/types'
 
-type ListCommitPullsResponseData = Endpoints['GET /repos/:owner/:repo/commits/:commit_sha/pulls']['response']['data']
-type CreateIssueCommentResponseData = Endpoints['POST /repos/:owner/:repo/issues/:issue_number/comments']['response']['data']
+type ListCommitPullsResponseData =
+  Endpoints['GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls']['response']['data']
+type CreateIssueCommentResponseData =
+  Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
+type IssuesListCommentsResponseData =
+  Endpoints['GET /repos/{owner}/{repo}/issues/comments']['response']['data']
 
 interface ListCommitPullsParams {
   repoToken: string
@@ -14,9 +18,9 @@ interface ListCommitPullsParams {
 }
 
 const listCommitPulls = async (
-  params: ListCommitPullsParams
+  params: ListCommitPullsParams,
 ): Promise<ListCommitPullsResponseData | null> => {
-  const {repoToken, owner, repo, commitSha} = params
+  const { repoToken, owner, repo, commitSha } = params
 
   const http = new HttpClient('http-client-add-pr-comment')
 
@@ -27,14 +31,14 @@ const listCommitPulls = async (
 
   const body = await http.getJson<ListCommitPullsResponseData>(
     `https://api.github.com/repos/${owner}/${repo}/commits/${commitSha}/pulls`,
-    additionalHeaders
+    additionalHeaders,
   )
 
   return body.result
 }
 
 const getIssueNumberFromCommitPullsList = (
-  commitPullsList: ListCommitPullsResponseData
+  commitPullsList: ListCommitPullsResponseData,
 ): number | null => (commitPullsList.length ? commitPullsList[0].number : null)
 
 interface CreateCommentProxyParams {
@@ -47,18 +51,18 @@ interface CreateCommentProxyParams {
 }
 
 const createCommentProxy = async (
-  params: CreateCommentProxyParams
+  params: CreateCommentProxyParams,
 ): Promise<CreateIssueCommentResponseData | null> => {
-  const {repoToken, owner, repo, issueNumber, body, proxyUrl} = params
+  const { repoToken, owner, repo, issueNumber, body, proxyUrl } = params
 
   const http = new HttpClient('http-client-add-pr-comment')
 
   const response = await http.postJson<CreateIssueCommentResponseData>(
     `${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
-    {body},
+    { body },
     {
       ['temporary-github-token']: repoToken,
-    }
+    },
   )
 
   return response.result
@@ -67,18 +71,18 @@ const createCommentProxy = async (
 const isMessagePresent = (
   message: AddPrCommentInputs['message'],
   comments: IssuesListCommentsResponseData,
-  login?: string
+  login?: string,
 ): boolean => {
   const cleanRe = new RegExp('\\R|\\s', 'g')
   const messageClean = message.replace(cleanRe, '')
 
-  return comments.some(({user, body}) => {
+  return comments.some(({ user, body }) => {
     // If a username is provided we can save on a bit of processing
-    if (login && user.login !== login) {
+    if (login && user?.login !== login) {
       return false
     }
 
-    return body.replace(cleanRe, '') === messageClean
+    return body?.replace(cleanRe, '') === messageClean
   })
 }
 
@@ -102,16 +106,16 @@ const getInputs = (): AddPrCommentInputs => {
 
 const run = async (): Promise<void> => {
   try {
-    const {allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl} = getInputs()
+    const { allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl } = getInputs()
 
     if (!repoToken) {
       throw new Error(
-        'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable'
+        'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable',
       )
     }
 
     const {
-      payload: {pull_request: pullRequest, issue, repository},
+      payload: { pull_request: pullRequest, issue, repository },
       sha: commitSha,
     } = github.context
 
@@ -121,8 +125,15 @@ const run = async (): Promise<void> => {
       return
     }
 
-    const {full_name: repoFullName} = repository
-    const [owner, repo] = repoFullName!.split('/')
+    const { full_name: repoFullName } = repository
+
+    if (!repoFullName) {
+      core.info('repository is missing a full_name property... weird')
+      core.setOutput('comment-created', 'false')
+      return
+    }
+
+    const [owner, repo] = repoFullName.split('/')
 
     let issueNumber
 
@@ -132,13 +143,13 @@ const run = async (): Promise<void> => {
       issueNumber = pullRequest.number
     } else {
       // If this is not a pull request, attempt to find a PR matching the sha
-      const commitPullsList = await listCommitPulls({repoToken, owner, repo, commitSha})
+      const commitPullsList = await listCommitPulls({ repoToken, owner, repo, commitSha })
       issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
     }
 
     if (!issueNumber) {
       core.info(
-        'this action only works on issues and pull_request events or other commits associated with a pull'
+        'this action only works on issues and pull_request events or other commits associated with a pull',
       )
       core.setOutput('comment-created', 'false')
       return
@@ -151,7 +162,7 @@ const run = async (): Promise<void> => {
     if (!allowRepeats) {
       core.debug('repeat comments are disallowed, checking for existing')
 
-      const {data: comments} = await octokit.issues.listComments({
+      const { data: comments } = await octokit.rest.issues.listComments({
         owner,
         repo,
         issue_number: issueNumber,
@@ -174,7 +185,7 @@ const run = async (): Promise<void> => {
           proxyUrl,
         })
       } else {
-        await octokit.issues.createComment({
+        await octokit.rest.issues.createComment({
           owner,
           repo,
           issue_number: issueNumber,
@@ -186,8 +197,10 @@ const run = async (): Promise<void> => {
     } else {
       core.setOutput('comment-created', 'false')
     }
-  } catch (error) {
-    core.setFailed(error.message)
+  } catch (err) {
+    if (err instanceof Error) {
+      core.setFailed(err.message)
+    }
   }
 }
 

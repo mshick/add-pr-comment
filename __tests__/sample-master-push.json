@@ -45,7 +45,10 @@
       "tree_id": "055d2e982d249db10b8dd73fc1745ff97576ecc9",
       "url": "https://github.com/mshick/add-pr-comment/commit/566e30ed2c7a061fa9e14117c14eb385a197e750"
     },
-    "pusher": { "email": "m@shick.us", "name": "mshick" },
+    "pusher": {
+      "email": "m@shick.us",
+      "name": "mshick"
+    },
     "ref": "refs/heads/master",
     "repository": {
       "archive_url": "https://api.github.com/repos/mshick/add-pr-comment/{archive_format}{/ref}",
