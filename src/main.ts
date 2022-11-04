@@ -200,6 +200,8 @@ const run = async (): Promise<void> => {
   } catch (err) {
     if (err instanceof Error) {
       core.setFailed(err.message)
+    } else {
+      core.setFailed('unknown failure')
     }
   }
 }
