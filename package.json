@@ -25,7 +25,7 @@
     "build": "tsc",
     "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
     "lint": "eslint src/**/*.ts",
-    "package": "ncc build --source-map --license licenses.txt",
+    "package": "ncc build --source-map",
     "test": "vitest run",
     "watch": "vitest"
   },
