@@ -20,7 +20,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: mshick/add-pr-comment@v1
+      - uses: mshick/add-pr-comment@v2
         with:
           message: |
             **Hello**
@@ -43,7 +43,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: mshick/add-pr-comment@v1
+      - uses: mshick/add-pr-comment@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -81,7 +81,7 @@ jobs:
   pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: mshick/add-pr-comment@v1
+      - uses: mshick/add-pr-comment@v2
         with:
           message: |
             **Howdie!**
