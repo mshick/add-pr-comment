@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { HttpClient } from '@actions/http-client'
 import { Endpoints, RequestHeaders } from '@octokit/types'
+import fs from 'node:fs/promises'
 
 type ListCommitPullsResponseData =
   Endpoints['GET /repos/{owner}/{repo}/commits/{commit_sha}/pulls']['response']['data']
@@ -88,6 +89,7 @@ const isMessagePresent = (
 interface AddPrCommentInputs {
   allowRepeats: boolean
   message: string
+  messagePath: string
   proxyUrl?: string
   repoToken?: string
   repoTokenUserLogin?: string
@@ -97,6 +99,7 @@ const getInputs = (): AddPrCommentInputs => {
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
     message: core.getInput('message'),
+    messagePath: core.getInput('message-path'),
     proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
     repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
     repoTokenUserLogin: core.getInput('repo-token-user-login'),
@@ -105,12 +108,27 @@ const getInputs = (): AddPrCommentInputs => {
 
 const run = async (): Promise<void> => {
   try {
-    const { allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl } = getInputs()
+    const { allowRepeats, message, messagePath, repoToken, repoTokenUserLogin, proxyUrl } =
+      getInputs()
 
     if (!repoToken) {
       throw new Error(
         'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable',
       )
+    }
+
+    if (message && messagePath) {
+      throw new Error('must specify only one, message or message-path')
+    }
+
+    let messageText = message
+
+    if (messagePath) {
+      messageText = await fs.readFile(messagePath, { encoding: 'utf8' })
+    }
+
+    if (!messageText) {
+      throw new Error('could not get message text, check your message-path')
     }
 
     const {

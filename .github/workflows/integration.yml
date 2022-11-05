@@ -52,7 +52,7 @@ jobs:
         run: |
           npm run build
 
-      - uses: mshick/add-pr-comment@v2
+      - uses: ./
         with:
           message: |
             **Hello**

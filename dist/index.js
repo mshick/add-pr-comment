@@ -1107,10 +1107,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const core = __importStar(__webpack_require__(470));
 const github = __importStar(__webpack_require__(469));
 const http_client_1 = __webpack_require__(425);
+const promises_1 = __importDefault(__webpack_require__(269));
 const listCommitPulls = async (params) => {
     const { repoToken, owner, repo, commitSha } = params;
     const http = new http_client_1.HttpClient('http-client-add-pr-comment');
@@ -1145,6 +1149,7 @@ const getInputs = () => {
     return {
         allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
         message: core.getInput('message'),
+        messagePath: core.getInput('message-path'),
         proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
         repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
         repoTokenUserLogin: core.getInput('repo-token-user-login'),
@@ -1152,9 +1157,19 @@ const getInputs = () => {
 };
 const run = async () => {
     try {
-        const { allowRepeats, message, repoToken, repoTokenUserLogin, proxyUrl } = getInputs();
+        const { allowRepeats, message, messagePath, repoToken, repoTokenUserLogin, proxyUrl } = getInputs();
         if (!repoToken) {
             throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable');
+        }
+        if (message && messagePath) {
+            throw new Error('must specify only one, message or message-path');
+        }
+        let messageText = message;
+        if (messagePath) {
+            messageText = await promises_1.default.readFile(messagePath, { encoding: 'utf8' });
+        }
+        if (!messageText) {
+            throw new Error('could not get message text, check your message-path');
         }
         const { payload: { pull_request: pullRequest, issue, repository }, sha: commitSha, } = github.context;
         if (!repository) {
@@ -1428,6 +1443,14 @@ class Context {
 }
 exports.Context = Context;
 //# sourceMappingURL=context.js.map
+
+/***/ }),
+
+/***/ 269:
+/***/ (function(module) {
+
+module.exports = eval("require")("node:fs/promises");
+
 
 /***/ }),
 
