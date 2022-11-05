@@ -9,6 +9,7 @@
 - Multiple posts of the same comment optionally allowable.
 - Supports emoji 😂😂😂!
 - Supports a proxy for fork-based PRs. [See below](#proxy-for-fork-based-prs).
+- Supports creating a message from a file path
 
 ## Usage
 
@@ -56,7 +57,8 @@ jobs:
 
 | Variable or Argument  | Location | Description                                                                                                                 | Required | Default |
 | --------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------- | -------- | ------- |
-| message               | with     | The message you'd like displayed, supports Markdown and all valid Unicode characters                                        | yes      |         |
+| message               | with     | The message you'd like displayed, supports Markdown and all valid Unicode characters                                        | maybe    |         |
+| message-path          | with     | A path to a message you'd like displayed. Will be read and displayed just like a normal message                             | maybe    |         |
 | repo-token            | with     | A valid GitHub token, either the temporary token GitHub provides or a personal access token                                 | maybe    |         |
 | repo-token-user-login | with     | Define this to save on comment processing time when checking for repeats. GitHub's default token uses `github-actions[bot]` | no       |         |
 | allow-repeats         | with     | A boolean flag to allow identical messages to be posted each time this action is run                                        | no       | false   |
