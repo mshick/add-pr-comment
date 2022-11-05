@@ -38,6 +38,14 @@ jobs:
     permissions:
       issues: write
       pull-requests: read
+      actions: read
+      checks: read
+      contents: read
+      deployments: read
+      id-token: read
+      discussions: read
+      packages: read
+      statuses: read
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
