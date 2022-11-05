@@ -1200,9 +1200,10 @@ const run = async () => {
                 shouldCreateComment = false;
             }
         }
+        let createdCommentData;
         if (shouldCreateComment) {
             if (proxyUrl) {
-                await createCommentProxy({
+                createdCommentData = await createCommentProxy({
                     owner,
                     repo,
                     issueNumber,
@@ -1212,14 +1213,18 @@ const run = async () => {
                 });
             }
             else {
-                await octokit.rest.issues.createComment({
+                const createdComment = await octokit.rest.issues.createComment({
                     owner,
                     repo,
                     issue_number: issueNumber,
                     body: message,
                 });
+                createdCommentData = createdComment.data;
             }
+        }
+        if (createdCommentData) {
             core.setOutput('comment-created', 'true');
+            core.setOutput('comment-id', createdCommentData.id);
         }
         else {
             core.setOutput('comment-created', 'false');
