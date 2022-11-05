@@ -31,6 +31,9 @@ const inputs = {
 let issueNumber = 1
 let getCommitPullsResponse
 let getIssueCommentsResponse
+const postIssueCommentsResponse = {
+  id: 42,
+}
 
 vi.mock('@actions/core')
 
@@ -38,12 +41,7 @@ export const handlers = [
   rest.post(
     `https://api.github.com/repos/${repoFullName}/issues/:issueNumber/comments`,
     (req, res, ctx) => {
-      return res(
-        ctx.status(200),
-        ctx.json({
-          url: 'https://github.com/#example',
-        }),
-      )
+      return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
     },
   ),
   rest.get(
@@ -112,6 +110,7 @@ describe('add-pr-comment action', () => {
 
     await expect(run()).resolves.not.toThrow()
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
   it('creates a comment in an existing PR', async () => {
