@@ -13,6 +13,8 @@
 
 ## Usage
 
+Note that write access needs to be granted for the pull-requests scope.
+
 ```yaml
 on:
   pull_request:
@@ -20,6 +22,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: mshick/add-pr-comment@v2
         with:
@@ -43,6 +47,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: mshick/add-pr-comment@v2
         env:
@@ -82,6 +88,8 @@ on:
 jobs:
   pr:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
       - uses: mshick/add-pr-comment@v2
         with:
