@@ -21,8 +21,17 @@ const multilineMessageWindows = fs
   .readFileSync(path.resolve(__dirname, './message-windows.txt'))
   .toString()
 
-const inputs = {
+type Inputs = {
+  message: string | undefined
+  'message-path': string | undefined
+  'repo-token': string
+  'repo-token-user-login': string
+  'allow-repeats': string
+}
+
+const inputs: Inputs = {
   message: '',
+  'message-path': undefined,
   'repo-token': '',
   'repo-token-user-login': '',
   'allow-repeats': 'false',
@@ -90,20 +99,17 @@ describe('add-pr-comment action', () => {
     server.resetHandlers()
   })
 
-  vi.mocked(core.getInput).mockImplementation((name: string) => {
-    switch (name) {
-      case 'message':
-        return inputs.message
-      case 'repo-token':
-        return inputs['repo-token']
-      case 'allow-repeats':
-        return inputs['allow-repeats']
-      default:
-        return ''
+  vi.mocked(core.getInput).mockImplementation((name: string, options?: core.InputOptions) => {
+    const value = inputs[name] ?? ''
+
+    if (options?.required && value === undefined) {
+      throw new Error(`${name} is required`)
     }
+
+    return value
   })
 
-  it('creates a comment', async () => {
+  it('creates a comment with message text', async () => {
     inputs.message = simpleMessage
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
@@ -113,10 +119,31 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
+  it('creates a comment with a message-path', async () => {
+    inputs.message = undefined
+    inputs['message-path'] = path.resolve(__dirname, './message.txt')
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('fails when both message and message-path are defined', async () => {
+    inputs.message = 'foobar'
+    inputs['message-path'] = path.resolve(__dirname, './message.txt')
+    inputs['repo-token'] = repoToken
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setFailed).toHaveBeenCalledWith('must specify only one, message or message-path')
+  })
+
   it('creates a comment in an existing PR', async () => {
     process.env['GITHUB_TOKEN'] = repoToken
 
     inputs.message = simpleMessage
+    inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
 
@@ -139,6 +166,7 @@ describe('add-pr-comment action', () => {
     process.env['GITHUB_TOKEN'] = repoToken
 
     inputs.message = simpleMessage
+    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'true'
 
     github.context.payload = {
@@ -156,6 +184,7 @@ describe('add-pr-comment action', () => {
 
   it('identifies repeat messages and does not create a comment [user login provided]', async () => {
     inputs.message = simpleMessage
+    inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
     inputs['repo-token-user-login'] = userLogin
     inputs['allow-repeats'] = 'false'
@@ -178,6 +207,7 @@ describe('add-pr-comment action', () => {
 
   it('matches multiline messages with windows line feeds against api responses with unix linefeeds [no user login provided]', async () => {
     inputs.message = multilineMessageWindows
+    inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
 
