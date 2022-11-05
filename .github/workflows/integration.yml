@@ -42,7 +42,6 @@ jobs:
       checks: read
       contents: read
       deployments: read
-      id-token: read
       discussions: read
       packages: read
       statuses: read
