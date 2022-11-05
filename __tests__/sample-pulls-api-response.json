@@ -305,7 +305,9 @@
         "self": {
           "href": "https://api.github.com/repos/mshick/add-pr-comment/pulls/6"
         },
-        "html": { "href": "https://github.com/mshick/add-pr-comment/pull/6" },
+        "html": {
+          "href": "https://github.com/mshick/add-pr-comment/pull/6"
+        },
         "issue": {
           "href": "https://api.github.com/repos/mshick/add-pr-comment/issues/6"
         },

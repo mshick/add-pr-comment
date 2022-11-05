@@ -1,18 +1,7 @@
 {
   "name": "@mshick/add-pr-comment",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
-  "main": "lib/main.js",
-  "scripts": {
-    "build": "tsc && ncc build lib/main.js",
-    "lint": "eslint . --ext .ts",
-    "test": "jest",
-    "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mshick/add-pr-comment.git"
-  },
   "keywords": [
     "GitHub",
     "Actions",
@@ -21,32 +10,122 @@
     "comments",
     "pr"
   ],
-  "author": "Michael Shick <m@shick.us>",
-  "license": "MIT",
+  "homepage": "https://github.com/mshick/add-pr-comment#readme",
   "bugs": {
     "url": "https://github.com/mshick/add-pr-comment/issues"
   },
-  "homepage": "https://github.com/mshick/add-pr-comment#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mshick/add-pr-comment.git"
+  },
+  "license": "MIT",
+  "author": "Michael Shick <m@shick.us>",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
+    "lint": "eslint src/**/*.ts",
+    "package": "ncc build --source-map",
+    "test": "vitest run",
+    "watch": "vitest"
+  },
+  "prettier": {
+    "bracketSpacing": true,
+    "jsxSingleQuote": true,
+    "printWidth": 100,
+    "semi": false,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "all"
+  },
+  "eslintConfig": {
+    "env": {
+      "node": true
+    },
+    "settings": {
+      "import/resolver": {
+        "typescript": {}
+      }
+    },
+    "extends": [
+      "eslint:recommended",
+      "plugin:prettier/recommended"
+    ],
+    "rules": {
+      "capitalized-comments": "off",
+      "no-console": "error",
+      "no-unreachable": "error"
+    },
+    "overrides": [
+      {
+        "files": [
+          "**/*.ts"
+        ],
+        "parser": "@typescript-eslint/parser",
+        "parserOptions": {
+          "ecmaVersion": "latest",
+          "sourceType": "module"
+        },
+        "extends": [
+          "plugin:@typescript-eslint/recommended"
+        ],
+        "rules": {
+          "@typescript-eslint/no-explicit-any": "off"
+        }
+      },
+      {
+        "files": [
+          "*.json"
+        ],
+        "plugins": [
+          "json-format"
+        ]
+      },
+      {
+        "files": [
+          "*.mdx",
+          "*.md"
+        ],
+        "settings": {
+          "mdx/code-blocks": false,
+          "mdx/language-mapper": {}
+        },
+        "extends": "plugin:mdx/recommended",
+        "rules": {
+          "indent": "off"
+        }
+      }
+    ]
+  },
+  "eslintIgnore": [
+    "tsconfig.json",
+    "dist"
+  ],
   "dependencies": {
-    "@actions/core": "^1.2.4",
-    "@actions/github": "^4.0.0",
-    "@actions/http-client": "^1.0.8"
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1",
+    "@actions/http-client": "^2.0.1"
   },
   "devDependencies": {
-    "@octokit/types": "^5.4.0",
-    "@types/jest": "^26.0.9",
-    "@types/node": "^12.12.42",
-    "@typescript-eslint/eslint-plugin": "^3.9.0",
-    "@typescript-eslint/parser": "^3.9.0",
+    "@octokit/types": "^8.0.0",
+    "@types/node": "^18.11.9",
+    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@typescript-eslint/parser": "^5.42.0",
     "@zeit/ncc": "^0.22.3",
-    "eslint": "^7.6.0",
-    "eslint-config-prettier": "^6.11.0",
-    "eslint-plugin-prettier": "^3.1.4",
-    "jest": "^26.3.0",
-    "jest-circus": "^26.3.0",
-    "nock": "^13.0.4",
-    "prettier": "^2.0.5",
-    "ts-jest": "^26.2.0",
-    "typescript": "^3.9.7"
+    "eslint": "^8.26.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-import-resolver-typescript": "^3.5.2",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-json-format": "^2.0.1",
+    "eslint-plugin-mdx": "^2.0.5",
+    "eslint-plugin-prettier": "^4.2.1",
+    "msw": "^0.47.4",
+    "nock": "^13.2.9",
+    "prettier": "^2.7.1",
+    "typescript": "^4.8.4",
+    "vitest": "^0.24.5"
+  },
+  "engines": {
+    "node": "^14.15.0 || ^16.13.0 || ^18.0.0"
   }
 }

@@ -1,9 +1,11 @@
-import * as fs from 'fs'
-import * as path from 'path'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {WebhookPayload} from '@actions/github/lib/interfaces'
-import nock from 'nock'
+import { WebhookPayload } from '@actions/github/lib/interfaces'
+import { rest } from 'msw'
+import { setupServer } from 'msw/node'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
 
@@ -12,87 +14,136 @@ const repoToken = '12345'
 const userLogin = 'github-actions[bot]'
 const commitSha = 'abc123'
 const simpleMessage = 'hello world'
-const multilineMessage = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
-const multilineMessageWindows = fs.readFileSync(path.resolve(__dirname, './message-windows.txt')).toString()
+const multilineMessage = fs
+  .readFileSync(path.resolve(__dirname, './message-windows.txt'))
+  .toString()
+const multilineMessageWindows = fs
+  .readFileSync(path.resolve(__dirname, './message-windows.txt'))
+  .toString()
 
-let issueNumber = 1
+type Inputs = {
+  message: string | undefined
+  'message-path': string | undefined
+  'repo-token': string
+  'repo-token-user-login': string
+  'allow-repeats': string
+}
 
-const inputs = {
+const inputs: Inputs = {
   message: '',
+  'message-path': undefined,
   'repo-token': '',
   'repo-token-user-login': '',
   'allow-repeats': 'false',
 }
 
-beforeEach(() => {
-  issueNumber = 1
-  jest.resetModules()
-  jest.spyOn(core, 'getInput').mockImplementation((name: string): string => {
-    switch (name) {
-      case 'message':
-        return inputs.message
-      case 'repo-token':
-        return inputs['repo-token']
-      case 'allow-repeats':
-        return inputs['allow-repeats']
-      default:
-        return ''
-    }
-  })
+let issueNumber = 1
+let getCommitPullsResponse
+let getIssueCommentsResponse
+const postIssueCommentsResponse = {
+  id: 42,
+}
 
-  github.context.sha = commitSha
+vi.mock('@actions/core')
 
-  // https://developer.github.com/webhooks/event-payloads/#issues
-  github.context.payload = {
-    pull_request: {
-      number: issueNumber,
+export const handlers = [
+  rest.post(
+    `https://api.github.com/repos/${repoFullName}/issues/:issueNumber/comments`,
+    (req, res, ctx) => {
+      return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
     },
-    repository: {
-      full_name: repoFullName,
-      name: 'bar',
-      owner: {
-        login: 'bar',
-      },
+  ),
+  rest.get(
+    `https://api.github.com/repos/${repoFullName}/issues/:issueNumber/comments`,
+    (req, res, ctx) => {
+      return res(ctx.status(200), ctx.json(getIssueCommentsResponse))
     },
-  } as WebhookPayload
-})
+  ),
+  rest.get(
+    `https://api.github.com/repos/${repoFullName}/commits/:commitSha/pulls`,
+    (req, res, ctx) => {
+      return res(ctx.status(200), ctx.json(getCommitPullsResponse))
+    },
+  ),
+]
 
-afterEach(() => {
-  jest.restoreAllMocks()
-  expect(nock.pendingMocks()).toEqual([])
-  nock.isDone()
-  nock.cleanAll()
-})
+const server = setupServer(...handlers)
 
 describe('add-pr-comment action', () => {
-  it('creates a comment', async () => {
+  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+  afterAll(() => server.close())
+
+  beforeEach(() => {
+    issueNumber = 1
+    vi.resetModules()
+
+    github.context.sha = commitSha
+
+    // https://developer.github.com/webhooks/event-payloads/#issues
+    github.context.payload = {
+      pull_request: {
+        number: issueNumber,
+      },
+      repository: {
+        full_name: repoFullName,
+        name: 'bar',
+        owner: {
+          login: 'bar',
+        },
+      },
+    } as WebhookPayload
+  })
+
+  afterEach(() => {
+    vi.clearAllMocks()
+    server.resetHandlers()
+  })
+
+  vi.mocked(core.getInput).mockImplementation((name: string, options?: core.InputOptions) => {
+    const value = inputs[name] ?? ''
+
+    if (options?.required && value === undefined) {
+      throw new Error(`${name} is required`)
+    }
+
+    return value
+  })
+
+  it('creates a comment with message text', async () => {
     inputs.message = simpleMessage
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
 
-    const originalSetOutput = core.setOutput
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
 
-    jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
-      if (key === 'comment-created') {
-        expect(value).toBe('true')
-      }
-
-      return originalSetOutput(key, value)
-    })
-
-    nock('https://api.github.com')
-      .post(`/repos/${repoFullName}/issues/${issueNumber}/comments`, ({body}) => body === simpleMessage)
-      .reply(200, {
-        url: 'https://github.com/#example',
-      })
+  it('creates a comment with a message-path', async () => {
+    inputs.message = undefined
+    inputs['message-path'] = path.resolve(__dirname, './message.txt')
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('fails when both message and message-path are defined', async () => {
+    inputs.message = 'foobar'
+    inputs['message-path'] = path.resolve(__dirname, './message.txt')
+    inputs['repo-token'] = repoToken
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setFailed).toHaveBeenCalledWith('must specify only one, message or message-path')
   })
 
   it('creates a comment in an existing PR', async () => {
     process.env['GITHUB_TOKEN'] = repoToken
 
     inputs.message = simpleMessage
+    inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
 
@@ -103,34 +154,19 @@ describe('add-pr-comment action', () => {
       },
     } as WebhookPayload
 
-    const originalSetOutput = core.setOutput
-
-    jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
-      if (key === 'comment-created') {
-        expect(value).toBe('true')
-      }
-
-      return originalSetOutput(key, value)
-    })
-
     issueNumber = apiResponse.result[0].number
-    nock('https://api.github.com')
-      .get(`/repos/${repoFullName}/commits/${commitSha}/pulls`)
-      .reply(200, apiResponse.result)
 
-    nock('https://api.github.com')
-      .post(`/repos/${repoFullName}/issues/${issueNumber}/comments`, ({body}) => body === simpleMessage)
-      .reply(200, {
-        url: 'https://github.com/#example',
-      })
+    getCommitPullsResponse = apiResponse.result
 
     await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 
   it('safely exits when no issue can be found [using GITHUB_TOKEN in env]', async () => {
     process.env['GITHUB_TOKEN'] = repoToken
 
     inputs.message = simpleMessage
+    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'true'
 
     github.context.payload = {
@@ -140,36 +176,18 @@ describe('add-pr-comment action', () => {
       },
     } as WebhookPayload
 
-    const originalSetOutput = core.setOutput
-
-    jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
-      if (key === 'comment-created') {
-        expect(value).toBe('false')
-      }
-
-      return originalSetOutput(key, value)
-    })
-
-    nock('https://api.github.com').get(`/repos/${repoFullName}/commits/${commitSha}/pulls`).reply(200, [])
+    getCommitPullsResponse = []
 
     await run()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
   })
 
   it('identifies repeat messages and does not create a comment [user login provided]', async () => {
     inputs.message = simpleMessage
+    inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
     inputs['repo-token-user-login'] = userLogin
     inputs['allow-repeats'] = 'false'
-
-    const originalSetOutput = core.setOutput
-
-    jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
-      if (key === 'comment-created') {
-        expect(value).toBe('false')
-      }
-
-      return originalSetOutput(key, value)
-    })
 
     const replyBody = [
       {
@@ -180,25 +198,18 @@ describe('add-pr-comment action', () => {
       },
     ]
 
-    nock('https://api.github.com').get(`/repos/${repoFullName}/issues/1/comments`).reply(200, replyBody)
+    getIssueCommentsResponse = replyBody
 
     await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
   })
 
   it('matches multiline messages with windows line feeds against api responses with unix linefeeds [no user login provided]', async () => {
     inputs.message = multilineMessageWindows
+    inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
-
-    const originalSetOutput = core.setOutput
-
-    jest.spyOn(core, 'setOutput').mockImplementation((key: string, value: string): void => {
-      if (key === 'comment-created') {
-        expect(value).toBe('false')
-      }
-
-      return originalSetOutput(key, value)
-    })
 
     const replyBody = [
       {
@@ -209,8 +220,9 @@ describe('add-pr-comment action', () => {
       },
     ]
 
-    nock('https://api.github.com').get(`/repos/${repoFullName}/issues/1/comments`).reply(200, replyBody)
+    getIssueCommentsResponse = replyBody
 
     await run()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
   })
 })
