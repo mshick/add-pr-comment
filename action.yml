@@ -17,6 +17,13 @@ inputs:
   proxy-url:
     description: "Proxy URL for comment creation"
     required: false
+outputs:
+  comment-created:
+    description: "Whether a comment was created."
+    required: true
+  comment-id:
+    description: "If a comment was created, the id of it."
+    required: true    
 branding:
   icon: message-circle
   color: purple

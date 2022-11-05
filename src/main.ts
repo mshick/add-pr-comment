@@ -9,7 +9,6 @@ type CreateIssueCommentResponseData =
   Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
 type IssuesListCommentsResponseData =
   Endpoints['GET /repos/{owner}/{repo}/issues/comments']['response']['data']
-
 interface ListCommitPullsParams {
   repoToken: string
   owner: string
@@ -174,9 +173,11 @@ const run = async (): Promise<void> => {
       }
     }
 
+    let createdCommentData: CreateIssueCommentResponseData | null | undefined
+
     if (shouldCreateComment) {
       if (proxyUrl) {
-        await createCommentProxy({
+        createdCommentData = await createCommentProxy({
           owner,
           repo,
           issueNumber,
@@ -185,15 +186,19 @@ const run = async (): Promise<void> => {
           proxyUrl,
         })
       } else {
-        await octokit.rest.issues.createComment({
+        const createdComment = await octokit.rest.issues.createComment({
           owner,
           repo,
           issue_number: issueNumber,
           body: message,
         })
+        createdCommentData = createdComment.data
       }
+    }
 
+    if (createdCommentData) {
       core.setOutput('comment-created', 'true')
+      core.setOutput('comment-id', createdCommentData.id)
     } else {
       core.setOutput('comment-created', 'false')
     }
