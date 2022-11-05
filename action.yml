@@ -4,7 +4,7 @@ inputs:
   message:
     description: "The message to print."
     required: false
-  message:
+  message-path:
     description: "A path to a file to print as a message instead of a string."
     required: false    
   repo-token:
