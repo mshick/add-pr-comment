@@ -10,12 +10,6 @@ type CreateIssueCommentResponseData =
   Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
 type IssuesListCommentsResponseData =
   Endpoints['GET /repos/{owner}/{repo}/issues/comments']['response']['data']
-interface ListCommitPullsParams {
-  repoToken: string
-  owner: string
-  repo: string
-  commitSha: string
-}
 
 const getIssueNumberFromCommitPullsList = (
   commitPullsList: ListCommitPullsResponseData,
