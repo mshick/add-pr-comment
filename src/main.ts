@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { HttpClient } from '@actions/http-client'
-import { Endpoints, RequestHeaders } from '@octokit/types'
+import { Endpoints } from '@octokit/types'
 import fs from 'node:fs/promises'
 
 type ListCommitPullsResponseData =
@@ -10,32 +10,6 @@ type CreateIssueCommentResponseData =
   Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
 type IssuesListCommentsResponseData =
   Endpoints['GET /repos/{owner}/{repo}/issues/comments']['response']['data']
-interface ListCommitPullsParams {
-  repoToken: string
-  owner: string
-  repo: string
-  commitSha: string
-}
-
-const listCommitPulls = async (
-  params: ListCommitPullsParams,
-): Promise<ListCommitPullsResponseData | null> => {
-  const { repoToken, owner, repo, commitSha } = params
-
-  const http = new HttpClient('http-client-add-pr-comment')
-
-  const additionalHeaders: RequestHeaders = {
-    accept: 'application/vnd.github.groot-preview+json',
-    authorization: `token ${repoToken}`,
-  }
-
-  const body = await http.getJson<ListCommitPullsResponseData>(
-    `https://api.github.com/repos/${owner}/${repo}/commits/${commitSha}/pulls`,
-    additionalHeaders,
-  )
-
-  return body.result
-}
 
 const getIssueNumberFromCommitPullsList = (
   commitPullsList: ListCommitPullsResponseData,
@@ -151,6 +125,7 @@ const run = async (): Promise<void> => {
     }
 
     const [owner, repo] = repoFullName.split('/')
+    const octokit = github.getOctokit(repoToken)
 
     let issueNumber
 
@@ -160,8 +135,12 @@ const run = async (): Promise<void> => {
       issueNumber = pullRequest.number
     } else {
       // If this is not a pull request, attempt to find a PR matching the sha
-      const commitPullsList = await listCommitPulls({ repoToken, owner, repo, commitSha })
-      issueNumber = commitPullsList && getIssueNumberFromCommitPullsList(commitPullsList)
+      const commitPullsList = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+        owner,
+        repo,
+        commit_sha: commitSha,
+      })
+      issueNumber = commitPullsList.data && getIssueNumberFromCommitPullsList(commitPullsList.data)
     }
 
     if (!issueNumber) {
@@ -171,8 +150,6 @@ const run = async (): Promise<void> => {
       core.setOutput('comment-created', 'false')
       return
     }
-
-    const octokit = github.getOctokit(repoToken)
 
     let shouldCreateComment = true
 
