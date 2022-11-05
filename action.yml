@@ -3,10 +3,7 @@ description: "Add a comment to a pull request"
 inputs:
   message:
     description: "The message to print."
-    required: false
-  message-path:
-    description: "A path to a file containing the message to print. For much larger messages."
-    required: false
+    required: true
   repo-token:
     description: "A GitHub token for API access."
     required: false
@@ -23,8 +20,10 @@ inputs:
 outputs:
   comment-created:
     description: "Whether a comment was created."
+    required: true
   comment-id:
     description: "If a comment was created, the id of it."
+    required: true    
 branding:
   icon: message-circle
   color: purple
