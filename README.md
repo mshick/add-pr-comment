@@ -2,6 +2,10 @@
 
 > A GitHub Action which adds a comment to a pull request's issue.
 
+Note, I'm publishing v2 as v1 without any new features due to all the
+deprecations folks are experiencing with v1. v2 will make some changes to the
+interface and add new features.
+
 ## Features
 
 - Fast, runs in the GitHub Actions node.js runtime; no Docker pull needed.
@@ -20,7 +24,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v1
         with:
           message: |
             **Hello**
@@ -81,7 +85,7 @@ jobs:
   pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v1
         with:
           message: |
             **Howdie!**
