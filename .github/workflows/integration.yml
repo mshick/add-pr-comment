@@ -35,6 +35,8 @@ jobs:
   dogfood:
     name: Dogfood
     runs-on: ubuntu-latest
+    permissions:
+       pull-requests: write    
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
