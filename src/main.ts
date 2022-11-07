@@ -54,19 +54,6 @@ function getExistingCommentId(
   return found?.id
 }
 
-function getStatusBody(status: string) {
-  switch (status) {
-    case 'success':
-      return '## ✅ Job Succeded'
-    case 'failure':
-      return '## ❗️ Job Failed'
-    case 'cancelled':
-      return '## ✖️ Job Cancelled'
-    default:
-      return ''
-  }
-}
-
 interface AddPrCommentInputs {
   allowRepeats: boolean
   message?: string

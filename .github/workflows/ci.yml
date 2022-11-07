@@ -55,7 +55,7 @@ jobs:
 
       - name: Build action
         run: |
-          npm run build
+          npm run release
 
       # - if: always()
       #   name: Dump context
