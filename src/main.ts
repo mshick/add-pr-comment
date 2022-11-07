@@ -126,6 +126,9 @@ const run = async (): Promise<void> => {
     const [owner, repo] = repoFullName.split('/')
     const octokit = github.getOctokit(repoToken)
 
+    // eslint-disable-next-line no-console
+    console.log('before----------')
+
     const job = await octokit.rest.actions.getJobForWorkflowRun({
       job_id: Number(github.context.job),
       owner,
@@ -133,11 +136,11 @@ const run = async (): Promise<void> => {
     })
 
     // eslint-disable-next-line no-console
-    core.info('------------------------------------------')
+    console.log('------------------------------------------')
     // eslint-disable-next-line no-console
-    core.info(JSON.stringify(job))
+    console.log(job)
     // eslint-disable-next-line no-console
-    core.info('------------------------------------------')
+    console.log('------------------------------------------')
 
     let issueNumber
 
