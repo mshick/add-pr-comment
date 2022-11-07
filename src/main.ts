@@ -59,20 +59,33 @@ interface AddPrCommentInputs {
   message?: string
   messagePath?: string
   proxyUrl?: string
-  repoToken?: string
+  repoToken: string
   messageId: string
 }
 
 const getInputs = (): AddPrCommentInputs => {
   const messageId = core.getInput('message-id')
+  const message = core.getInput('message')
+  const messagePath = core.getInput('message-path')
+  const repoToken = core.getInput('repo-token') || process.env['GITHUB_TOKEN']
+
+  if (!repoToken) {
+    throw new Error(
+      'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable',
+    )
+  }
+
+  if (message && messagePath) {
+    throw new Error('must specify only one, message or message-path')
+  }
 
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
-    message: core.getInput('message'),
+    message,
     messageId: messageId === '' ? 'add-pr-comment' : messageId,
-    messagePath: core.getInput('message-path'),
+    messagePath,
     proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
-    repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
+    repoToken,
   }
 }
 
@@ -80,16 +93,6 @@ const run = async (): Promise<void> => {
   try {
     const { allowRepeats, message, messageId, messagePath, repoToken, proxyUrl } = getInputs()
     const messageIdComment = `<!-- ${messageId} -->`
-
-    if (!repoToken) {
-      throw new Error(
-        'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable',
-      )
-    }
-
-    if (message && messagePath) {
-      throw new Error('must specify only one, message or message-path')
-    }
 
     let messageText = message
 
@@ -122,6 +125,19 @@ const run = async (): Promise<void> => {
 
     const [owner, repo] = repoFullName.split('/')
     const octokit = github.getOctokit(repoToken)
+
+    const job = await octokit.rest.actions.getJobForWorkflowRun({
+      job_id: Number(github.context.job),
+      owner,
+      repo,
+    })
+
+    // eslint-disable-next-line no-console
+    console.log('------------------------------------------')
+    // eslint-disable-next-line no-console
+    console.log(job)
+    // eslint-disable-next-line no-console
+    console.log('------------------------------------------')
 
     let issueNumber
 
