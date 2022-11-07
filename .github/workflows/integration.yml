@@ -57,7 +57,7 @@ jobs:
       - uses: ./
         with:
           message: |
-            **Hello**
+            **Hello ${{ env.GITHUB_RUN_NUMBER }}**
             🌏
-            !
+            ! 
           repo-token: ${{ secrets.GITHUB_TOKEN }}
