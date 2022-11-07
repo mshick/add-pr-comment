@@ -99,9 +99,9 @@ const run = async () => {
         const [owner, repo] = repoFullName.split('/');
         const octokit = github.getOctokit(repoToken);
         // eslint-disable-next-line no-console
-        console.log('before----------');
+        console.log('before----------', process.env['GITHUB_JOB'], owner, repo);
         const job = await octokit.rest.actions.getJobForWorkflowRun({
-            job_id: Number(github.context.job),
+            job_id: Number(process.env['GITHUB_JOB']),
             owner,
             repo,
         });
