@@ -17,6 +17,7 @@ const getIssueNumberFromCommitPullsList = (
 
 interface CreateCommentProxyParams {
   repoToken: string
+  commentId?: number
   body: string
   owner: string
   repo: string
@@ -27,13 +28,13 @@ interface CreateCommentProxyParams {
 const createCommentProxy = async (
   params: CreateCommentProxyParams,
 ): Promise<CreateIssueCommentResponseData | null> => {
-  const { repoToken, owner, repo, issueNumber, body, proxyUrl } = params
+  const { repoToken, owner, repo, issueNumber, body, commentId, proxyUrl } = params
 
   const http = new HttpClient('http-client-add-pr-comment')
 
   const response = await http.postJson<CreateIssueCommentResponseData>(
     `${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
-    { body },
+    { comment_id: commentId, body },
     {
       ['temporary-github-token']: repoToken,
     },
@@ -42,48 +43,43 @@ const createCommentProxy = async (
   return response.result
 }
 
-const isMessagePresent = (
-  message: AddPrCommentInputs['message'],
+const getExistingCommentId = (
   comments: IssuesListCommentsResponseData,
-  login?: string,
-): boolean => {
-  const cleanRe = new RegExp('\\R|\\s', 'g')
-  const messageClean = message.replace(cleanRe, '')
-
-  return comments.some(({ user, body }) => {
-    // If a username is provided we can save on a bit of processing
-    if (login && user?.login !== login) {
-      return false
-    }
-
-    return body?.replace(cleanRe, '') === messageClean
+  messageId: string,
+): number | undefined => {
+  const found = comments.find(({ body }) => {
+    return (body?.search(messageId) ?? -1) > -1
   })
+
+  return found?.id
 }
 
 interface AddPrCommentInputs {
   allowRepeats: boolean
-  message: string
-  messagePath: string
+  message?: string
+  messagePath?: string
   proxyUrl?: string
   repoToken?: string
-  repoTokenUserLogin?: string
+  messageId: string
 }
 
 const getInputs = (): AddPrCommentInputs => {
+  const messageId = core.getInput('message-id')
+
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
     message: core.getInput('message'),
+    messageId: messageId === '' ? 'add-pr-comment' : messageId,
     messagePath: core.getInput('message-path'),
     proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
     repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
-    repoTokenUserLogin: core.getInput('repo-token-user-login'),
   }
 }
 
 const run = async (): Promise<void> => {
   try {
-    const { allowRepeats, message, messagePath, repoToken, repoTokenUserLogin, proxyUrl } =
-      getInputs()
+    const { allowRepeats, message, messageId, messagePath, repoToken, proxyUrl } = getInputs()
+    const messageIdComment = `<!-- ${messageId} -->`
 
     if (!repoToken) {
       throw new Error(
@@ -151,7 +147,7 @@ const run = async (): Promise<void> => {
       return
     }
 
-    let shouldCreateComment = true
+    let existingCommentId
 
     if (!allowRepeats) {
       core.debug('repeat comments are disallowed, checking for existing')
@@ -162,40 +158,52 @@ const run = async (): Promise<void> => {
         issue_number: issueNumber,
       })
 
-      if (isMessagePresent(message, comments, repoTokenUserLogin)) {
-        core.info('the issue already contains an identical message')
-        shouldCreateComment = false
+      existingCommentId = getExistingCommentId(comments, messageIdComment)
+
+      if (existingCommentId) {
+        core.debug(`existing comment found with id: ${existingCommentId}`)
       }
     }
 
-    let createdCommentData: CreateIssueCommentResponseData | null | undefined
+    let comment: CreateIssueCommentResponseData | null | undefined
+    const body = `${messageIdComment}\n\n${messageText}`
 
-    if (shouldCreateComment) {
-      if (proxyUrl) {
-        createdCommentData = await createCommentProxy({
-          owner,
-          repo,
-          issueNumber,
-          body: message,
-          repoToken,
-          proxyUrl,
-        })
-      } else {
-        const createdComment = await octokit.rest.issues.createComment({
-          owner,
-          repo,
-          issue_number: issueNumber,
-          body: message,
-        })
-        createdCommentData = createdComment.data
-      }
-    }
-
-    if (createdCommentData) {
+    if (proxyUrl) {
+      comment = await createCommentProxy({
+        commentId: existingCommentId,
+        owner,
+        repo,
+        issueNumber,
+        body,
+        repoToken,
+        proxyUrl,
+      })
+      core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true')
+    } else if (existingCommentId) {
+      const updatedComment = await octokit.rest.issues.updateComment({
+        comment_id: existingCommentId,
+        owner,
+        repo,
+        body,
+      })
+      comment = updatedComment.data
+      core.setOutput('comment-updated', 'true')
+    } else {
+      const createdComment = await octokit.rest.issues.createComment({
+        issue_number: issueNumber,
+        owner,
+        repo,
+        body,
+      })
+      comment = createdComment.data
       core.setOutput('comment-created', 'true')
-      core.setOutput('comment-id', createdCommentData.id)
+    }
+
+    if (comment) {
+      core.setOutput('comment-id', comment.id)
     } else {
       core.setOutput('comment-created', 'false')
+      core.setOutput('comment-updated', 'false')
     }
   } catch (err) {
     if (err instanceof Error) {

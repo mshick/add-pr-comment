@@ -3,7 +3,6 @@ import * as github from '@actions/github'
 import { WebhookPayload } from '@actions/github/lib/interfaces'
 import { rest } from 'msw'
 import { setupServer } from 'msw/node'
-import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import run from '../src/main'
@@ -11,21 +10,14 @@ import apiResponse from './sample-pulls-api-response.json'
 
 const repoFullName = 'foo/bar'
 const repoToken = '12345'
-const userLogin = 'github-actions[bot]'
 const commitSha = 'abc123'
 const simpleMessage = 'hello world'
-const multilineMessage = fs
-  .readFileSync(path.resolve(__dirname, './message-windows.txt'))
-  .toString()
-const multilineMessageWindows = fs
-  .readFileSync(path.resolve(__dirname, './message-windows.txt'))
-  .toString()
 
 type Inputs = {
   message: string | undefined
   'message-path': string | undefined
   'repo-token': string
-  'repo-token-user-login': string
+  'message-id': string
   'allow-repeats': string
 }
 
@@ -33,14 +25,14 @@ const inputs: Inputs = {
   message: '',
   'message-path': undefined,
   'repo-token': '',
-  'repo-token-user-login': '',
+  'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
 }
 
 let issueNumber = 1
 let getCommitPullsResponse
 let getIssueCommentsResponse
-const postIssueCommentsResponse = {
+let postIssueCommentsResponse = {
   id: 42,
 }
 
@@ -49,6 +41,12 @@ vi.mock('@actions/core')
 export const handlers = [
   rest.post(
     `https://api.github.com/repos/${repoFullName}/issues/:issueNumber/comments`,
+    (req, res, ctx) => {
+      return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
+    },
+  ),
+  rest.patch(
+    `https://api.github.com/repos/${repoFullName}/issues/comments/:commentId`,
     (req, res, ctx) => {
       return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
     },
@@ -182,19 +180,16 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
   })
 
-  it('identifies repeat messages and does not create a comment [user login provided]', async () => {
+  it('creates a message when the message id does not exist', async () => {
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
-    inputs['repo-token-user-login'] = userLogin
     inputs['allow-repeats'] = 'false'
+    inputs['message-id'] = 'custom-id'
 
     const replyBody = [
       {
-        body: simpleMessage,
-        user: {
-          login: userLogin,
-        },
+        body: `<!-- some-other-id -->\n\n${simpleMessage}`,
       },
     ]
 
@@ -202,27 +197,32 @@ describe('add-pr-comment action', () => {
 
     await run()
 
-    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 
-  it('matches multiline messages with windows line feeds against api responses with unix linefeeds [no user login provided]', async () => {
-    inputs.message = multilineMessageWindows
+  it('identifies an existing message by id and updates it', async () => {
+    inputs.message = simpleMessage
     inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
 
+    const commentId = 123
+
     const replyBody = [
       {
-        body: multilineMessage,
-        user: {
-          login: userLogin,
-        },
+        id: commentId,
+        body: `<!-- ${inputs['message-id']} -->\n\n${simpleMessage}`,
       },
     ]
 
     getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
 
     await run()
-    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
   })
 })
