@@ -1,52 +1,54 @@
-name: Integration
+name: ci
 
 on:
   pull_request:
 
 jobs:
   test:
-    name: Unit Tests
+    name: unit tests
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup node.js
+      - name: setup node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version-file: '.node-version'
+          cache: 'npm'
 
-      - name: Install dependencies
+      - name: install dependencies
         run: |
           npm ci
 
-      - name: Lint code
+      - name: lint code
         run: |
           npm run lint
 
-      - name: Build action
+      - name: build action
         run: |
           npm run build
 
-      - name: Run tests
+      - name: run tests
         run: |
           npm test
 
   dogfood:
-    name: Dogfood
+    name: dogfood
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
     steps:
-      - name: Checkout repo
+      - name: checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup node.js
+      - name: setup node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 16
+          node-version-file: '.node-version'
+          cache: 'npm'
 
-      - name: Install dependencies
+      - name: install dependencies
         run: |
           npm ci
 
