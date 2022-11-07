@@ -101,16 +101,16 @@ const run = async () => {
         // eslint-disable-next-line no-console
         console.log(JSON.stringify(process.env));
         // eslint-disable-next-line no-console
-        console.log('before----------', process.env['GITHUB_JOB'], owner, repo);
-        const job = await octokit.rest.actions.getJobForWorkflowRun({
-            job_id: Number(process.env['GITHUB_JOB']),
+        console.log('before----------', process.env['GITHUB_RUN_ID'], owner, repo);
+        const runObj = await octokit.rest.actions.getWorkflowRun({
+            run_id: Number(process.env['GITHUB_RUN_ID']),
             owner,
             repo,
         });
         // eslint-disable-next-line no-console
         console.log('------------------------------------------');
         // eslint-disable-next-line no-console
-        console.log(job);
+        console.log(runObj);
         // eslint-disable-next-line no-console
         console.log('------------------------------------------');
         let issueNumber;
