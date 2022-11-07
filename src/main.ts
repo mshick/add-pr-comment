@@ -25,9 +25,9 @@ interface CreateCommentProxyParams {
   proxyUrl: string
 }
 
-const createCommentProxy = async (
+async function createCommentProxy(
   params: CreateCommentProxyParams,
-): Promise<CreateIssueCommentResponseData | null> => {
+): Promise<CreateIssueCommentResponseData | null> {
   const { repoToken, owner, repo, issueNumber, body, commentId, proxyUrl } = params
 
   const http = new HttpClient('http-client-add-pr-comment')
@@ -43,10 +43,10 @@ const createCommentProxy = async (
   return response.result
 }
 
-const getExistingCommentId = (
+function getExistingCommentId(
   comments: IssuesListCommentsResponseData,
   messageId: string,
-): number | undefined => {
+): number | undefined {
   const found = comments.find(({ body }) => {
     return (body?.search(messageId) ?? -1) > -1
   })
@@ -54,20 +54,38 @@ const getExistingCommentId = (
   return found?.id
 }
 
+function getStatusBody(status: string) {
+  switch (status) {
+    case 'success':
+      return '## ✅ Job Succeded'
+    case 'failure':
+      return '## ❗️ Job Failed'
+    case 'cancelled':
+      return '## ✖️ Job Cancelled'
+    default:
+      return ''
+  }
+}
+
 interface AddPrCommentInputs {
   allowRepeats: boolean
   message?: string
+  messageId: string
   messagePath?: string
+  messageSuccess?: string
+  messageFailure?: string
+  messageCancelled?: string
   proxyUrl?: string
   repoToken: string
-  messageId: string
+  status?: string
 }
 
-const getInputs = (): AddPrCommentInputs => {
+async function getInputs(): Promise<AddPrCommentInputs> {
   const messageId = core.getInput('message-id')
-  const message = core.getInput('message')
+  const messageInput = core.getInput('message')
   const messagePath = core.getInput('message-path')
   const repoToken = core.getInput('repo-token') || process.env['GITHUB_TOKEN']
+  const status = core.getInput('status')
 
   if (!repoToken) {
     throw new Error(
@@ -75,34 +93,43 @@ const getInputs = (): AddPrCommentInputs => {
     )
   }
 
-  if (message && messagePath) {
+  if (messageInput && messagePath) {
     throw new Error('must specify only one, message or message-path')
+  }
+
+  let message
+
+  if (messagePath) {
+    message = await fs.readFile(messagePath, { encoding: 'utf8' })
+  } else {
+    message = messageInput
+  }
+
+  if (status) {
+    const statusMessage = core.getInput(`message-${status}`)
+    if (statusMessage) {
+      message = statusMessage
+    }
+  }
+
+  if (!message) {
+    throw new Error('no message, check your message inputs')
   }
 
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
     message,
     messageId: messageId === '' ? 'add-pr-comment' : messageId,
-    messagePath,
     proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
     repoToken,
+    status,
   }
 }
 
 const run = async (): Promise<void> => {
   try {
-    const { allowRepeats, message, messageId, messagePath, repoToken, proxyUrl } = getInputs()
+    const { allowRepeats, message, messageId, repoToken, proxyUrl } = await getInputs()
     const messageIdComment = `<!-- ${messageId} -->`
-
-    let messageText = message
-
-    if (messagePath) {
-      messageText = await fs.readFile(messagePath, { encoding: 'utf8' })
-    }
-
-    if (!messageText) {
-      throw new Error('could not get message text, check your message-path')
-    }
 
     const {
       payload: { pull_request: pullRequest, issue, repository },
@@ -125,29 +152,6 @@ const run = async (): Promise<void> => {
 
     const [owner, repo] = repoFullName.split('/')
     const octokit = github.getOctokit(repoToken)
-
-    const output = await fs.readFile(process.env['GITHUB_OUTPUT']!, 'utf8')
-    const state = await fs.readFile(process.env['GITHUB_STATE']!, 'utf8')
-    const stepSummary = await fs.readFile(process.env['GITHUB_STEP_SUMMARY']!, 'utf8')
-
-    // eslint-disable-next-line no-console
-    console.log({ output, state, stepSummary })
-
-    // eslint-disable-next-line no-console
-    // console.log('before----------', process.env['GITHUB_OUTPUT'], owner, repo)
-
-    // const runObj = await octokit.rest.actions.getWorkflowRun({
-    //   run_id: Number(process.env['GITHUB_RUN_ID']),
-    //   owner,
-    //   repo,
-    // })
-
-    // eslint-disable-next-line no-console
-    console.log('------------------------------------------')
-    // eslint-disable-next-line no-console
-    // console.log(runObj)
-    // eslint-disable-next-line no-console
-    console.log('------------------------------------------')
 
     let issueNumber
 
@@ -192,7 +196,7 @@ const run = async (): Promise<void> => {
     }
 
     let comment: CreateIssueCommentResponseData | null | undefined
-    const body = `${messageIdComment}\n\n${messageText}`
+    const body = `${messageIdComment}\n\n${message}`
 
     if (proxyUrl) {
       comment = await createCommentProxy({

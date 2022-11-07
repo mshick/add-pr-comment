@@ -21,6 +21,18 @@ inputs:
   proxy-url:
     description: "Proxy URL for comment creation"
     required: false
+  status:
+    description: "Provide a job status for status headers."
+    required: false
+  message-success:
+    description: "Override the message when a run is successful."
+    required: false
+  message-failure:
+    description: "Override the message when a run fails."
+    required: false
+  message-cancelled:
+    description: "Override the message when a run is cancelled."
+    required: false
 outputs:
   comment-created:
     description: "Whether a comment was created."

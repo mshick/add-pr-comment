@@ -64,9 +64,15 @@ jobs:
       - uses: ./
         with:
           message: |
-            **STATUS**
-            ${{ job.status }}
+            **Hello ${{ github.run_number }}**
+            🌏
+            !
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          message-success: |
+            Alt message for success
+          message-failure: |
+            Alt message for failure
           
       # - uses: ./
       #   with:
