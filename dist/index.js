@@ -39,37 +39,35 @@ const http_client_1 = __nccwpck_require__(6255);
 const promises_1 = __importDefault(__nccwpck_require__(3977));
 const getIssueNumberFromCommitPullsList = (commitPullsList) => (commitPullsList.length ? commitPullsList[0].number : null);
 const createCommentProxy = async (params) => {
-    const { repoToken, owner, repo, issueNumber, body, proxyUrl } = params;
+    const { repoToken, owner, repo, issueNumber, body, commentId, proxyUrl } = params;
     const http = new http_client_1.HttpClient('http-client-add-pr-comment');
-    const response = await http.postJson(`${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`, { body }, {
+    const response = await http.postJson(`${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`, { comment_id: commentId, body }, {
         ['temporary-github-token']: repoToken,
     });
     return response.result;
 };
-const isMessagePresent = (message, comments, login) => {
-    const cleanRe = new RegExp('\\R|\\s', 'g');
-    const messageClean = message.replace(cleanRe, '');
-    return comments.some(({ user, body }) => {
-        // If a username is provided we can save on a bit of processing
-        if (login && (user === null || user === void 0 ? void 0 : user.login) !== login) {
-            return false;
-        }
-        return (body === null || body === void 0 ? void 0 : body.replace(cleanRe, '')) === messageClean;
+const getExistingCommentId = (comments, messageId) => {
+    const found = comments.find(({ body }) => {
+        var _a;
+        return ((_a = body === null || body === void 0 ? void 0 : body.search(messageId)) !== null && _a !== void 0 ? _a : -1) > -1;
     });
+    return found === null || found === void 0 ? void 0 : found.id;
 };
 const getInputs = () => {
+    const messageId = core.getInput('message-id');
     return {
         allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
         message: core.getInput('message'),
+        messageId: messageId === '' ? 'add-pr-comment' : messageId,
         messagePath: core.getInput('message-path'),
         proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
         repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
-        repoTokenUserLogin: core.getInput('repo-token-user-login'),
     };
 };
 const run = async () => {
     try {
-        const { allowRepeats, message, messagePath, repoToken, repoTokenUserLogin, proxyUrl } = getInputs();
+        const { allowRepeats, message, messageId, messagePath, repoToken, proxyUrl } = getInputs();
+        const messageIdComment = `<!-- ${messageId} -->`;
         if (!repoToken) {
             throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable');
         }
@@ -118,7 +116,7 @@ const run = async () => {
             core.setOutput('comment-created', 'false');
             return;
         }
-        let shouldCreateComment = true;
+        let existingCommentId;
         if (!allowRepeats) {
             core.debug('repeat comments are disallowed, checking for existing');
             const { data: comments } = await octokit.rest.issues.listComments({
@@ -126,39 +124,51 @@ const run = async () => {
                 repo,
                 issue_number: issueNumber,
             });
-            if (isMessagePresent(message, comments, repoTokenUserLogin)) {
-                core.info('the issue already contains an identical message');
-                shouldCreateComment = false;
+            existingCommentId = getExistingCommentId(comments, messageIdComment);
+            if (existingCommentId) {
+                core.debug(`existing comment found with id: ${existingCommentId}`);
             }
         }
-        let createdCommentData;
-        if (shouldCreateComment) {
-            if (proxyUrl) {
-                createdCommentData = await createCommentProxy({
-                    owner,
-                    repo,
-                    issueNumber,
-                    body: message,
-                    repoToken,
-                    proxyUrl,
-                });
-            }
-            else {
-                const createdComment = await octokit.rest.issues.createComment({
-                    owner,
-                    repo,
-                    issue_number: issueNumber,
-                    body: message,
-                });
-                createdCommentData = createdComment.data;
-            }
+        let comment;
+        const body = `${messageIdComment}\n\n${messageText}`;
+        if (proxyUrl) {
+            comment = await createCommentProxy({
+                commentId: existingCommentId,
+                owner,
+                repo,
+                issueNumber,
+                body,
+                repoToken,
+                proxyUrl,
+            });
+            core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true');
         }
-        if (createdCommentData) {
+        else if (existingCommentId) {
+            const updatedComment = await octokit.rest.issues.updateComment({
+                comment_id: existingCommentId,
+                owner,
+                repo,
+                body,
+            });
+            comment = updatedComment.data;
+            core.setOutput('comment-updated', 'true');
+        }
+        else {
+            const createdComment = await octokit.rest.issues.createComment({
+                issue_number: issueNumber,
+                owner,
+                repo,
+                body,
+            });
+            comment = createdComment.data;
             core.setOutput('comment-created', 'true');
-            core.setOutput('comment-id', createdCommentData.id);
+        }
+        if (comment) {
+            core.setOutput('comment-id', comment.id);
         }
         else {
             core.setOutput('comment-created', 'false');
+            core.setOutput('comment-updated', 'false');
         }
     }
     catch (err) {
