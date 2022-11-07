@@ -128,7 +128,7 @@ const run = async (): Promise<void> => {
 
     const output = await fs.readFile(process.env['GITHUB_OUTPUT']!)
     const state = await fs.readFile(process.env['GITHUB_STATE']!)
-    const stepSummary = await fs.readFile(process.env['GITHUB_STEP_SUMMAR']!)
+    const stepSummary = await fs.readFile(process.env['GITHUB_STEP_SUMMARY']!)
 
     // eslint-disable-next-line no-console
     console.log({ output, state, stepSummary })

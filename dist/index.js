@@ -100,7 +100,7 @@ const run = async () => {
         const octokit = github.getOctokit(repoToken);
         const output = await promises_1.default.readFile(process.env['GITHUB_OUTPUT']);
         const state = await promises_1.default.readFile(process.env['GITHUB_STATE']);
-        const stepSummary = await promises_1.default.readFile(process.env['GITHUB_STEP_SUMMAR']);
+        const stepSummary = await promises_1.default.readFile(process.env['GITHUB_STEP_SUMMARY']);
         // eslint-disable-next-line no-console
         console.log({ output, state, stepSummary });
         // eslint-disable-next-line no-console
