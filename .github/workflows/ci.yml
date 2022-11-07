@@ -59,7 +59,14 @@ jobs:
       - uses: ./
         with:
           message: |
-            **Hello ${{ github.run_number }}**
-            🌏
-            ! 
+            **STATUC**
+            {{ github.action_status }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          
+      # - uses: ./
+      #   with:
+      #     message: |
+      #       **Hello ${{ github.run_number }}**
+      #       🌏
+      #       ! 
+      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
