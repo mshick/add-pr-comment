@@ -126,22 +126,26 @@ const run = async (): Promise<void> => {
     const [owner, repo] = repoFullName.split('/')
     const octokit = github.getOctokit(repoToken)
 
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify(process.env))
+    const output = await fs.readFile(process.env['GITHUB_OUTPUT']!)
+    const state = await fs.readFile(process.env['GITHUB_STATE']!)
+    const stepSummary = await fs.readFile(process.env['GITHUB_STEP_SUMMAR']!)
 
     // eslint-disable-next-line no-console
-    console.log('before----------', process.env['GITHUB_RUN_ID'], owner, repo)
+    console.log({ output, state, stepSummary })
 
-    const runObj = await octokit.rest.actions.getWorkflowRun({
-      run_id: Number(process.env['GITHUB_RUN_ID']),
-      owner,
-      repo,
-    })
+    // eslint-disable-next-line no-console
+    // console.log('before----------', process.env['GITHUB_OUTPUT'], owner, repo)
+
+    // const runObj = await octokit.rest.actions.getWorkflowRun({
+    //   run_id: Number(process.env['GITHUB_RUN_ID']),
+    //   owner,
+    //   repo,
+    // })
 
     // eslint-disable-next-line no-console
     console.log('------------------------------------------')
     // eslint-disable-next-line no-console
-    console.log(runObj)
+    // console.log(runObj)
     // eslint-disable-next-line no-console
     console.log('------------------------------------------')
 
