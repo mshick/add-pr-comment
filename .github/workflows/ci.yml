@@ -56,6 +56,10 @@ jobs:
         run: |
           npm run build
 
+      - if: always()
+        name: Dump context
+        uses: crazy-max/ghaction-dump-context@v1
+
       - uses: ./
         with:
           message: |
