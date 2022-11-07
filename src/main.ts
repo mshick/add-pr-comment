@@ -126,9 +126,9 @@ const run = async (): Promise<void> => {
     const [owner, repo] = repoFullName.split('/')
     const octokit = github.getOctokit(repoToken)
 
-    const output = await fs.readFile(process.env['GITHUB_OUTPUT']!)
-    const state = await fs.readFile(process.env['GITHUB_STATE']!)
-    const stepSummary = await fs.readFile(process.env['GITHUB_STEP_SUMMARY']!)
+    const output = await fs.readFile(process.env['GITHUB_OUTPUT']!, 'utf8')
+    const state = await fs.readFile(process.env['GITHUB_STATE']!, 'utf8')
+    const stepSummary = await fs.readFile(process.env['GITHUB_STEP_SUMMARY']!, 'utf8')
 
     // eslint-disable-next-line no-console
     console.log({ output, state, stepSummary })
