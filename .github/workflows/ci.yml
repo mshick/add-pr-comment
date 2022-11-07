@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      actions: read
     steps:
       - name: checkout repo
         uses: actions/checkout@v3
