@@ -127,7 +127,7 @@ const run = async (): Promise<void> => {
     const octokit = github.getOctokit(repoToken)
 
     // eslint-disable-next-line no-console
-    console.log('before----------')
+    console.log('before----------', github.context.job, owner, repo)
 
     const job = await octokit.rest.actions.getJobForWorkflowRun({
       job_id: Number(github.context.job),
