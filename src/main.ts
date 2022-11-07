@@ -133,11 +133,11 @@ const run = async (): Promise<void> => {
     })
 
     // eslint-disable-next-line no-console
-    console.log('------------------------------------------')
+    core.info('------------------------------------------')
     // eslint-disable-next-line no-console
-    console.log(job)
+    core.info(JSON.stringify(job))
     // eslint-disable-next-line no-console
-    console.log('------------------------------------------')
+    core.info('------------------------------------------')
 
     let issueNumber
 
