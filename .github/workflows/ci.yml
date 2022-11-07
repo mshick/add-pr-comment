@@ -59,8 +59,8 @@ jobs:
       - uses: ./
         with:
           message: |
-            **STATUC**
-            {{ github.action_status }}
+            **STATUS**
+            ${{ github.action_status }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           
       # - uses: ./
