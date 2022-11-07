@@ -6,7 +6,11 @@ inputs:
     required: false
   message-path:
     description: "A path to a file to print as a message instead of a string."
-    required: false    
+    required: false
+  message-id:
+    description: "An optional id to use for this message."
+    required: false
+    default: "add-pr-comment"
   repo-token:
     description: "A GitHub token for API access."
     required: false
@@ -17,15 +21,13 @@ inputs:
   proxy-url:
     description: "Proxy URL for comment creation"
     required: false
-  message-id:
-    description: "An optional id to use for this message."
-    required: false
-    default: "add-pr-comment"
 outputs:
   comment-created:
     description: "Whether a comment was created."
+  comment-updated:
+    description: "Whether a comment was updated."
   comment-id:
-    description: "If a comment was created, the id of it."
+    description: "If a comment was created or updated, it's id."
 branding:
   icon: message-circle
   color: purple
