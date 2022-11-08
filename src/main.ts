@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { PayloadRepository, WebhookPayload } from '@actions/github/lib/interfaces'
 import { HttpClient } from '@actions/http-client'
 import { Endpoints } from '@octokit/types'
 import fs from 'node:fs/promises'
@@ -65,14 +66,19 @@ interface AddPrCommentInputs {
   proxyUrl?: string
   repoToken: string
   status?: string
+  issue?: number
+  repository?: PayloadRepository
+  commitSha: string
+  pullRequest?: WebhookPayload['pull_request']
 }
 
 async function getInputs(): Promise<AddPrCommentInputs> {
-  const messageId = core.getInput('message-id')
-  const messageInput = core.getInput('message')
-  const messagePath = core.getInput('message-path')
+  const messageId = core.getInput('message-id', { required: false })
+  const messageInput = core.getInput('message', { required: false })
+  const messagePath = core.getInput('message-path', { required: false })
   const repoToken = core.getInput('repo-token', { required: true })
-  const status = core.getInput('status')
+  const status = core.getInput('status', { required: true })
+  const issue = core.getInput('issue', { required: false })
 
   if (messageInput && messagePath) {
     throw new Error('must specify only one, message or message-path')
@@ -106,6 +112,8 @@ async function getInputs(): Promise<AddPrCommentInputs> {
     throw new Error('no message, check your message inputs')
   }
 
+  const { payload, sha } = github.context
+
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
     message,
@@ -113,29 +121,33 @@ async function getInputs(): Promise<AddPrCommentInputs> {
     proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
     repoToken,
     status,
+    issue: issue ? Number(issue) : payload.issue?.number,
+    pullRequest: payload.pull_request,
+    repository: payload.repository,
+    commitSha: sha,
   }
 }
 
 const run = async (): Promise<void> => {
   try {
-    const { allowRepeats, message, messageId, repoToken, proxyUrl } = await getInputs()
+    const {
+      allowRepeats,
+      message,
+      messageId,
+      repoToken,
+      proxyUrl,
+      issue,
+      repository,
+      pullRequest,
+      commitSha,
+    } = await getInputs()
+
     const messageIdComment = `<!-- ${messageId} -->`
 
-    const {
-      payload: { pull_request: pullRequest, issue, repository },
-      sha: commitSha,
-    } = github.context
-
-    if (!repository) {
-      core.info('unable to determine repository from request type')
-      core.setOutput('comment-created', 'false')
-      return
-    }
-
-    const { full_name: repoFullName } = repository
+    const repoFullName = repository?.full_name
 
     if (!repoFullName) {
-      core.info('repository is missing a full_name property... weird')
+      core.info('unable to determine repository from request type')
       core.setOutput('comment-created', 'false')
       return
     }
@@ -145,8 +157,8 @@ const run = async (): Promise<void> => {
 
     let issueNumber
 
-    if (issue && issue.number) {
-      issueNumber = issue.number
+    if (issue) {
+      issueNumber = issue
     } else if (pullRequest && pullRequest.number) {
       issueNumber = pullRequest.number
     } else {
@@ -161,7 +173,7 @@ const run = async (): Promise<void> => {
 
     if (!issueNumber) {
       core.info(
-        'this action only works on issues and pull_request events or other commits associated with a pull',
+        'no issue number found, use a pull_request event, a pull event, or provide an issue input',
       )
       core.setOutput('comment-created', 'false')
       return

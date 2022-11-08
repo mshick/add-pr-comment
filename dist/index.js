@@ -54,11 +54,13 @@ function getExistingCommentId(comments, messageId) {
     return found === null || found === void 0 ? void 0 : found.id;
 }
 async function getInputs() {
-    const messageId = core.getInput('message-id');
-    const messageInput = core.getInput('message');
-    const messagePath = core.getInput('message-path');
+    var _a;
+    const messageId = core.getInput('message-id', { required: false });
+    const messageInput = core.getInput('message', { required: false });
+    const messagePath = core.getInput('message-path', { required: false });
     const repoToken = core.getInput('repo-token', { required: true });
-    const status = core.getInput('status');
+    const status = core.getInput('status', { required: true });
+    const issue = core.getInput('issue', { required: false });
     if (messageInput && messagePath) {
         throw new Error('must specify only one, message or message-path');
     }
@@ -84,6 +86,7 @@ async function getInputs() {
     if (!message) {
         throw new Error('no message, check your message inputs');
     }
+    const { payload, sha } = github.context;
     return {
         allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
         message,
@@ -91,29 +94,27 @@ async function getInputs() {
         proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
         repoToken,
         status,
+        issue: issue ? Number(issue) : (_a = payload.issue) === null || _a === void 0 ? void 0 : _a.number,
+        pullRequest: payload.pull_request,
+        repository: payload.repository,
+        commitSha: sha,
     };
 }
 const run = async () => {
     try {
-        const { allowRepeats, message, messageId, repoToken, proxyUrl } = await getInputs();
+        const { allowRepeats, message, messageId, repoToken, proxyUrl, issue, repository, pullRequest, commitSha, } = await getInputs();
         const messageIdComment = `<!-- ${messageId} -->`;
-        const { payload: { pull_request: pullRequest, issue, repository }, sha: commitSha, } = github.context;
-        if (!repository) {
-            core.info('unable to determine repository from request type');
-            core.setOutput('comment-created', 'false');
-            return;
-        }
-        const { full_name: repoFullName } = repository;
+        const repoFullName = repository === null || repository === void 0 ? void 0 : repository.full_name;
         if (!repoFullName) {
-            core.info('repository is missing a full_name property... weird');
+            core.info('unable to determine repository from request type');
             core.setOutput('comment-created', 'false');
             return;
         }
         const [owner, repo] = repoFullName.split('/');
         const octokit = github.getOctokit(repoToken);
         let issueNumber;
-        if (issue && issue.number) {
-            issueNumber = issue.number;
+        if (issue) {
+            issueNumber = issue;
         }
         else if (pullRequest && pullRequest.number) {
             issueNumber = pullRequest.number;
@@ -128,7 +129,7 @@ const run = async () => {
             issueNumber = commitPullsList.data && getIssueNumberFromCommitPullsList(commitPullsList.data);
         }
         if (!issueNumber) {
-            core.info('this action only works on issues and pull_request events or other commits associated with a pull');
+            core.info('no issue number found, use a pull_request event, a pull event, or provide an issue input');
             core.setOutput('comment-created', 'false');
             return;
         }

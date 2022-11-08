@@ -63,3 +63,4 @@ jobs:
             🌏
             !
           status: ${{ job.status }}
+          issue: 64
