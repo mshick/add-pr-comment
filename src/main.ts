@@ -71,14 +71,8 @@ async function getInputs(): Promise<AddPrCommentInputs> {
   const messageId = core.getInput('message-id')
   const messageInput = core.getInput('message')
   const messagePath = core.getInput('message-path')
-  const repoToken = core.getInput('repo-token') || process.env['GITHUB_TOKEN']
+  const repoToken = core.getInput('repo-token', { required: true })
   const status = core.getInput('status')
-
-  if (!repoToken) {
-    throw new Error(
-      'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable',
-    )
-  }
 
   if (messageInput && messagePath) {
     throw new Error('must specify only one, message or message-path')
@@ -96,22 +90,16 @@ async function getInputs(): Promise<AddPrCommentInputs> {
   const messageFailure = core.getInput(`message-failure`)
   const messageCancelled = core.getInput(`message-cancelled`)
 
-  if ((messageSuccess || messageFailure || messageCancelled) && !status) {
-    throw new Error('to use a status message you must provide a status input')
+  if (status === 'success' && messageSuccess) {
+    message = messageSuccess
   }
 
-  if (status) {
-    if (status === 'success' && messageSuccess) {
-      message = messageSuccess
-    }
+  if (status === 'failure' && messageFailure) {
+    message = messageFailure
+  }
 
-    if (status === 'failure' && messageFailure) {
-      message = messageFailure
-    }
-
-    if (status === 'cancelled' && messageCancelled) {
-      message = messageCancelled
-    }
+  if (status === 'cancelled' && messageCancelled) {
+    message = messageCancelled
   }
 
   if (!message) {
