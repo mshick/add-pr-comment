@@ -9,21 +9,23 @@ inputs:
     required: false
   message-id:
     description: "An optional id to use for this message."
-    required: false
     default: "add-pr-comment"
-  repo-token:
-    description: "A GitHub token for API access."
     required: false
+  repo-token:
+    description: "A GitHub token for API access. Defaults to {{ github.token }}."
+    default: "${{ github.token }}"
+    required: true
   allow-repeats:
     description: "Allow messages to be repeated."
-    required: false
     default: "false"
+    required: false
   proxy-url:
     description: "Proxy URL for comment creation"
     required: false
   status:
-    description: "Provide a job status for status headers."
-    required: false
+    description: "A job status for status headers. Defaults to {{ job.status }}."
+    default: "${{ job.status }}"
+    required: true
   message-success:
     description: "Override the message when a run is successful."
     required: false
@@ -33,13 +35,16 @@ inputs:
   message-cancelled:
     description: "Override the message when a run is cancelled."
     required: false
+  issue:
+    description: "Override the message when a run is cancelled."
+    required: false
 outputs:
   comment-created:
     description: "Whether a comment was created."
   comment-updated:
     description: "Whether a comment was updated."
   comment-id:
-    description: "If a comment was created or updated, it's id."
+    description: "If a comment was created or updated, the comment id."
 branding:
   icon: message-circle
   color: purple

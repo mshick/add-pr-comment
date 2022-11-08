@@ -62,5 +62,3 @@ jobs:
             **Hello ${{ github.run_number }}**
             🌏
             !
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
