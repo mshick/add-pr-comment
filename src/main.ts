@@ -25,9 +25,9 @@ interface CreateCommentProxyParams {
   proxyUrl: string
 }
 
-const createCommentProxy = async (
+async function createCommentProxy(
   params: CreateCommentProxyParams,
-): Promise<CreateIssueCommentResponseData | null> => {
+): Promise<CreateIssueCommentResponseData | null> {
   const { repoToken, owner, repo, issueNumber, body, commentId, proxyUrl } = params
 
   const http = new HttpClient('http-client-add-pr-comment')
@@ -43,10 +43,10 @@ const createCommentProxy = async (
   return response.result
 }
 
-const getExistingCommentId = (
+function getExistingCommentId(
   comments: IssuesListCommentsResponseData,
   messageId: string,
-): number | undefined => {
+): number | undefined {
   const found = comments.find(({ body }) => {
     return (body?.search(messageId) ?? -1) > -1
   })
@@ -57,49 +57,81 @@ const getExistingCommentId = (
 interface AddPrCommentInputs {
   allowRepeats: boolean
   message?: string
-  messagePath?: string
-  proxyUrl?: string
-  repoToken?: string
   messageId: string
+  messagePath?: string
+  messageSuccess?: string
+  messageFailure?: string
+  messageCancelled?: string
+  proxyUrl?: string
+  repoToken: string
+  status?: string
 }
 
-const getInputs = (): AddPrCommentInputs => {
+async function getInputs(): Promise<AddPrCommentInputs> {
   const messageId = core.getInput('message-id')
+  const messageInput = core.getInput('message')
+  const messagePath = core.getInput('message-path')
+  const repoToken = core.getInput('repo-token') || process.env['GITHUB_TOKEN']
+  const status = core.getInput('status')
+
+  if (!repoToken) {
+    throw new Error(
+      'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable',
+    )
+  }
+
+  if (messageInput && messagePath) {
+    throw new Error('must specify only one, message or message-path')
+  }
+
+  let message
+
+  if (messagePath) {
+    message = await fs.readFile(messagePath, { encoding: 'utf8' })
+  } else {
+    message = messageInput
+  }
+
+  const messageSuccess = core.getInput(`message-success`)
+  const messageFailure = core.getInput(`message-failure`)
+  const messageCancelled = core.getInput(`message-cancelled`)
+
+  if ((messageSuccess || messageFailure || messageCancelled) && !status) {
+    throw new Error('to use a status message you must provide a status input')
+  }
+
+  if (status) {
+    if (status === 'success' && messageSuccess) {
+      message = messageSuccess
+    }
+
+    if (status === 'failure' && messageFailure) {
+      message = messageFailure
+    }
+
+    if (status === 'cancelled' && messageCancelled) {
+      message = messageCancelled
+    }
+  }
+
+  if (!message) {
+    throw new Error('no message, check your message inputs')
+  }
 
   return {
     allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
-    message: core.getInput('message'),
+    message,
     messageId: messageId === '' ? 'add-pr-comment' : messageId,
-    messagePath: core.getInput('message-path'),
     proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
-    repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
+    repoToken,
+    status,
   }
 }
 
 const run = async (): Promise<void> => {
   try {
-    const { allowRepeats, message, messageId, messagePath, repoToken, proxyUrl } = getInputs()
+    const { allowRepeats, message, messageId, repoToken, proxyUrl } = await getInputs()
     const messageIdComment = `<!-- ${messageId} -->`
-
-    if (!repoToken) {
-      throw new Error(
-        'no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable',
-      )
-    }
-
-    if (message && messagePath) {
-      throw new Error('must specify only one, message or message-path')
-    }
-
-    let messageText = message
-
-    if (messagePath) {
-      messageText = await fs.readFile(messagePath, { encoding: 'utf8' })
-    }
-
-    if (!messageText) {
-      throw new Error('could not get message text, check your message-path')
-    }
 
     const {
       payload: { pull_request: pullRequest, issue, repository },
@@ -166,7 +198,7 @@ const run = async (): Promise<void> => {
     }
 
     let comment: CreateIssueCommentResponseData | null | undefined
-    const body = `${messageIdComment}\n\n${messageText}`
+    const body = `${messageIdComment}\n\n${message}`
 
     if (proxyUrl) {
       comment = await createCommentProxy({

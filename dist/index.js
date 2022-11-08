@@ -38,49 +38,73 @@ const github = __importStar(__nccwpck_require__(5438));
 const http_client_1 = __nccwpck_require__(6255);
 const promises_1 = __importDefault(__nccwpck_require__(3977));
 const getIssueNumberFromCommitPullsList = (commitPullsList) => (commitPullsList.length ? commitPullsList[0].number : null);
-const createCommentProxy = async (params) => {
+async function createCommentProxy(params) {
     const { repoToken, owner, repo, issueNumber, body, commentId, proxyUrl } = params;
     const http = new http_client_1.HttpClient('http-client-add-pr-comment');
     const response = await http.postJson(`${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`, { comment_id: commentId, body }, {
         ['temporary-github-token']: repoToken,
     });
     return response.result;
-};
-const getExistingCommentId = (comments, messageId) => {
+}
+function getExistingCommentId(comments, messageId) {
     const found = comments.find(({ body }) => {
         var _a;
         return ((_a = body === null || body === void 0 ? void 0 : body.search(messageId)) !== null && _a !== void 0 ? _a : -1) > -1;
     });
     return found === null || found === void 0 ? void 0 : found.id;
-};
-const getInputs = () => {
+}
+async function getInputs() {
     const messageId = core.getInput('message-id');
+    const messageInput = core.getInput('message');
+    const messagePath = core.getInput('message-path');
+    const repoToken = core.getInput('repo-token') || process.env['GITHUB_TOKEN'];
+    const status = core.getInput('status');
+    if (!repoToken) {
+        throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable');
+    }
+    if (messageInput && messagePath) {
+        throw new Error('must specify only one, message or message-path');
+    }
+    let message;
+    if (messagePath) {
+        message = await promises_1.default.readFile(messagePath, { encoding: 'utf8' });
+    }
+    else {
+        message = messageInput;
+    }
+    const messageSuccess = core.getInput(`message-success`);
+    const messageFailure = core.getInput(`message-failure`);
+    const messageCancelled = core.getInput(`message-cancelled`);
+    if ((messageSuccess || messageFailure || messageCancelled) && !status) {
+        throw new Error('to use a status message you must provide a status input');
+    }
+    if (status) {
+        if (status === 'success' && messageSuccess) {
+            message = messageSuccess;
+        }
+        if (status === 'failure' && messageFailure) {
+            message = messageFailure;
+        }
+        if (status === 'cancelled' && messageCancelled) {
+            message = messageCancelled;
+        }
+    }
+    if (!message) {
+        throw new Error('no message, check your message inputs');
+    }
     return {
         allowRepeats: Boolean(core.getInput('allow-repeats') === 'true'),
-        message: core.getInput('message'),
+        message,
         messageId: messageId === '' ? 'add-pr-comment' : messageId,
-        messagePath: core.getInput('message-path'),
         proxyUrl: core.getInput('proxy-url').replace(/\/$/, ''),
-        repoToken: core.getInput('repo-token') || process.env['GITHUB_TOKEN'],
+        repoToken,
+        status,
     };
-};
+}
 const run = async () => {
     try {
-        const { allowRepeats, message, messageId, messagePath, repoToken, proxyUrl } = getInputs();
+        const { allowRepeats, message, messageId, repoToken, proxyUrl } = await getInputs();
         const messageIdComment = `<!-- ${messageId} -->`;
-        if (!repoToken) {
-            throw new Error('no github token provided, set one with the repo-token input or GITHUB_TOKEN env variable');
-        }
-        if (message && messagePath) {
-            throw new Error('must specify only one, message or message-path');
-        }
-        let messageText = message;
-        if (messagePath) {
-            messageText = await promises_1.default.readFile(messagePath, { encoding: 'utf8' });
-        }
-        if (!messageText) {
-            throw new Error('could not get message text, check your message-path');
-        }
         const { payload: { pull_request: pullRequest, issue, repository }, sha: commitSha, } = github.context;
         if (!repository) {
             core.info('unable to determine repository from request type');
@@ -130,7 +154,7 @@ const run = async () => {
             }
         }
         let comment;
-        const body = `${messageIdComment}\n\n${messageText}`;
+        const body = `${messageIdComment}\n\n${message}`;
         if (proxyUrl) {
             comment = await createCommentProxy({
                 commentId: existingCommentId,

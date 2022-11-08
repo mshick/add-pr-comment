@@ -19,6 +19,10 @@ type Inputs = {
   'repo-token': string
   'message-id': string
   'allow-repeats': string
+  'message-success'?: string
+  'message-failure'?: string
+  'message-cancelled'?: string
+  status?: 'success' | 'failure' | 'cancelled'
 }
 
 const inputs: Inputs = {
@@ -36,18 +40,27 @@ let postIssueCommentsResponse = {
   id: 42,
 }
 
+type MessagePayload = {
+  comment_id?: number
+  body: string
+}
+
+let messagePayload: MessagePayload | undefined
+
 vi.mock('@actions/core')
 
 export const handlers = [
   rest.post(
     `https://api.github.com/repos/${repoFullName}/issues/:issueNumber/comments`,
-    (req, res, ctx) => {
+    async (req, res, ctx) => {
+      messagePayload = await req.json<MessagePayload>()
       return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
     },
   ),
   rest.patch(
     `https://api.github.com/repos/${repoFullName}/issues/comments/:commentId`,
-    (req, res, ctx) => {
+    async (req, res, ctx) => {
+      messagePayload = await req.json<MessagePayload>()
       return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
     },
   ),
@@ -224,5 +237,74 @@ describe('add-pr-comment action', () => {
 
     expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('overrides the default message with a success message on success', async () => {
+    inputs.message = simpleMessage
+    inputs['message-path'] = undefined
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'false'
+    inputs['message-success'] = '666'
+    inputs.status = 'success'
+
+    const commentId = 123
+
+    getIssueCommentsResponse = [
+      {
+        id: commentId,
+      },
+    ]
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+    expect(messagePayload?.body).toContain('666')
+  })
+
+  it('overrides the default message with a failure message on failure', async () => {
+    inputs.message = simpleMessage
+    inputs['message-path'] = undefined
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'false'
+    inputs['message-failure'] = '666'
+    inputs.status = 'failure'
+
+    const commentId = 123
+
+    getIssueCommentsResponse = [
+      {
+        id: commentId,
+      },
+    ]
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+    expect(messagePayload?.body).toContain('666')
+  })
+
+  it('overrides the default message with a cancelled message on cancelled', async () => {
+    inputs.message = simpleMessage
+    inputs['message-path'] = undefined
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'false'
+    inputs['message-cancelled'] = '666'
+    inputs.status = 'cancelled'
+
+    const commentId = 123
+
+    getIssueCommentsResponse = [
+      {
+        id: commentId,
+      },
+    ]
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+    expect(messagePayload?.body).toContain('666')
   })
 })

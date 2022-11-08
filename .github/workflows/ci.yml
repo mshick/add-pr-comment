@@ -54,12 +54,13 @@ jobs:
 
       - name: Build action
         run: |
-          npm run build
+          npm run release
 
       - uses: ./
         with:
           message: |
             **Hello ${{ github.run_number }}**
             🌏
-            ! 
+            !
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
