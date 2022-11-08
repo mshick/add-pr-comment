@@ -12,8 +12,9 @@ inputs:
     required: false
     default: "add-pr-comment"
   repo-token:
-    description: "A GitHub token for API access."
-    required: false
+    description: "A GitHub token for API access. Defaults to {{ github.token }}."
+    default: '${{ github.token }}'
+    required: true
   allow-repeats:
     description: "Allow messages to be repeated."
     required: false
@@ -22,8 +23,9 @@ inputs:
     description: "Proxy URL for comment creation"
     required: false
   status:
-    description: "Provide a job status for status headers."
-    required: false
+    description: "A job status for status headers. Default to {{ job.status }}."
+    default: '${{ job.status }}'
+    required: true
   message-success:
     description: "Override the message when a run is successful."
     required: false
@@ -31,6 +33,9 @@ inputs:
     description: "Override the message when a run fails."
     required: false
   message-cancelled:
+    description: "Override the message when a run is cancelled."
+    required: false
+  issue:
     description: "Override the message when a run is cancelled."
     required: false
 outputs:
