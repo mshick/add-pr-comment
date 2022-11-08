@@ -224,7 +224,7 @@ describe('add-pr-comment action', () => {
     const replyBody = [
       {
         id: commentId,
-        body: `<!-- ${inputs['message-id']} -->\n\n${simpleMessage}`,
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\n${simpleMessage}`,
       },
     ]
 

@@ -62,5 +62,3 @@ jobs:
             **Hello ${{ github.run_number }}**
             🌏
             !
-          status: ${{ job.status }}
-          issue: 64

@@ -63,19 +63,19 @@ jobs:
 
 ## Configuration options
 
-| Variable or Argument | Location | Description                                                                                          | Required | Default |
-| -------------------- | -------- | ---------------------------------------------------------------------------------------------------- | -------- | ------- |
-| message              | with     | The message you'd like displayed, supports Markdown and all valid Unicode characters.                | maybe    |         |
-| message-path         | with     | Path to a message you'd like displayed. Will be read and displayed just like a normal message.       | maybe    |         |
-| message-success      | with     | A message override, printed in case of success.                                                      | maybe    |         |
-| message-failure      | with     | A message override, printed in case of failure.                                                      | maybe    |         |
-| message-cancelled    | with     | A message override, printed in case of cancelled.                                                    | maybe    |         |
-| status               | with     | Required if you want to use message status overrides.                                                | maybe    |         |
-| repo-token           | with     | Valid GitHub token, either the temporary token GitHub provides or a personal access token.           | maybe    |         |
-| message-id           | with     | Message id to use when searching existing comments. If found, updates the existing (sticky comment). | no       |         |
-| allow-repeats        | with     | Boolean flag to allow identical messages to be posted each time this action is run.                  | no       | false   |
-| proxy-url            | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                    | no       |         |
-| GITHUB_TOKEN         | env      | Valid GitHub token, can alternatively be defined in the env.                                         | maybe    |         |
+| Variable or Argument | Location | Description                                                                                          | Required | Default            |
+| -------------------- | -------- | ---------------------------------------------------------------------------------------------------- | -------- | ------------------ |
+| message              | with     | The message you'd like displayed, supports Markdown and all valid Unicode characters.                | maybe    |                    |
+| message-path         | with     | Path to a message you'd like displayed. Will be read and displayed just like a normal message.       | maybe    |                    |
+| message-success      | with     | A message override, printed in case of success.                                                      | maybe    |                    |
+| message-failure      | with     | A message override, printed in case of failure.                                                      | maybe    |                    |
+| message-cancelled    | with     | A message override, printed in case of cancelled.                                                    | maybe    |                    |
+| status               | with     | Required if you want to use message status overrides.                                                | yes      | {{ job.status }}   |
+| repo-token           | with     | Valid GitHub token, either the temporary token GitHub provides or a personal access token.           | yes      | {{ github.token }} |
+| message-id           | with     | Message id to use when searching existing comments. If found, updates the existing (sticky comment). | no       |                    |
+| allow-repeats        | with     | Boolean flag to allow identical messages to be posted each time this action is run.                  | no       | false              |
+| proxy-url            | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                    | no       |                    |
+| GITHUB_TOKEN         | env      | Valid GitHub token, can alternatively be defined in the env.                                         | no       |                    |
 
 ## Advanced Uses
 
