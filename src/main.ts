@@ -101,15 +101,15 @@ async function getInputs(): Promise<AddPrCommentInputs> {
   }
 
   if (status) {
-    if (status === 'success') {
+    if (status === 'success' && messageSuccess) {
       message = messageSuccess
     }
 
-    if (status === 'failure') {
+    if (status === 'failure' && messageFailure) {
       message = messageFailure
     }
 
-    if (status === 'cancelled') {
+    if (status === 'cancelled' && messageCancelled) {
       message = messageCancelled
     }
   }
