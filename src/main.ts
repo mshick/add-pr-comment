@@ -92,10 +92,25 @@ async function getInputs(): Promise<AddPrCommentInputs> {
     message = messageInput
   }
 
+  const messageSuccess = core.getInput(`message-success`)
+  const messageFailure = core.getInput(`message-failure`)
+  const messageCancelled = core.getInput(`message-cancelled`)
+
+  if ((messageSuccess || messageFailure || messageCancelled) && !status) {
+    throw new Error('to use a status message you must provide a status input')
+  }
+
   if (status) {
-    const statusMessage = core.getInput(`message-${status}`)
-    if (statusMessage) {
-      message = statusMessage
+    if (status === 'success') {
+      message = messageSuccess
+    }
+
+    if (status === 'failure') {
+      message = messageFailure
+    }
+
+    if (status === 'cancelled') {
+      message = messageCancelled
     }
   }
 

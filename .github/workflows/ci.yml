@@ -38,7 +38,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
-      actions: read
     steps:
       - name: checkout repo
         uses: actions/checkout@v3
@@ -57,10 +56,6 @@ jobs:
         run: |
           npm run release
 
-      # - if: always()
-      #   name: Dump context
-      #   uses: crazy-max/ghaction-dump-context@v1
-
       - uses: ./
         with:
           message: |
@@ -69,15 +64,3 @@ jobs:
             !
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           status: ${{ job.status }}
-          message-success: |
-            Alt message for success
-          message-failure: |
-            Alt message for failure
-          
-      # - uses: ./
-      #   with:
-      #     message: |
-      #       **Hello ${{ github.run_number }}**
-      #       🌏
-      #       ! 
-      #     repo-token: ${{ secrets.GITHUB_TOKEN }}
