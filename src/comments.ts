@@ -15,20 +15,15 @@ export async function getExistingCommentId(
     owner,
     repo,
     issue_number: issueNumber,
-    per_page: 2,
+    per_page: 100,
   }
 
   let found
-  let page = 0
 
   for await (const comments of octokit.paginate.iterator(
     octokit.rest.issues.listComments,
     parameters,
   )) {
-    page += 1
-    // eslint-disable-next-line no-console
-    console.log('page', page)
-
     found = comments.data.find(({ body }) => {
       return (body?.search(messageId) ?? -1) > -1
     })
@@ -37,23 +32,6 @@ export async function getExistingCommentId(
       break
     }
   }
-
-  // eslint-disable-next-line no-console
-  console.log(found)
-
-  // const comments = await octokit.rest.issues.listComments({
-  //   owner,
-  //   repo,
-  //   issue_number: issueNumber,
-  //   per_page: 2,
-  // })
-
-  // // eslint-disable-next-line no-console
-  // console.log(comments.headers)
-
-  // const found = comments.data.find(({ body }) => {
-  //   return (body?.search(messageId) ?? -1) > -1
-  // })
 
   return found?.id
 }
