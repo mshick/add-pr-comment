@@ -14,6 +14,8 @@ async function getExistingCommentId(octokit, owner, repo, issueNumber, messageId
         repo,
         issue_number: issueNumber,
     });
+    // eslint-disable-next-line no-console
+    console.log(comments.headers);
     const found = comments.data.find(({ body }) => {
         var _a;
         return ((_a = body === null || body === void 0 ? void 0 : body.search(messageId)) !== null && _a !== void 0 ? _a : -1) > -1;

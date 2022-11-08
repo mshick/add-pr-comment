@@ -15,7 +15,11 @@ export async function getExistingCommentId(
     owner,
     repo,
     issue_number: issueNumber,
+    per_page: 2,
   })
+
+  // eslint-disable-next-line no-console
+  console.log(comments.headers)
 
   const found = comments.data.find(({ body }) => {
     return (body?.search(messageId) ?? -1) > -1
