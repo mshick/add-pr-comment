@@ -11,9 +11,9 @@ inputs:
     description: "An optional id to use for this message."
     default: "add-pr-comment"
     required: false
-  auto-refresh-message-position:
+  refresh-message-position:
     description: "If a message with the same id, this option allow to refresh the position of the message to be the last one posted."
-    default: "true"
+    default: "false"
     required: false
   repo-token:
     description: "A GitHub token for API access. Defaults to {{ github.token }}."

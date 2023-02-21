@@ -17,7 +17,7 @@ const run = async (): Promise<void> => {
       allowRepeats,
       message,
       messageId,
-      autoRefreshMessagePosition,
+      refreshMessagePosition,
       repoToken,
       proxyUrl,
       issue,
@@ -76,7 +76,7 @@ const run = async (): Promise<void> => {
       })
       core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true')
     } else if (existingCommentId) {
-      if (autoRefreshMessagePosition) {
+      if (refreshMessagePosition) {
         await deleteComment(octokit, owner, repo, existingCommentId, body)
         comment = await createComment(octokit, owner, repo, issueNumber, body)
       } else {

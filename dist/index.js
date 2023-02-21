@@ -109,7 +109,7 @@ async function getInputs() {
     const issue = core.getInput('issue', { required: false });
     const proxyUrl = core.getInput('proxy-url', { required: false }).replace(/\/$/, '');
     const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true';
-    const autoRefreshMessagePosition = core.getInput('auto-refresh-message-position', { required: false }) === 'true';
+    const refreshMessagePosition = core.getInput('refresh-message-position', { required: false }) === 'true';
     if (messageInput && messagePath) {
         throw new Error('must specify only one, message or message-path');
     }
@@ -142,7 +142,7 @@ async function getInputs() {
     }
     const [owner, repo] = repoFullName.split('/');
     return {
-        autoRefreshMessagePosition,
+        refreshMessagePosition,
         allowRepeats,
         message,
         messageId: `<!-- ${messageId} -->`,
@@ -219,7 +219,7 @@ const issues_1 = __nccwpck_require__(6962);
 const proxy_1 = __nccwpck_require__(8689);
 const run = async () => {
     try {
-        const { allowRepeats, message, messageId, autoRefreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, } = await (0, config_1.getInputs)();
+        const { allowRepeats, message, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, } = await (0, config_1.getInputs)();
         const octokit = github.getOctokit(repoToken);
         let issueNumber;
         if (issue) {
@@ -260,7 +260,7 @@ const run = async () => {
             core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true');
         }
         else if (existingCommentId) {
-            if (autoRefreshMessagePosition) {
+            if (refreshMessagePosition) {
                 await (0, comments_1.deleteComment)(octokit, owner, repo, existingCommentId, body);
                 comment = await (0, comments_1.createComment)(octokit, owner, repo, issueNumber, body);
             }
