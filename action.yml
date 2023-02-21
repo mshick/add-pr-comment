@@ -18,7 +18,7 @@ inputs:
   repo-token:
     description: "A GitHub token for API access. Defaults to {{ github.token }}."
     default: "${{ github.token }}"
-    required: true
+    required: false
   allow-repeats:
     description: "Allow messages to be repeated."
     default: "false"
@@ -29,7 +29,7 @@ inputs:
   status:
     description: "A job status for status headers. Defaults to {{ job.status }}."
     default: "${{ job.status }}"
-    required: true
+    required: false
   message-success:
     description: "Override the message when a run is successful."
     required: false
