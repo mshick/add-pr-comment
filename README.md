@@ -69,6 +69,7 @@ jobs:
 | message-success   | with     | A message override, printed in case of success.                                                      | no       |                    |
 | message-failure   | with     | A message override, printed in case of failure.                                                      | no       |                    |
 | message-cancelled | with     | A message override, printed in case of cancelled.                                                    | no       |                    |
+| message-skipped   | with     | A message override, printed in case of skipped.                                                      | no       |                    |
 | status            | with     | Required if you want to use message status overrides.                                                | no       | {{ job.status }}   |
 | repo-token        | with     | Valid GitHub token, either the temporary token GitHub provides or a personal access token.           | no       | {{ github.token }} |
 | message-id        | with     | Message id to use when searching existing comments. If found, updates the existing (sticky comment). | no       |                    |

@@ -46,6 +46,8 @@ export async function getInputs(): Promise<Inputs> {
   const messageSuccess = core.getInput(`message-success`)
   const messageFailure = core.getInput(`message-failure`)
   const messageCancelled = core.getInput(`message-cancelled`)
+  const messageSkipped = core.getInput(`message-skipped`)
+
 
   if (status === 'success' && messageSuccess) {
     message = messageSuccess
@@ -57,6 +59,10 @@ export async function getInputs(): Promise<Inputs> {
 
   if (status === 'cancelled' && messageCancelled) {
     message = messageCancelled
+  }
+
+  if (status === 'skipped' && messageSkipped) {
+    message = messageSkipped
   }
 
   if (!message) {

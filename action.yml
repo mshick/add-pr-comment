@@ -35,6 +35,9 @@ inputs:
   message-cancelled:
     description: "Override the message when a run is cancelled."
     required: false
+  message-skipped:
+    description: "Override the message when a run is skipped."
+    required: false
   issue:
     description: "Override the message when a run is cancelled."
     required: false
