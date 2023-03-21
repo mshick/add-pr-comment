@@ -89,11 +89,13 @@ const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
 const promises_1 = __importDefault(__nccwpck_require__(3977));
 async function getInputs() {
-    var _a, _b, _c;
+    var _a, _b;
     const messageIdInput = core.getInput('message-id', { required: false });
     const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`;
     const messageInput = core.getInput('message', { required: false });
     const messagePath = core.getInput('message-path', { required: false });
+    const repoOwner = core.getInput('repo-owner', { required: false });
+    const repoName = core.getInput('repo-name', { required: false });
     const repoToken = core.getInput('repo-token', { required: true });
     const status = core.getInput('status', { required: true });
     const issue = core.getInput('issue', { required: false });
@@ -125,11 +127,7 @@ async function getInputs() {
         throw new Error('no message, check your message inputs');
     }
     const { payload } = github.context;
-    const repoFullName = (_a = payload.repository) === null || _a === void 0 ? void 0 : _a.full_name;
-    if (!repoFullName) {
-        throw new Error('unable to determine repository from request type');
-    }
-    const [owner, repo] = repoFullName.split('/');
+
     return {
         allowRepeats,
         message,
@@ -137,11 +135,11 @@ async function getInputs() {
         proxyUrl,
         repoToken,
         status,
-        issue: issue ? Number(issue) : (_b = payload.issue) === null || _b === void 0 ? void 0 : _b.number,
-        pullRequestNumber: (_c = payload.pull_request) === null || _c === void 0 ? void 0 : _c.number,
+        issue: issue ? Number(issue) : (_a = payload.issue) === null || _a === void 0 ? void 0 : _a.number,
+        pullRequestNumber: (_b = payload.pull_request) === null || _b === void 0 ? void 0 : _b.number,
         commitSha: github.context.sha,
-        owner,
-        repo,
+        owner: repoOwner || payload.repo.owner,
+        repo: repoName || payload.repo.repo,
     };
 }
 exports.getInputs = getInputs;

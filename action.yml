@@ -11,6 +11,14 @@ inputs:
     description: "An optional id to use for this message."
     default: "add-pr-comment"
     required: false
+  repo-owner:
+    description: "The repo owner."
+    default: "${{ github.repository_owner }}"
+    required: false
+  repo-name:
+    description: "The repo name."
+    default: "${{ github.event.repository.name }}"
+    required: false
   repo-token:
     description: "A GitHub token for API access. Defaults to {{ github.token }}."
     default: "${{ github.token }}"
