@@ -37,12 +37,6 @@ export async function getInputs(): Promise<Inputs> {
 
   let message
 
-  if (messagePath) {
-    message = await fs.readFile(messagePath, { encoding: 'utf8' })
-  } else {
-    message = messageInput
-  }
-
   const messageSuccess = core.getInput(`message-success`)
   const messageFailure = core.getInput(`message-failure`)
   const messageCancelled = core.getInput(`message-cancelled`)
@@ -57,6 +51,14 @@ export async function getInputs(): Promise<Inputs> {
 
   if (status === 'cancelled' && messageCancelled) {
     message = messageCancelled
+  }
+
+  if (message === undefined) {
+    if (messagePath) {
+        message = await fs.readFile(messagePath, { encoding: 'utf8' })
+    } else {
+        message = messageInput
+    }
   }
 
   if (!message) {

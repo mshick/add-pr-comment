@@ -103,12 +103,6 @@ async function getInputs() {
         throw new Error('must specify only one, message or message-path');
     }
     let message;
-    if (messagePath) {
-        message = await promises_1.default.readFile(messagePath, { encoding: 'utf8' });
-    }
-    else {
-        message = messageInput;
-    }
     const messageSuccess = core.getInput(`message-success`);
     const messageFailure = core.getInput(`message-failure`);
     const messageCancelled = core.getInput(`message-cancelled`);
@@ -120,6 +114,14 @@ async function getInputs() {
     }
     if (status === 'cancelled' && messageCancelled) {
         message = messageCancelled;
+    }
+    if (message === undefined) {
+        if (messagePath) {
+            message = await promises_1.default.readFile(messagePath, { encoding: 'utf8' });
+        }
+        else {
+            message = messageInput;
+        }
     }
     if (!message) {
         throw new Error('no message, check your message inputs');
