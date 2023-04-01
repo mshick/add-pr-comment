@@ -53,6 +53,23 @@ export async function updateComment(
   return updatedComment.data
 }
 
+export async function deleteComment(
+  octokit: InstanceType<typeof GitHub>,
+  owner: string,
+  repo: string,
+  existingCommentId: number,
+  body: string,
+): Promise<CreateIssueCommentResponseData> {
+  const deletedComment = await octokit.rest.issues.deleteComment({
+    comment_id: existingCommentId,
+    owner,
+    repo,
+    body,
+  })
+
+  return deletedComment.data
+}
+
 export async function createComment(
   octokit: InstanceType<typeof GitHub>,
   owner: string,

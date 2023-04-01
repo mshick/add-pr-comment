@@ -7,7 +7,7 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createComment = exports.updateComment = exports.getExistingCommentId = void 0;
+exports.createComment = exports.deleteComment = exports.updateComment = exports.getExistingCommentId = void 0;
 async function getExistingCommentId(octokit, owner, repo, issueNumber, messageId) {
     const parameters = {
         owner,
@@ -38,6 +38,16 @@ async function updateComment(octokit, owner, repo, existingCommentId, body) {
     return updatedComment.data;
 }
 exports.updateComment = updateComment;
+async function deleteComment(octokit, owner, repo, existingCommentId, body) {
+    const deletedComment = await octokit.rest.issues.deleteComment({
+        comment_id: existingCommentId,
+        owner,
+        repo,
+        body,
+    });
+    return deletedComment.data;
+}
+exports.deleteComment = deleteComment;
 async function createComment(octokit, owner, repo, issueNumber, body) {
     const createdComment = await octokit.rest.issues.createComment({
         issue_number: issueNumber,
@@ -99,6 +109,7 @@ async function getInputs() {
     const issue = core.getInput('issue', { required: false });
     const proxyUrl = core.getInput('proxy-url', { required: false }).replace(/\/$/, '');
     const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true';
+    const refreshMessagePosition = core.getInput('refresh-message-position', { required: false }) === 'true';
     if (messageInput && messagePath) {
         throw new Error('must specify only one, message or message-path');
     }
@@ -106,6 +117,7 @@ async function getInputs() {
     const messageSuccess = core.getInput(`message-success`);
     const messageFailure = core.getInput(`message-failure`);
     const messageCancelled = core.getInput(`message-cancelled`);
+    const messageSkipped = core.getInput(`message-skipped`);
     if (status === 'success' && messageSuccess) {
         message = messageSuccess;
     }
@@ -114,6 +126,9 @@ async function getInputs() {
     }
     if (status === 'cancelled' && messageCancelled) {
         message = messageCancelled;
+    }
+    if (status === 'skipped' && messageSkipped) {
+        message = messageSkipped;
     }
     if (message === undefined) {
         if (messagePath) {
@@ -133,6 +148,7 @@ async function getInputs() {
     }
     const [owner, repo] = repoFullName.split('/');
     return {
+        refreshMessagePosition,
         allowRepeats,
         message,
         messageId: `<!-- ${messageId} -->`,
@@ -209,7 +225,7 @@ const issues_1 = __nccwpck_require__(6962);
 const proxy_1 = __nccwpck_require__(8689);
 const run = async () => {
     try {
-        const { allowRepeats, message, messageId, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, } = await (0, config_1.getInputs)();
+        const { allowRepeats, message, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, } = await (0, config_1.getInputs)();
         const octokit = github.getOctokit(repoToken);
         let issueNumber;
         if (issue) {
@@ -250,7 +266,13 @@ const run = async () => {
             core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true');
         }
         else if (existingCommentId) {
-            comment = await (0, comments_1.updateComment)(octokit, owner, repo, existingCommentId, body);
+            if (refreshMessagePosition) {
+                await (0, comments_1.deleteComment)(octokit, owner, repo, existingCommentId, body);
+                comment = await (0, comments_1.createComment)(octokit, owner, repo, issueNumber, body);
+            }
+            else {
+                comment = await (0, comments_1.updateComment)(octokit, owner, repo, existingCommentId, body);
+            }
             core.setOutput('comment-updated', 'true');
         }
         else {

@@ -5,6 +5,7 @@ import {
   CreateIssueCommentResponseData,
   getExistingCommentId,
   updateComment,
+  deleteComment,
 } from './comments'
 import { getInputs } from './config'
 import { getIssueNumberFromCommitPullsList } from './issues'
@@ -16,6 +17,7 @@ const run = async (): Promise<void> => {
       allowRepeats,
       message,
       messageId,
+      refreshMessagePosition,
       repoToken,
       proxyUrl,
       issue,
@@ -74,7 +76,12 @@ const run = async (): Promise<void> => {
       })
       core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true')
     } else if (existingCommentId) {
-      comment = await updateComment(octokit, owner, repo, existingCommentId, body)
+      if (refreshMessagePosition) {
+        await deleteComment(octokit, owner, repo, existingCommentId, body)
+        comment = await createComment(octokit, owner, repo, issueNumber, body)
+      } else {
+        comment = await updateComment(octokit, owner, repo, existingCommentId, body)
+      }
       core.setOutput('comment-updated', 'true')
     } else {
       comment = await createComment(octokit, owner, repo, issueNumber, body)
