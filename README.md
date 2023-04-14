@@ -126,8 +126,8 @@ jobs:
       pull-requests: write
     steps:
       - uses: mshick/add-pr-comment@v2
+        if: always()
         with:
-          if: always()
           message: |
             **Howdie!**
           message-failure: |
