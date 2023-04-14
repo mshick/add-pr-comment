@@ -128,6 +128,7 @@ jobs:
       - uses: mshick/add-pr-comment@v2
         if: always()
         with:
+          status: ${{ job.status }}
           message: |
             **Howdie!**
           message-failure: |
