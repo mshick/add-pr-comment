@@ -3,6 +3,7 @@ import * as github from '@actions/github'
 import fs from 'node:fs/promises'
 
 interface Inputs {
+  refreshMessagePosition: boolean
   allowRepeats: boolean
   message?: string
   messageId: string
@@ -30,6 +31,8 @@ export async function getInputs(): Promise<Inputs> {
   const issue = core.getInput('issue', { required: false })
   const proxyUrl = core.getInput('proxy-url', { required: false }).replace(/\/$/, '')
   const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true'
+  const refreshMessagePosition =
+    core.getInput('refresh-message-position', { required: false }) === 'true'
 
   if (messageInput && messagePath) {
     throw new Error('must specify only one, message or message-path')
@@ -80,6 +83,7 @@ export async function getInputs(): Promise<Inputs> {
   const [owner, repo] = repoFullName.split('/')
 
   return {
+    refreshMessagePosition,
     allowRepeats,
     message,
     messageId: `<!-- ${messageId} -->`,
