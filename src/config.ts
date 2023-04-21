@@ -51,7 +51,6 @@ export async function getInputs(): Promise<Inputs> {
   const messageCancelled = core.getInput(`message-cancelled`)
   const messageSkipped = core.getInput(`message-skipped`)
 
-
   if (status === 'success' && messageSuccess) {
     message = messageSuccess
   }
