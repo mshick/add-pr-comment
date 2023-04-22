@@ -8,7 +8,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
 
-const repoFullName = 'foo/bar'
+let repoFullName = 'foo/bar'
 const repoToken = '12345'
 const commitSha = 'abc123'
 const simpleMessage = 'hello world'
@@ -16,6 +16,8 @@ const simpleMessage = 'hello world'
 type Inputs = {
   message: string | undefined
   'message-path': string | undefined
+  'repo-owner': string
+  'repo-name': string
   'repo-token': string
   'message-id': string
   'allow-repeats': string
@@ -172,6 +174,18 @@ describe('add-pr-comment action', () => {
 
     await expect(run()).resolves.not.toThrow()
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+  })
+
+  it('creates a comment in another repo', async () => {
+    const repoOwner = 'my-owner'
+    const repoName = 'my-repo'
+    inputs['repo-owner'] = repoOwner
+    inputs['repo-name'] = repoName
+    repoFullName = `${repoOwner}/${repoName}`
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
   it('safely exits when no issue can be found [using GITHUB_TOKEN in env]', async () => {
