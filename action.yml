@@ -11,6 +11,9 @@ inputs:
     description: "An optional id to use for this message."
     default: "add-pr-comment"
     required: false
+  refresh-message-position:
+    description: "If a message with the same id, this option allow to refresh the position of the message to be the last one posted."
+    default: "false"
   repo-owner:
     description: "The repo owner."
     default: "${{ github.repository_owner }}"
@@ -42,6 +45,9 @@ inputs:
     required: false
   message-cancelled:
     description: "Override the message when a run is cancelled."
+    required: false
+  message-skipped:
+    description: "Override the message when a run is skipped."
     required: false
   issue:
     description: "Override the message when a run is cancelled."

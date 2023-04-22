@@ -54,7 +54,7 @@ jobs:
 
       - name: Build action
         run: |
-          npm run release
+          npm run build
 
       - uses: ./
         with:

@@ -22,7 +22,8 @@ type Inputs = {
   'message-success'?: string
   'message-failure'?: string
   'message-cancelled'?: string
-  status?: 'success' | 'failure' | 'cancelled'
+  'message-skipped'?: string
+  status?: 'success' | 'failure' | 'cancelled' | 'skipped'
 }
 
 const inputs: Inputs = {
@@ -292,6 +293,29 @@ describe('add-pr-comment action', () => {
     inputs['allow-repeats'] = 'false'
     inputs['message-cancelled'] = '666'
     inputs.status = 'cancelled'
+
+    const commentId = 123
+
+    getIssueCommentsResponse = [
+      {
+        id: commentId,
+      },
+    ]
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+    expect(messagePayload?.body).toContain('666')
+  })
+
+  it('overrides the default message with a skipped message on skipped', async () => {
+    inputs.message = simpleMessage
+    inputs['message-path'] = undefined
+    inputs['repo-token'] = repoToken
+    inputs['allow-repeats'] = 'false'
+    inputs['message-skipped'] = '666'
+    inputs.status = 'skipped'
 
     const commentId = 123
 
