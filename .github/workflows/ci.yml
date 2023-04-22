@@ -100,4 +100,8 @@ jobs:
             WHERE DEPARTMENT_ID = 90;
             ```
 
-            🌏!            
+            🌏!
+            
+      - uses: ./
+        with:
+          message-path: ./.github/preformatted.md           
