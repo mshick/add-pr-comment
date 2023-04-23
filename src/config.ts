@@ -3,21 +3,22 @@ import * as github from '@actions/github'
 import { getInputAsArray, getMessageFromPaths } from './util'
 
 interface Inputs {
-  refreshMessagePosition: boolean
   allowRepeats: boolean
+  attachPath?: string[]
+  commitSha: string
+  issue?: number
   message?: string
   messageId: string
-  messagePath?: string
+  messagePath?: string[]
   messageSuccess?: string
   messageFailure?: string
   messageCancelled?: string
   proxyUrl?: string
+  pullRequestNumber?: number
+  refreshMessagePosition: boolean
+  repo: string
   repoToken: string
   status?: string
-  issue?: number
-  commitSha: string
-  pullRequestNumber?: number
-  repo: string
   owner: string
 }
 
@@ -33,8 +34,9 @@ export async function getInputs(): Promise<Inputs> {
   const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true'
   const refreshMessagePosition =
     core.getInput('refresh-message-position', { required: false }) === 'true'
+  const attachPath = getInputAsArray('attach-path', { required: false })
 
-  if (messageInput && messagePath) {
+  if (messageInput && messagePath.length) {
     throw new Error('must specify only one, message or message-path')
   }
 
@@ -82,16 +84,17 @@ export async function getInputs(): Promise<Inputs> {
   const [owner, repo] = repoFullName.split('/')
 
   return {
-    refreshMessagePosition,
     allowRepeats,
+    attachPath,
+    commitSha: github.context.sha,
+    issue: issue ? Number(issue) : payload.issue?.number,
     message,
     messageId: `<!-- ${messageId} -->`,
     proxyUrl,
+    pullRequestNumber: payload.pull_request?.number,
+    refreshMessagePosition,
     repoToken,
     status,
-    issue: issue ? Number(issue) : payload.issue?.number,
-    pullRequestNumber: payload.pull_request?.number,
-    commitSha: github.context.sha,
     owner,
     repo,
   }
