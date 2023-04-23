@@ -8,7 +8,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
 
-let repoFullName = 'foo/bar'
+const defaultRepoFullName = 'foo/bar'
 const repoToken = '12345'
 const commitSha = 'abc123'
 const simpleMessage = 'hello world'
@@ -28,15 +28,21 @@ type Inputs = {
   status?: 'success' | 'failure' | 'cancelled' | 'skipped'
 }
 
-const inputs: Inputs = {
+const defaultInputs: Inputs = {
   message: '',
   'message-path': undefined,
-  'repo-token': '',
+  'repo-owner': 'foo',
+  'repo-name': 'bar',
+  'repo-token': repoToken,
   'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
 }
 
-let issueNumber = 1
+const defaultIssueNumber = 1
+
+let repoFullName = defaultRepoFullName
+let inputs = defaultInputs
+let issueNumber = defaultIssueNumber
 let getCommitPullsResponse
 let getIssueCommentsResponse
 let postIssueCommentsResponse = {
@@ -88,7 +94,10 @@ describe('add-pr-comment action', () => {
   afterAll(() => server.close())
 
   beforeEach(() => {
-    issueNumber = 1
+    inputs = { ...defaultInputs }
+    issueNumber = defaultIssueNumber
+    repoFullName = defaultRepoFullName
+
     vi.resetModules()
 
     github.context.sha = commitSha
@@ -125,7 +134,6 @@ describe('add-pr-comment action', () => {
 
   it('creates a comment with message text', async () => {
     inputs.message = simpleMessage
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
@@ -136,7 +144,6 @@ describe('add-pr-comment action', () => {
   it('creates a comment with a message-path', async () => {
     inputs.message = undefined
     inputs['message-path'] = path.resolve(__dirname, './message.txt')
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
@@ -147,18 +154,14 @@ describe('add-pr-comment action', () => {
   it('fails when both message and message-path are defined', async () => {
     inputs.message = 'foobar'
     inputs['message-path'] = path.resolve(__dirname, './message.txt')
-    inputs['repo-token'] = repoToken
 
     await expect(run()).resolves.not.toThrow()
     expect(core.setFailed).toHaveBeenCalledWith('must specify only one, message or message-path')
   })
 
   it('creates a comment in an existing PR', async () => {
-    process.env['GITHUB_TOKEN'] = repoToken
-
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'true'
 
     github.context.payload = {
@@ -211,7 +214,6 @@ describe('add-pr-comment action', () => {
   it('creates a message when the message id does not exist', async () => {
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
     inputs['message-id'] = 'custom-id'
 
@@ -231,7 +233,6 @@ describe('add-pr-comment action', () => {
   it('identifies an existing message by id and updates it', async () => {
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
 
     const commentId = 123
@@ -257,7 +258,6 @@ describe('add-pr-comment action', () => {
   it('overrides the default message with a success message on success', async () => {
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
     inputs['message-success'] = '666'
     inputs.status = 'success'
@@ -280,7 +280,6 @@ describe('add-pr-comment action', () => {
   it('overrides the default message with a failure message on failure', async () => {
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
     inputs['message-failure'] = '666'
     inputs.status = 'failure'
@@ -303,7 +302,6 @@ describe('add-pr-comment action', () => {
   it('overrides the default message with a cancelled message on cancelled', async () => {
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
     inputs['message-cancelled'] = '666'
     inputs.status = 'cancelled'
@@ -326,7 +324,6 @@ describe('add-pr-comment action', () => {
   it('overrides the default message with a skipped message on skipped', async () => {
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
-    inputs['repo-token'] = repoToken
     inputs['allow-repeats'] = 'false'
     inputs['message-skipped'] = '666'
     inputs.status = 'skipped'

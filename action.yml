@@ -10,33 +10,34 @@ inputs:
   message-id:
     description: "An optional id to use for this message."
     default: "add-pr-comment"
-    required: false
+    required: true
   refresh-message-position:
     description: "If a message with the same id, this option allow to refresh the position of the message to be the last one posted."
     default: "false"
+    required: true
   repo-owner:
     description: "The repo owner."
     default: "${{ github.repository_owner }}"
-    required: false
+    required: true
   repo-name:
     description: "The repo name."
     default: "${{ github.event.repository.name }}"
-    required: false
+    required: true
   repo-token:
     description: "A GitHub token for API access. Defaults to {{ github.token }}."
     default: "${{ github.token }}"
-    required: false
+    required: true
   allow-repeats:
     description: "Allow messages to be repeated."
     default: "false"
-    required: false
+    required: true
   proxy-url:
     description: "Proxy URL for comment creation"
     required: false
   status:
     description: "A job status for status headers. Defaults to {{ job.status }}."
     default: "${{ job.status }}"
-    required: false
+    required: true
   message-success:
     description: "Override the message when a run is successful."
     required: false
