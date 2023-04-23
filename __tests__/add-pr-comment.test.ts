@@ -29,7 +29,7 @@ type Inputs = {
 const inputs: Inputs = {
   message: '',
   'message-path': undefined,
-  'repo-token': '',
+  'repo-token': 'foo',
   'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
 }
@@ -152,8 +152,6 @@ describe('add-pr-comment action', () => {
   })
 
   it('creates a comment in an existing PR', async () => {
-    process.env['GITHUB_TOKEN'] = repoToken
-
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
     inputs['repo-token'] = repoToken
@@ -175,8 +173,6 @@ describe('add-pr-comment action', () => {
   })
 
   it('safely exits when no issue can be found [using GITHUB_TOKEN in env]', async () => {
-    process.env['GITHUB_TOKEN'] = repoToken
-
     inputs.message = simpleMessage
     inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'true'
