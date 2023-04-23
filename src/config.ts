@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import fs from 'node:fs/promises'
+import { getInputAsArray, getMessageFromPaths } from './util'
 
 interface Inputs {
   refreshMessagePosition: boolean
@@ -25,7 +25,7 @@ export async function getInputs(): Promise<Inputs> {
   const messageIdInput = core.getInput('message-id', { required: false })
   const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`
   const messageInput = core.getInput('message', { required: false })
-  const messagePath = core.getInput('message-path', { required: false })
+  const messagePath = getInputAsArray('message-path', { required: false })
   const repoToken = core.getInput('repo-token', { required: true })
   const status = core.getInput('status', { required: true })
   const issue = core.getInput('issue', { required: false })
@@ -40,8 +40,8 @@ export async function getInputs(): Promise<Inputs> {
 
   let message
 
-  if (messagePath) {
-    message = await fs.readFile(messagePath, { encoding: 'utf8' })
+  if (messagePath.length) {
+    message = await getMessageFromPaths(messagePath)
   } else {
     message = messageInput
   }
