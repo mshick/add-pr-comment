@@ -90,7 +90,7 @@ describe('add-pr-comment action', () => {
   afterAll(() => server.close())
 
   beforeEach(() => {
-    inputs = defaultInputs
+    inputs = { ...defaultInputs }
     issueNumber = defaultIssueNumber
     repoFullName = defaultRepoFullName
 
