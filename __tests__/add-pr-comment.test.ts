@@ -8,7 +8,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
 
-const repoFullName = 'foo/bar'
+const defaultRepoFullName = 'foo/bar'
 const repoToken = '12345'
 const commitSha = 'abc123'
 const simpleMessage = 'hello world'
@@ -26,7 +26,7 @@ type Inputs = {
   status?: 'success' | 'failure' | 'cancelled' | 'skipped'
 }
 
-const inputs: Inputs = {
+const defaultInputs: Inputs = {
   message: '',
   'message-path': undefined,
   'repo-token': '',
@@ -34,7 +34,11 @@ const inputs: Inputs = {
   'allow-repeats': 'false',
 }
 
-let issueNumber = 1
+const defaultIssueNumber = 1
+
+let repoFullName = defaultRepoFullName
+let inputs = defaultInputs
+let issueNumber = defaultIssueNumber
 let getCommitPullsResponse
 let getIssueCommentsResponse
 let postIssueCommentsResponse = {
@@ -86,7 +90,10 @@ describe('add-pr-comment action', () => {
   afterAll(() => server.close())
 
   beforeEach(() => {
-    issueNumber = 1
+    inputs = defaultInputs
+    issueNumber = defaultIssueNumber
+    repoFullName = defaultRepoFullName
+
     vi.resetModules()
 
     github.context.sha = commitSha
