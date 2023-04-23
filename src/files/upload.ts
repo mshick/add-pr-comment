@@ -6,7 +6,7 @@ import { findFilesToUpload } from './search'
 export async function uploadAttachments(paths: string[]): Promise<void> {
   try {
     const searchPath = paths
-    const searchResult = await findFilesToUpload(inputs.searchPath)
+    const searchResult = await findFilesToUpload(searchPath)
     if (searchResult.filesToUpload.length === 0) {
       // No files were found, different use cases warrant different types of behavior if nothing is found
       switch (inputs.ifNoFilesFound) {
