@@ -8,7 +8,6 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
 
-const defaultRepoFullName = 'foo/bar'
 const repoToken = '12345'
 const commitSha = 'abc123'
 const simpleMessage = 'hello world'
@@ -36,7 +35,6 @@ const defaultInputs: Inputs = {
 
 const defaultIssueNumber = 1
 
-let repoFullName = defaultRepoFullName
 let inputs = defaultInputs
 let issueNumber = defaultIssueNumber
 let getCommitPullsResponse
@@ -54,29 +52,29 @@ let messagePayload: MessagePayload | undefined
 
 vi.mock('@actions/core')
 
-export const handlers = [
+const handlers = [
   rest.post(
-    `https://api.github.com/repos/${repoFullName}/issues/:issueNumber/comments`,
+    `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
     async (req, res, ctx) => {
       messagePayload = await req.json<MessagePayload>()
       return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
     },
   ),
   rest.patch(
-    `https://api.github.com/repos/${repoFullName}/issues/comments/:commentId`,
+    `https://api.github.com/repos/:repoUser/:repoName/issues/comments/:commentId`,
     async (req, res, ctx) => {
       messagePayload = await req.json<MessagePayload>()
       return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
     },
   ),
   rest.get(
-    `https://api.github.com/repos/${repoFullName}/issues/:issueNumber/comments`,
+    `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
     (req, res, ctx) => {
       return res(ctx.status(200), ctx.json(getIssueCommentsResponse))
     },
   ),
   rest.get(
-    `https://api.github.com/repos/${repoFullName}/commits/:commitSha/pulls`,
+    `https://api.github.com/repos/:repoUser/:repoName/commits/:commitSha/pulls`,
     (req, res, ctx) => {
       return res(ctx.status(200), ctx.json(getCommitPullsResponse))
     },
@@ -92,7 +90,6 @@ describe('add-pr-comment action', () => {
   beforeEach(() => {
     inputs = { ...defaultInputs }
     issueNumber = defaultIssueNumber
-    repoFullName = defaultRepoFullName
 
     vi.resetModules()
 
@@ -104,7 +101,7 @@ describe('add-pr-comment action', () => {
         number: issueNumber,
       },
       repository: {
-        full_name: repoFullName,
+        full_name: `${inputs['repo-owner']}/${inputs['repo-name']}`,
         name: 'bar',
         owner: {
           login: 'bar',
@@ -173,6 +170,28 @@ describe('add-pr-comment action', () => {
 
     await expect(run()).resolves.not.toThrow()
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+  })
+
+  it.only('creates a comment in another repo', async () => {
+    inputs.message = simpleMessage
+    inputs['repo-owner'] = 'my-owner'
+    inputs['repo-name'] = 'my-repo'
+    inputs['allow-repeats'] = 'true'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: {
+        number: 0,
+      },
+    } as WebhookPayload
+
+    issueNumber = apiResponse.result[0].number
+
+    getCommitPullsResponse = apiResponse.result
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
   it('safely exits when no issue can be found [using GITHUB_TOKEN in env]', async () => {

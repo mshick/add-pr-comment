@@ -1,11 +1,11 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import {
-  createComment,
   CreateIssueCommentResponseData,
+  createComment,
+  deleteComment,
   getExistingCommentId,
   updateComment,
-  deleteComment,
 } from './comments'
 import { getInputs } from './config'
 import { getIssueNumberFromCommitPullsList } from './issues'
@@ -95,6 +95,11 @@ const run = async (): Promise<void> => {
       core.setOutput('comment-updated', 'false')
     }
   } catch (err) {
+    if (process.env.NODE_ENV === 'test') {
+      // eslint-disable-next-line no-console
+      console.log(err)
+    }
+
     if (err instanceof Error) {
       core.setFailed(err.message)
     }
