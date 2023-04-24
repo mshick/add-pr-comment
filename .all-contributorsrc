@@ -1,0 +1,25 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "ReenigneArcher",
+      "name": "ReenigneArcher",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42013603?v=4",
+      "profile": "https://app.lizardbyte.dev",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "add-pr-comment",
+  "projectOwner": "mshick"
+}
