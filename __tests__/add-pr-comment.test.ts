@@ -158,7 +158,6 @@ describe('add-pr-comment action', () => {
 
   it('creates a comment in an existing PR', async () => {
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'true'
 
     github.context.payload = {
@@ -202,7 +201,6 @@ describe('add-pr-comment action', () => {
     process.env['GITHUB_TOKEN'] = repoToken
 
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'true'
 
     github.context.payload = {
@@ -220,7 +218,6 @@ describe('add-pr-comment action', () => {
 
   it('creates a message when the message id does not exist', async () => {
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'false'
     inputs['message-id'] = 'custom-id'
 
@@ -239,7 +236,6 @@ describe('add-pr-comment action', () => {
 
   it('identifies an existing message by id and updates it', async () => {
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'false'
 
     const commentId = 123
@@ -264,7 +260,6 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a success message on success', async () => {
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'false'
     inputs['message-success'] = '666'
     inputs.status = 'success'
@@ -286,7 +281,6 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a failure message on failure', async () => {
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'false'
     inputs['message-failure'] = '666'
     inputs.status = 'failure'
@@ -308,7 +302,6 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a cancelled message on cancelled', async () => {
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'false'
     inputs['message-cancelled'] = '666'
     inputs.status = 'cancelled'
@@ -330,7 +323,6 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a skipped message on skipped', async () => {
     inputs.message = simpleMessage
-    inputs['message-path'] = undefined
     inputs['allow-repeats'] = 'false'
     inputs['message-skipped'] = '666'
     inputs.status = 'skipped'
