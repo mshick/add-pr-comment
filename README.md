@@ -1,6 +1,6 @@
 # add-pr-comment
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A GitHub Action which adds a comment to a pull request's issue.
@@ -187,6 +187,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://app.lizardbyte.dev"><img src="https://avatars.githubusercontent.com/u/42013603?v=4?s=100" width="100px;" alt="ReenigneArcher"/><br /><sub><b>ReenigneArcher</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=ReenigneArcher" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/aryella-lacerda"><img src="https://avatars.githubusercontent.com/u/28730324?v=4?s=100" width="100px;" alt="Aryella Lacerda"/><br /><sub><b>Aryella Lacerda</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=aryella-lacerda" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vincent-joignie-dd"><img src="https://avatars.githubusercontent.com/u/103102299?v=4?s=100" width="100px;" alt="vincent-joignie-dd"/><br /><sub><b>vincent-joignie-dd</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=vincent-joignie-dd" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://ahanoff.dev"><img src="https://avatars.githubusercontent.com/u/2371703?v=4?s=100" width="100px;" alt="Akhan Zhakiyanov"/><br /><sub><b>Akhan Zhakiyanov</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=ahanoff" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
