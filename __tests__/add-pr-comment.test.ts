@@ -15,6 +15,8 @@ const simpleMessage = 'hello world'
 type Inputs = {
   message: string | undefined
   'message-path': string | undefined
+  'repo-owner': string
+  'repo-name': string
   'repo-token': string
   'message-id': string
   'allow-repeats': string
@@ -28,6 +30,8 @@ type Inputs = {
 const defaultInputs: Inputs = {
   message: '',
   'message-path': undefined,
+  'repo-owner': 'foo',
+  'repo-name': 'bar',
   'repo-token': repoToken,
   'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
@@ -172,7 +176,7 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 
-  it.only('creates a comment in another repo', async () => {
+  it('creates a comment in another repo', async () => {
     inputs.message = simpleMessage
     inputs['repo-owner'] = 'my-owner'
     inputs['repo-name'] = 'my-repo'
