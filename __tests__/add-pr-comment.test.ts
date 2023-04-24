@@ -16,6 +16,8 @@ const simpleMessage = 'hello world'
 type Inputs = {
   message: string | undefined
   'message-path': string | undefined
+  'repo-owner': string
+  'repo-name': string
   'repo-token': string
   'message-id': string
   'allow-repeats': string
@@ -29,6 +31,8 @@ type Inputs = {
 const defaultInputs: Inputs = {
   message: '',
   'message-path': undefined,
+  'repo-owner': 'foo',
+  'repo-name': 'bar',
   'repo-token': repoToken,
   'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
@@ -173,6 +177,18 @@ describe('add-pr-comment action', () => {
 
     await expect(run()).resolves.not.toThrow()
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+  })
+
+  it('creates a comment in another repo', async () => {
+    const repoOwner = 'my-owner'
+    const repoName = 'my-repo'
+    inputs['repo-owner'] = repoOwner
+    inputs['repo-name'] = repoName
+    repoFullName = `${repoOwner}/${repoName}`
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
   it('safely exits when no issue can be found [using GITHUB_TOKEN in env]', async () => {
