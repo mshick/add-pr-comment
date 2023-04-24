@@ -27,6 +27,8 @@ export async function getInputs(): Promise<Inputs> {
   const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`
   const messageInput = core.getInput('message', { required: false })
   const messagePath = getInputAsArray('message-path', { required: false })
+  const owner = core.getInput('repo-owner', { required: true })
+  const repo = core.getInput('repo-name', { required: true })
   const repoToken = core.getInput('repo-token', { required: true })
   const status = core.getInput('status', { required: true })
   const issue = core.getInput('issue', { required: false })
@@ -74,14 +76,6 @@ export async function getInputs(): Promise<Inputs> {
   }
 
   const { payload } = github.context
-
-  const repoFullName = payload.repository?.full_name
-
-  if (!repoFullName) {
-    throw new Error('unable to determine repository from request type')
-  }
-
-  const [owner, repo] = repoFullName.split('/')
 
   return {
     allowRepeats,
