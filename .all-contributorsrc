@@ -1,0 +1,52 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "ReenigneArcher",
+      "name": "ReenigneArcher",
+      "avatar_url": "https://avatars.githubusercontent.com/u/42013603?v=4",
+      "profile": "https://app.lizardbyte.dev",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "aryella-lacerda",
+      "name": "Aryella Lacerda",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28730324?v=4",
+      "profile": "https://github.com/aryella-lacerda",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "vincent-joignie-dd",
+      "name": "vincent-joignie-dd",
+      "avatar_url": "https://avatars.githubusercontent.com/u/103102299?v=4",
+      "profile": "https://github.com/vincent-joignie-dd",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "ahanoff",
+      "name": "Akhan Zhakiyanov",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2371703?v=4",
+      "profile": "https://ahanoff.dev",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "add-pr-comment",
+  "projectOwner": "mshick"
+}

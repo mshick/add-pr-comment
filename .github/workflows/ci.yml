@@ -1,7 +1,11 @@
 name: ci
 
 on:
-  pull_request:
+  pull_request_target:
+    types:
+      - opened
+      - closed
+      - reopened
 
 jobs:
   test:
