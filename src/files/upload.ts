@@ -12,7 +12,8 @@ export async function uploadAttachments(
 ): Promise<void> {
   try {
     // eslint-disable-next-line no-console
-    console.log('uploadAttachment', searchPath)
+    core.info('uploadAttachment---------')
+    core.info(searchPath)
 
     const searchResult = await findFilesToUpload(searchPath)
     if (searchResult.filesToUpload.length === 0) {
@@ -42,7 +43,7 @@ export async function uploadAttachments(
       )
 
       // eslint-disable-next-line no-console
-      console.log(JSON.stringify(uploadResponse, null, 2))
+      console.info(JSON.stringify(uploadResponse, null, 2))
 
       if (uploadResponse.failedItems.length > 0) {
         core.setFailed(
