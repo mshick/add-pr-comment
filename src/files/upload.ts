@@ -8,6 +8,7 @@ export type UploadAttachmentsOptions = {
 
 export async function uploadAttachments(
   searchPath: string,
+  artifactName: string,
   { retentionDays }: UploadAttachmentsOptions = {},
 ): Promise<void> {
   try {
@@ -32,8 +33,6 @@ export async function uploadAttachments(
       }
 
       const artifactClient = create()
-
-      const artifactName = 'TEST_ARTIFACT'
 
       const uploadResponse = await artifactClient.uploadArtifact(
         artifactName,

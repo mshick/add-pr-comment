@@ -8,6 +8,7 @@ import {
   updateComment,
 } from './comments'
 import { getInputs } from './config'
+import { getWorkflowArtifactDetails } from './files/details'
 import { uploadAttachments } from './files/upload'
 import { getIssueNumberFromCommitPullsList } from './issues'
 import { createCommentProxy } from './proxy'
@@ -69,9 +70,14 @@ const run = async (): Promise<void> => {
     const body = `${messageId}\n\n${message}`
 
     if (attachPath) {
+      const artifactName = 'TEST_ARTIFACT'
       for (const attach of attachPath) {
-        await uploadAttachments(attach)
+        await uploadAttachments(attach, artifactName)
       }
+
+      const artifactDetails = await getWorkflowArtifactDetails(octokit)
+
+      core.info(JSON.stringify(artifactDetails, null, 2))
     }
 
     if (proxyUrl) {
