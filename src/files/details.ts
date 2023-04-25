@@ -22,7 +22,7 @@ export async function getWorkflowArtifactDetails(
   const result = await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
     owner,
     repo,
-    ref: github.context.sha,
+    ref: github.context.payload.after,
     headers: {
       'X-GitHub-Api-Version': '2022-11-28',
     },
