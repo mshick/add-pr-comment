@@ -65,6 +65,6 @@ jobs:
           attach-path: |
             .github/test/image.png
           message: |
-            **Hello ${{ github.run_number }}**
+            **Hello**
             🌏
             !
