@@ -69,7 +69,7 @@ const run = async (): Promise<void> => {
     const body = `${messageId}\n\n${message}`
 
     if (attachPath) {
-      for (const attach in attachPath) {
+      for (const attach of attachPath) {
         await uploadAttachments(attach)
       }
     }
