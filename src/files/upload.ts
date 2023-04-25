@@ -1,34 +1,22 @@
-import { create, UploadOptions } from '@actions/artifact'
+import { create } from '@actions/artifact'
 import * as core from '@actions/core'
-import { NoFileOptions } from './constants'
 import { findFilesToUpload } from './search'
 
-export async function uploadAttachments(paths: string[]): Promise<void> {
+export type UploadAttachmentsOptions = {
+  retentionDays?: number
+}
+
+export async function uploadAttachments(
+  searchPath: string,
+  { retentionDays }: UploadAttachmentsOptions = {},
+): Promise<void> {
   try {
-    const searchPath = paths
+    // eslint-disable-next-line no-console
+    console.log('uploadAttachment', searchPath)
+
     const searchResult = await findFilesToUpload(searchPath)
     if (searchResult.filesToUpload.length === 0) {
-      // No files were found, different use cases warrant different types of behavior if nothing is found
-      switch (inputs.ifNoFilesFound) {
-        case NoFileOptions.warn: {
-          core.warning(
-            `No files were found with the provided path: ${inputs.searchPath}. No artifacts will be uploaded.`,
-          )
-          break
-        }
-        case NoFileOptions.error: {
-          core.setFailed(
-            `No files were found with the provided path: ${inputs.searchPath}. No artifacts will be uploaded.`,
-          )
-          break
-        }
-        case NoFileOptions.ignore: {
-          core.info(
-            `No files were found with the provided path: ${inputs.searchPath}. No artifacts will be uploaded.`,
-          )
-          break
-        }
-      }
+      core.warning(`No files were found with the provided path: ${searchPath}.`)
     } else {
       const s = searchResult.filesToUpload.length === 1 ? '' : 's'
       core.info(
@@ -43,19 +31,18 @@ export async function uploadAttachments(paths: string[]): Promise<void> {
       }
 
       const artifactClient = create()
-      const options: UploadOptions = {
-        continueOnError: false,
-      }
-      if (inputs.retentionDays) {
-        options.retentionDays = inputs.retentionDays
-      }
+
+      const artifactName = 'TEST_ARTIFACT'
 
       const uploadResponse = await artifactClient.uploadArtifact(
-        inputs.artifactName,
+        artifactName,
         searchResult.filesToUpload,
         searchResult.rootDirectory,
-        options,
+        { retentionDays, continueOnError: false },
       )
+
+      // eslint-disable-next-line no-console
+      console.log(JSON.stringify(uploadResponse, null, 2))
 
       if (uploadResponse.failedItems.length > 0) {
         core.setFailed(

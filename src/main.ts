@@ -8,6 +8,7 @@ import {
   updateComment,
 } from './comments'
 import { getInputs } from './config'
+import { uploadAttachments } from './files/upload'
 import { getIssueNumberFromCommitPullsList } from './issues'
 import { createCommentProxy } from './proxy'
 
@@ -25,6 +26,7 @@ const run = async (): Promise<void> => {
       commitSha,
       repo,
       owner,
+      attachPath,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
@@ -63,6 +65,12 @@ const run = async (): Promise<void> => {
     let comment: CreateIssueCommentResponseData | null | undefined
 
     const body = `${messageId}\n\n${message}`
+
+    if (attachPath) {
+      for (const attach in attachPath) {
+        await uploadAttachments(attach)
+      }
+    }
 
     if (proxyUrl) {
       comment = await createCommentProxy({
