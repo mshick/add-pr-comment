@@ -1,6 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { GitHub } from '@actions/github/lib/utils'
+import { HttpManager } from './http-manager'
 
 // type ListWorkflowRunArtifacts =
 // Endpoints['GET /repos/{owner}/{repo}/actions/runs/{run_id}/artifacts']
@@ -31,14 +32,7 @@ export async function getWorkflowArtifactDetails(
   core.info('checks------------')
   core.info(JSON.stringify(checks, null, 2))
 
-  const artifacts = (await octokit.request(`GET ${getArtifactUrl()}`, {
-    // owner,
-    // repo,
-    // ref: github.context.payload.after,
-    // headers: {
-    //   'X-GitHub-Api-Version': '2022-11-28',
-    // },
-  })) as any
+  const artifacts = await listArtifacts()
 
   core.info('artifacts------------')
   core.info(JSON.stringify(artifacts, null, 2))
@@ -103,15 +97,45 @@ function getArtifactUrl(): string {
   return artifactUrl
 }
 
-// async function listArtifacts(): Promise<ListArtifactsResponse> {
-// const artifactUrl = getArtifactUrl()
+export function getDownloadHeaders(
+  contentType: string,
+  isKeepAlive?: boolean,
+  acceptGzip?: boolean,
+): any {
+  const requestOptions: any = {}
 
-// use the first client from the httpManager, `keep-alive` is not used so the connection will close immediately
-// const client = this.downloadHttpManager.getClient(0)
-// const headers = getDownloadHeaders('application/json')
-// const response = await retryHttpClientRequest('List Artifacts', async () =>
-//   client.get(artifactUrl, headers),
-// )
-// const body: string = await response.readBody()
-// return JSON.parse(body)
-// }
+  if (contentType) {
+    requestOptions['Content-Type'] = contentType
+  }
+  if (isKeepAlive) {
+    requestOptions['Connection'] = 'Keep-Alive'
+    // keep alive for at least 10 seconds before closing the connection
+    requestOptions['Keep-Alive'] = '10'
+  }
+  if (acceptGzip) {
+    // if we are expecting a response with gzip encoding, it should be using an octet-stream in the accept header
+    requestOptions['Accept-Encoding'] = 'gzip'
+    requestOptions['Accept'] = `application/octet-stream;api-version=${getApiVersion()}`
+  } else {
+    // default to application/json if we are not working with gzip content
+    requestOptions['Accept'] = `application/json;api-version=${getApiVersion()}`
+  }
+
+  return requestOptions
+}
+
+const downloadHttpManager = new HttpManager(1, '@actions/artifact-download')
+
+async function listArtifacts(): Promise<any> {
+  const artifactUrl = getArtifactUrl()
+
+  // use the first client from the httpManager, `keep-alive` is not used so the connection will close immediately
+  const client = downloadHttpManager.getClient(0)
+  const headers = getDownloadHeaders('application/json')
+  const response = await client.get(artifactUrl, headers)
+  // const response = await retryHttpClientRequest('List Artifacts', async () =>
+  //   client.get(artifactUrl, headers),
+  // )
+  const body: string = await response.readBody()
+  return JSON.parse(body)
+}
