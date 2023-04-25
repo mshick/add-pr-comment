@@ -13,6 +13,8 @@ import { getIssueNumberFromCommitPullsList } from './issues'
 import { createCommentProxy } from './proxy'
 
 const run = async (): Promise<void> => {
+  core.info('running action................')
+
   try {
     const {
       allowRepeats,
