@@ -29,13 +29,7 @@ export async function getWorkflowArtifactDetails(
   })) as any
 
   core.info('checks------------')
-  core.info(
-    JSON.stringify(
-      checks.check_suites.map((s: any) => ({ id: s.id, status: s.status })),
-      null,
-      2,
-    ),
-  )
+  core.info(JSON.stringify(checks, null, 2))
 
   const artifacts = (await octokit.request(`GET ${getArtifactUrl()}`, {
     // owner,
