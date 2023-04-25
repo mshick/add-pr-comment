@@ -75,7 +75,7 @@ const run = async (): Promise<void> => {
         await uploadAttachments(attach, artifactName)
       }
 
-      const artifactDetails = await getWorkflowArtifactDetails(octokit)
+      const artifactDetails = await getWorkflowArtifactDetails(octokit, owner, repo)
 
       core.info(JSON.stringify(artifactDetails, null, 2))
     }

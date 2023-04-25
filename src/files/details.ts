@@ -1,10 +1,9 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { GitHub } from '@actions/github/lib/utils'
-import { Endpoints } from '@octokit/types'
 
-type ListWorkflowRunArtifacts =
-  Endpoints['GET /repos/{owner}/{repo}/actions/runs/{run_id}/artifacts']
+// type ListWorkflowRunArtifacts =
+// Endpoints['GET /repos/{owner}/{repo}/actions/runs/{run_id}/artifacts']
 
 export interface WorkflowArtifactDetails {
   id: number
@@ -63,6 +62,6 @@ export async function getWorkflowArtifactDetails(
 }
 
 // https://github.com/tonyhallett/DummyZipVsix/suites/2299172325/artifacts/48199605
-function getArtifactUrl(repoHtmlUrl: string, checkSuiteNumber: number, artifactId: number): string {
-  return `${repoHtmlUrl}/suites/${checkSuiteNumber}/artifacts/${artifactId.toString()}`
-}
+// function getArtifactUrl(repoHtmlUrl: string, checkSuiteNumber: number, artifactId: number): string {
+//   return `${repoHtmlUrl}/suites/${checkSuiteNumber}/artifacts/${artifactId.toString()}`
+// }
