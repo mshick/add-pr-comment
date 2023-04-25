@@ -19,17 +19,35 @@ export async function getWorkflowArtifactDetails(
   owner: string,
   repo: string,
 ): Promise<any> {
-  const result = await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
+  const checks = (await octokit.request('GET /repos/{owner}/{repo}/commits/{ref}/check-suites', {
     owner,
     repo,
     ref: github.context.payload.after,
     headers: {
       'X-GitHub-Api-Version': '2022-11-28',
     },
-  })
+  })) as any
 
-  core.info('result------------')
-  core.info(JSON.stringify(result, null, 2))
+  core.info('checks------------')
+  core.info(
+    JSON.stringify(
+      checks.check_suites.map((s: any) => ({ id: s.id, status: s.status })),
+      null,
+      2,
+    ),
+  )
+
+  const artifacts = (await octokit.request(`GET ${getArtifactUrl()}`, {
+    // owner,
+    // repo,
+    // ref: github.context.payload.after,
+    // headers: {
+    //   'X-GitHub-Api-Version': '2022-11-28',
+    // },
+  })) as any
+
+  core.info('artifacts------------')
+  core.info(JSON.stringify(artifacts, null, 2))
 
   // const artifactDetails: WorkflowArtifactDetails[] = []
   // const payload = github.context.payload as any
@@ -64,4 +82,42 @@ export async function getWorkflowArtifactDetails(
 // https://github.com/tonyhallett/DummyZipVsix/suites/2299172325/artifacts/48199605
 // function getArtifactUrl(repoHtmlUrl: string, checkSuiteNumber: number, artifactId: number): string {
 //   return `${repoHtmlUrl}/suites/${checkSuiteNumber}/artifacts/${artifactId.toString()}`
+// }
+
+function getRuntimeUrl(): string {
+  const runtimeUrl = process.env['ACTIONS_RUNTIME_URL']
+  if (!runtimeUrl) {
+    throw new Error('Unable to get ACTIONS_RUNTIME_URL env variable')
+  }
+  return runtimeUrl
+}
+
+function getWorkFlowRunId(): string {
+  const workFlowRunId = process.env['GITHUB_RUN_ID']
+  if (!workFlowRunId) {
+    throw new Error('Unable to get GITHUB_RUN_ID env variable')
+  }
+  return workFlowRunId
+}
+
+function getApiVersion(): string {
+  return '6.0-preview'
+}
+
+function getArtifactUrl(): string {
+  const artifactUrl = `${getRuntimeUrl()}_apis/pipelines/workflows/${getWorkFlowRunId()}/artifacts?api-version=${getApiVersion()}`
+  return artifactUrl
+}
+
+// async function listArtifacts(): Promise<ListArtifactsResponse> {
+// const artifactUrl = getArtifactUrl()
+
+// use the first client from the httpManager, `keep-alive` is not used so the connection will close immediately
+// const client = this.downloadHttpManager.getClient(0)
+// const headers = getDownloadHeaders('application/json')
+// const response = await retryHttpClientRequest('List Artifacts', async () =>
+//   client.get(artifactUrl, headers),
+// )
+// const body: string = await response.readBody()
+// return JSON.parse(body)
 // }
