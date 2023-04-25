@@ -1,3 +1,4 @@
+import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { GitHub } from '@actions/github/lib/utils'
 import { Endpoints } from '@octokit/types'
@@ -19,6 +20,11 @@ export async function getWorkflowArtifactDetails(
 ): Promise<WorkflowArtifactDetails[]> {
   const artifactDetails: WorkflowArtifactDetails[] = []
   const payload = github.context.payload as any
+  core.info('context------------')
+  core.info(JSON.stringify(github.context, null, 2))
+
+  core.info('payload------------')
+  core.info(JSON.stringify(payload, null, 2))
   // const payload = github.context.payload as unknown as EventPayloadMap['workflow_run']
   const workflowRun = payload.workflow_run
   const repoHtmlUrl = payload.repository.html_url
