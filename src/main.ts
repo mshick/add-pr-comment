@@ -25,6 +25,7 @@ const run = async (): Promise<void> => {
       commitSha,
       repo,
       owner,
+      updateOnly,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
@@ -58,6 +59,13 @@ const run = async (): Promise<void> => {
       if (existingCommentId) {
         core.debug(`existing comment found with id: ${existingCommentId}`)
       }
+    }
+
+    // if no existing comment and updateOnly is true, exit
+    if (!existingCommentId && updateOnly) {
+      core.info('no existing comment found and update-only is true, exiting')
+      core.setOutput('comment-created', 'false')
+      return
     }
 
     let comment: CreateIssueCommentResponseData | null | undefined

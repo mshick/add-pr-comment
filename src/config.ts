@@ -19,6 +19,7 @@ interface Inputs {
   pullRequestNumber?: number
   repo: string
   owner: string
+  updateOnly: boolean
 }
 
 export async function getInputs(): Promise<Inputs> {
@@ -35,6 +36,7 @@ export async function getInputs(): Promise<Inputs> {
   const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true'
   const refreshMessagePosition =
     core.getInput('refresh-message-position', { required: false }) === 'true'
+  const updateOnly = core.getInput('update-only', { required: false }) === 'true'
 
   if (messageInput && messagePath) {
     throw new Error('must specify only one, message or message-path')
@@ -88,5 +90,6 @@ export async function getInputs(): Promise<Inputs> {
     commitSha: github.context.sha,
     owner: repoOwner || payload.repo.owner,
     repo: repoName || payload.repo.repo,
+    updateOnly: updateOnly,
   }
 }
