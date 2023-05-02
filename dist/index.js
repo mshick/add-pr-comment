@@ -112,6 +112,7 @@ async function getInputs() {
     const proxyUrl = core.getInput('proxy-url', { required: false }).replace(/\/$/, '');
     const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true';
     const refreshMessagePosition = core.getInput('refresh-message-position', { required: false }) === 'true';
+    const updateOnly = core.getInput('update-only', { required: false }) === 'true';
     if (messageInput && messagePath) {
         throw new Error('must specify only one, message or message-path');
     }
@@ -125,6 +126,7 @@ async function getInputs() {
     const messageSuccess = core.getInput(`message-success`);
     const messageFailure = core.getInput(`message-failure`);
     const messageCancelled = core.getInput(`message-cancelled`);
+    const messageSkipped = core.getInput(`message-skipped`);
     if (status === 'success' && messageSuccess) {
         message = messageSuccess;
     }
@@ -134,11 +136,13 @@ async function getInputs() {
     if (status === 'cancelled' && messageCancelled) {
         message = messageCancelled;
     }
+    if (status === 'skipped' && messageSkipped) {
+        message = messageSkipped;
+    }
     if (!message) {
         throw new Error('no message, check your message inputs');
     }
     const { payload } = github.context;
-
     return {
         refreshMessagePosition,
         allowRepeats,
@@ -152,6 +156,7 @@ async function getInputs() {
         commitSha: github.context.sha,
         owner: repoOwner || payload.repo.owner,
         repo: repoName || payload.repo.repo,
+        updateOnly: updateOnly,
     };
 }
 exports.getInputs = getInputs;
@@ -217,7 +222,7 @@ const issues_1 = __nccwpck_require__(6962);
 const proxy_1 = __nccwpck_require__(8689);
 const run = async () => {
     try {
-        const { allowRepeats, message, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, } = await (0, config_1.getInputs)();
+        const { allowRepeats, message, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, } = await (0, config_1.getInputs)();
         const octokit = github.getOctokit(repoToken);
         let issueNumber;
         if (issue) {
@@ -242,6 +247,12 @@ const run = async () => {
             if (existingCommentId) {
                 core.debug(`existing comment found with id: ${existingCommentId}`);
             }
+        }
+        // if no existing comment and updateOnly is true, exit
+        if (!existingCommentId && updateOnly) {
+            core.info('no existing comment found and update-only is true, exiting');
+            core.setOutput('comment-created', 'false');
+            return;
         }
         let comment;
         const body = `${messageId}\n\n${message}`;
@@ -280,6 +291,10 @@ const run = async () => {
         }
     }
     catch (err) {
+        if (process.env.NODE_ENV === 'test') {
+            // eslint-disable-next-line no-console
+            console.log(err);
+        }
         if (err instanceof Error) {
             core.setFailed(err.message);
         }
@@ -2256,6 +2271,10 @@ function checkBypass(reqUrl) {
     if (!reqUrl.hostname) {
         return false;
     }
+    const reqHost = reqUrl.hostname;
+    if (isLoopbackAddress(reqHost)) {
+        return true;
+    }
     const noProxy = process.env['no_proxy'] || process.env['NO_PROXY'] || '';
     if (!noProxy) {
         return false;
@@ -2281,13 +2300,24 @@ function checkBypass(reqUrl) {
         .split(',')
         .map(x => x.trim().toUpperCase())
         .filter(x => x)) {
-        if (upperReqHosts.some(x => x === upperNoProxyItem)) {
+        if (upperNoProxyItem === '*' ||
+            upperReqHosts.some(x => x === upperNoProxyItem ||
+                x.endsWith(`.${upperNoProxyItem}`) ||
+                (upperNoProxyItem.startsWith('.') &&
+                    x.endsWith(`${upperNoProxyItem}`)))) {
             return true;
         }
     }
     return false;
 }
 exports.checkBypass = checkBypass;
+function isLoopbackAddress(host) {
+    const hostLower = host.toLowerCase();
+    return (hostLower === 'localhost' ||
+        hostLower.startsWith('127.') ||
+        hostLower.startsWith('[::1]') ||
+        hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
+}
 //# sourceMappingURL=proxy.js.map
 
 /***/ }),
@@ -6337,6 +6367,20 @@ const isDomainOrSubdomain = function isDomainOrSubdomain(destination, original) 
 };
 
 /**
+ * isSameProtocol reports whether the two provided URLs use the same protocol.
+ *
+ * Both domains must already be in canonical form.
+ * @param {string|URL} original
+ * @param {string|URL} destination
+ */
+const isSameProtocol = function isSameProtocol(destination, original) {
+	const orig = new URL$1(original).protocol;
+	const dest = new URL$1(destination).protocol;
+
+	return orig === dest;
+};
+
+/**
  * Fetch function
  *
  * @param   Mixed    url   Absolute url or Request instance
@@ -6367,7 +6411,7 @@ function fetch(url, opts) {
 			let error = new AbortError('The user aborted a request.');
 			reject(error);
 			if (request.body && request.body instanceof Stream.Readable) {
-				request.body.destroy(error);
+				destroyStream(request.body, error);
 			}
 			if (!response || !response.body) return;
 			response.body.emit('error', error);
@@ -6408,8 +6452,42 @@ function fetch(url, opts) {
 
 		req.on('error', function (err) {
 			reject(new FetchError(`request to ${request.url} failed, reason: ${err.message}`, 'system', err));
+
+			if (response && response.body) {
+				destroyStream(response.body, err);
+			}
+
 			finalize();
 		});
+
+		fixResponseChunkedTransferBadEnding(req, function (err) {
+			if (signal && signal.aborted) {
+				return;
+			}
+
+			if (response && response.body) {
+				destroyStream(response.body, err);
+			}
+		});
+
+		/* c8 ignore next 18 */
+		if (parseInt(process.version.substring(1)) < 14) {
+			// Before Node.js 14, pipeline() does not fully support async iterators and does not always
+			// properly handle when the socket close/end events are out of order.
+			req.on('socket', function (s) {
+				s.addListener('close', function (hadError) {
+					// if a data listener is still present we didn't end cleanly
+					const hasDataListener = s.listenerCount('data') > 0;
+
+					// if end happened before close but the socket didn't emit an error, do it now
+					if (response && hasDataListener && !hadError && !(signal && signal.aborted)) {
+						const err = new Error('Premature close');
+						err.code = 'ERR_STREAM_PREMATURE_CLOSE';
+						response.body.emit('error', err);
+					}
+				});
+			});
+		}
 
 		req.on('response', function (res) {
 			clearTimeout(reqTimeout);
@@ -6482,7 +6560,7 @@ function fetch(url, opts) {
 							size: request.size
 						};
 
-						if (!isDomainOrSubdomain(request.url, locationURL)) {
+						if (!isDomainOrSubdomain(request.url, locationURL) || !isSameProtocol(request.url, locationURL)) {
 							for (const name of ['authorization', 'www-authenticate', 'cookie', 'cookie2']) {
 								requestOpts.headers.delete(name);
 							}
@@ -6575,6 +6653,13 @@ function fetch(url, opts) {
 					response = new Response(body, response_options);
 					resolve(response);
 				});
+				raw.on('end', function () {
+					// some old IIS servers return zero-length OK deflate responses, so 'data' is never emitted.
+					if (!response) {
+						response = new Response(body, response_options);
+						resolve(response);
+					}
+				});
 				return;
 			}
 
@@ -6594,6 +6679,41 @@ function fetch(url, opts) {
 		writeToStream(req, request);
 	});
 }
+function fixResponseChunkedTransferBadEnding(request, errorCallback) {
+	let socket;
+
+	request.on('socket', function (s) {
+		socket = s;
+	});
+
+	request.on('response', function (response) {
+		const headers = response.headers;
+
+		if (headers['transfer-encoding'] === 'chunked' && !headers['content-length']) {
+			response.once('close', function (hadError) {
+				// if a data listener is still present we didn't end cleanly
+				const hasDataListener = socket.listenerCount('data') > 0;
+
+				if (hasDataListener && !hadError) {
+					const err = new Error('Premature close');
+					err.code = 'ERR_STREAM_PREMATURE_CLOSE';
+					errorCallback(err);
+				}
+			});
+		}
+	});
+}
+
+function destroyStream(stream, err) {
+	if (stream.destroy) {
+		stream.destroy(err);
+	} else {
+		// node < 8
+		stream.emit('error', err);
+		stream.end();
+	}
+}
+
 /**
  * Redirect code matching
  *
