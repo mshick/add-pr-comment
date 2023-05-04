@@ -12,7 +12,7 @@
     "removeComments": false,
     "preserveConstEnums": true,
     "resolveJsonModule": true,
-    "rootDir": "./src",
+    "rootDir": "src",
     "outDir": "./lib"
   },
   "exclude": ["node_modules", "**/*.test.ts"]

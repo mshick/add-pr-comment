@@ -1,6 +1,9 @@
 # add-pr-comment
+
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A GitHub Action which adds a comment to a pull request's issue.
@@ -65,25 +68,25 @@ jobs:
 
 ## Configuration options
 
-| Input                    | Location | Description                                                                                          | Required | Default                            |
-|--------------------------|----------|------------------------------------------------------------------------------------------------------|----------|------------------------------------|
-| message                  | with     | The message you'd like displayed, supports Markdown and all valid Unicode characters.                | maybe    |                                    |
-| message-path             | with     | Path to a message you'd like displayed. Will be read and displayed just like a normal message.       | maybe    |                                    |
-| message-success          | with     | A message override, printed in case of success.                                                      | no       |                                    |
-| message-failure          | with     | A message override, printed in case of failure.                                                      | no       |                                    |
-| message-cancelled        | with     | A message override, printed in case of cancelled.                                                    | no       |                                    |
-| message-skipped          | with     | A message override, printed in case of skipped.                                                      | no       |                                    |
-| status                   | with     | Required if you want to use message status overrides.                                                | no       | {{ job.status }}                   |
-| repo-owner               | with     | Owner of the repo.                                                                                   | no       | {{ github.repository_owner }}      |
-| repo-name                | with     | Name of the repo.                                                                                    | no       | {{ github.event.repository.name }} |
-| repo-token               | with     | Valid GitHub token, either the temporary token GitHub provides or a personal access token.           | no       | {{ github.token }}                 |
-| message-id               | with     | Message id to use when searching existing comments. If found, updates the existing (sticky comment). | no       |                                    |
-| refresh-message-position | with     | Should the sticky message be the last one in the PR's feed.                                          | no       | false                              |
-| allow-repeats            | with     | Boolean flag to allow identical messages to be posted each time this action is run.                  | no       | false                              |
-| proxy-url                | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                    | no       |                                    |
-| issue                    | with     | Optional issue number override.                                                                      | no       |                                    |
-| update-only              | with     | Only update the comment if it already exists.                                                        | no       |                                    |
-| GITHUB_TOKEN             | env      | Valid GitHub token, can alternatively be defined in the env.                                         | no       |                                    |
+| Input                    | Location | Description                                                                                                                                                                 | Required | Default                            |
+| ------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------- |
+| message                  | with     | The message you'd like displayed, supports Markdown and all valid Unicode characters.                                                                                       | maybe    |                                    |
+| message-path             | with     | Path to a message you'd like displayed. Will be read and displayed just like a normal message. Supports multi-line input and globs. Multiple messages will be concatenated. | maybe    |                                    |
+| message-success          | with     | A message override, printed in case of success.                                                                                                                             | no       |                                    |
+| message-failure          | with     | A message override, printed in case of failure.                                                                                                                             | no       |                                    |
+| message-cancelled        | with     | A message override, printed in case of cancelled.                                                                                                                           | no       |                                    |
+| message-skipped          | with     | A message override, printed in case of skipped.                                                                                                                             | no       |                                    |
+| status                   | with     | Required if you want to use message status overrides.                                                                                                                       | no       | {{ job.status }}                   |
+| repo-owner               | with     | Owner of the repo.                                                                                                                                                          | no       | {{ github.repository_owner }}      |
+| repo-name                | with     | Name of the repo.                                                                                                                                                           | no       | {{ github.event.repository.name }} |
+| repo-token               | with     | Valid GitHub token, either the temporary token GitHub provides or a personal access token.                                                                                  | no       | {{ github.token }}                 |
+| message-id               | with     | Message id to use when searching existing comments. If found, updates the existing (sticky comment).                                                                        | no       |                                    |
+| refresh-message-position | with     | Should the sticky message be the last one in the PR's feed.                                                                                                                 | no       | false                              |
+| allow-repeats            | with     | Boolean flag to allow identical messages to be posted each time this action is run.                                                                                         | no       | false                              |
+| proxy-url                | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                                                                                           | no       |                                    |
+| issue                    | with     | Optional issue number override.                                                                                                                                             | no       |                                    |
+| update-only              | with     | Only update the comment if it already exists.                                                                                                                               | no       |                                    |
+| GITHUB_TOKEN             | env      | Valid GitHub token, can alternatively be defined in the env.                                                                                                                | no       |                                    |
 
 ## Advanced Uses
 
@@ -141,6 +144,31 @@ jobs:
             Uh oh!
 ```
 
+### Multiple Message Files
+
+Instead of directly setting the message you can also load a file with the text
+of your message using `message-path`. `message-path` supports loading multiple
+files and files on multiple lines, the contents of which will be concatenated.
+
+**Example**
+
+````yaml
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: mshick/add-pr-comment@v2
+        if: always()
+        with:
+          message-path: |
+            message-part-*.txt
+```
+
 ### Bring your own issues
 
 You can set an issue id explicitly. Helpful for cases where you want to post
@@ -173,7 +201,7 @@ jobs:
           issue: ${{ steps.pr.outputs.issue }}
           message: |
             **Howdie!**
-```
+````
 
 ## Contributors ✨
 

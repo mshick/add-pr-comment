@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { getInputAsArray, getMessageFromPaths } from './util'
+import { getMessageFromPaths } from './util'
 
 interface Inputs {
   allowRepeats: boolean
@@ -9,7 +9,7 @@ interface Inputs {
   issue?: number
   message?: string
   messageId: string
-  messagePath?: string[]
+  messagePath?: string
   messageSuccess?: string
   messageFailure?: string
   messageCancelled?: string
@@ -27,7 +27,7 @@ export async function getInputs(): Promise<Inputs> {
   const messageIdInput = core.getInput('message-id', { required: false })
   const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`
   const messageInput = core.getInput('message', { required: false })
-  const messagePath = getInputAsArray('message-path', { required: false })
+  const messagePath = core.getInput('message-path', { required: false })
   const repoOwner = core.getInput('repo-owner', { required: true })
   const repoName = core.getInput('repo-name', { required: true })
   const repoToken = core.getInput('repo-token', { required: true })

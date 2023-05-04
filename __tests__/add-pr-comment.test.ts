@@ -9,8 +9,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
 
-const messagePathFixture = path.resolve(__dirname, './message.txt')
-const messagePathFixturePayload = await fs.readFile(messagePathFixture, 'utf-8')
+const messagePath1Fixture = path.resolve(__dirname, './message-part-1.txt')
+const messagePath1FixturePayload = await fs.readFile(messagePath1Fixture, 'utf-8')
+const messagePath2Fixture = path.resolve(__dirname, './message-part-2.txt')
 
 const repoToken = '12345'
 const commitSha = 'abc123'
@@ -93,7 +94,13 @@ const handlers = [
 const server = setupServer(...handlers)
 
 describe('add-pr-comment action', () => {
-  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+  beforeAll(() => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
+    vi.spyOn(core, 'debug').mockImplementation(() => {})
+    vi.spyOn(core, 'info').mockImplementation(() => {})
+    vi.spyOn(core, 'warning').mockImplementation(() => {})
+    server.listen({ onUnhandledRequest: 'error' })
+  })
   afterAll(() => server.close())
 
   beforeEach(() => {
@@ -146,11 +153,11 @@ describe('add-pr-comment action', () => {
 
   it('creates a comment with a message-path', async () => {
     inputs.message = undefined
-    inputs['message-path'] = messagePathFixture
+    inputs['message-path'] = messagePath1Fixture
     inputs['allow-repeats'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
-    expect(`<!-- add-pr-comment:add-pr-comment -->\n\n${messagePathFixturePayload}`).toEqual(
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\n${messagePath1FixturePayload}`).toEqual(
       messagePayload?.body,
     )
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
@@ -159,12 +166,25 @@ describe('add-pr-comment action', () => {
 
   it('creates a comment with multiple message-paths concatenated', async () => {
     inputs.message = undefined
-    inputs['message-path'] = `${messagePathFixture}\n${messagePathFixture}`
+    inputs['message-path'] = `${messagePath1Fixture}\n${messagePath2Fixture}`
     inputs['allow-repeats'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
     expect(
-      `<!-- add-pr-comment:add-pr-comment -->\n\n${messagePathFixturePayload}\n${messagePathFixturePayload}`,
+      `<!-- add-pr-comment:add-pr-comment -->\n\n${messagePath1FixturePayload}\n${messagePath1FixturePayload}`,
+    ).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('supports globs in message paths', async () => {
+    inputs.message = undefined
+    inputs['message-path'] = `${path.resolve(__dirname)}/message-part-*.txt`
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(
+      `<!-- add-pr-comment:add-pr-comment -->\n\n${messagePath1FixturePayload}\n${messagePath1FixturePayload}`,
     ).toEqual(messagePayload?.body)
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
@@ -172,7 +192,7 @@ describe('add-pr-comment action', () => {
 
   it('fails when both message and message-path are defined', async () => {
     inputs.message = 'foobar'
-    inputs['message-path'] = path.resolve(__dirname, './message.txt')
+    inputs['message-path'] = messagePath1Fixture
 
     await expect(run()).resolves.not.toThrow()
     expect(core.setFailed).toHaveBeenCalledWith('must specify only one, message or message-path')
