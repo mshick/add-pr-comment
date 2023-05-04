@@ -152,7 +152,7 @@ files and files on multiple lines, the contents of which will be concatenated.
 
 **Example**
 
-````yaml
+```yaml
 on:
   pull_request:
 
@@ -168,6 +168,7 @@ jobs:
           message-path: |
             message-part-*.txt
 ```
+
 
 ### Bring your own issues
 
