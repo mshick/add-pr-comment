@@ -53,6 +53,9 @@ inputs:
   issue:
     description: "Override the message when a run is cancelled."
     required: false
+  update-only:
+    description: "Only update the comment if it already exists."
+    required: false
 outputs:
   comment-created:
     description: "Whether a comment was created."

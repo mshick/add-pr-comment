@@ -1,6 +1,6 @@
 # add-pr-comment
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-4-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-5-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A GitHub Action which adds a comment to a pull request's issue.
@@ -82,6 +82,7 @@ jobs:
 | allow-repeats            | with     | Boolean flag to allow identical messages to be posted each time this action is run.                  | no       | false                              |
 | proxy-url                | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                    | no       |                                    |
 | issue                    | with     | Optional issue number override.                                                                      | no       |                                    |
+| update-only              | with     | Only update the comment if it already exists.                                                        | no       |                                    |
 | GITHUB_TOKEN             | env      | Valid GitHub token, can alternatively be defined in the env.                                         | no       |                                    |
 
 ## Advanced Uses
@@ -188,6 +189,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/aryella-lacerda"><img src="https://avatars.githubusercontent.com/u/28730324?v=4?s=100" width="100px;" alt="Aryella Lacerda"/><br /><sub><b>Aryella Lacerda</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=aryella-lacerda" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/vincent-joignie-dd"><img src="https://avatars.githubusercontent.com/u/103102299?v=4?s=100" width="100px;" alt="vincent-joignie-dd"/><br /><sub><b>vincent-joignie-dd</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=vincent-joignie-dd" title="Code">💻</a></td>
       <td align="center" valign="top" width="14.28%"><a href="https://ahanoff.dev"><img src="https://avatars.githubusercontent.com/u/2371703?v=4?s=100" width="100px;" alt="Akhan Zhakiyanov"/><br /><sub><b>Akhan Zhakiyanov</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=ahanoff" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/ahatzz11"><img src="https://avatars.githubusercontent.com/u/6256032?v=4?s=100" width="100px;" alt="Alex Hatzenbuhler"/><br /><sub><b>Alex Hatzenbuhler</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=ahatzz11" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>

@@ -24,6 +24,7 @@ type Inputs = {
   'message-failure'?: string
   'message-cancelled'?: string
   'message-skipped'?: string
+  'update-only'?: string
   status?: 'success' | 'failure' | 'cancelled' | 'skipped'
 }
 
@@ -173,6 +174,15 @@ describe('add-pr-comment action', () => {
 
     await expect(run()).resolves.not.toThrow()
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+  })
+
+  it('does not create a comment when updateOnly is true and no existing comment is found', async () => {
+    inputs.message = simpleMessage
+    inputs['allow-repeats'] = 'true'
+    inputs['update-only'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
   })
 
   it('creates a comment in another repo', async () => {

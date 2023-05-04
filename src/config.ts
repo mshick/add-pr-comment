@@ -20,6 +20,7 @@ interface Inputs {
   repoToken: string
   status?: string
   owner: string
+  updateOnly: boolean
 }
 
 export async function getInputs(): Promise<Inputs> {
@@ -27,8 +28,8 @@ export async function getInputs(): Promise<Inputs> {
   const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`
   const messageInput = core.getInput('message', { required: false })
   const messagePath = getInputAsArray('message-path', { required: false })
-  const owner = core.getInput('repo-owner', { required: true })
-  const repo = core.getInput('repo-name', { required: true })
+  const repoOwner = core.getInput('repo-owner', { required: true })
+  const repoName = core.getInput('repo-name', { required: true })
   const repoToken = core.getInput('repo-token', { required: true })
   const status = core.getInput('status', { required: true })
   const issue = core.getInput('issue', { required: false })
@@ -36,6 +37,7 @@ export async function getInputs(): Promise<Inputs> {
   const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true'
   const refreshMessagePosition =
     core.getInput('refresh-message-position', { required: false }) === 'true'
+  const updateOnly = core.getInput('update-only', { required: false }) === 'true'
 
   if (messageInput && messagePath.length) {
     throw new Error('must specify only one, message or message-path')
@@ -87,7 +89,8 @@ export async function getInputs(): Promise<Inputs> {
     refreshMessagePosition,
     repoToken,
     status,
-    owner,
-    repo,
+    owner: repoOwner || payload.repo.owner,
+    repo: repoName || payload.repo.repo,
+    updateOnly: updateOnly,
   }
 }

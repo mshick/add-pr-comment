@@ -1,6 +1,6 @@
 {
   "name": "@mshick/add-pr-comment",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
   "keywords": [
     "GitHub",
@@ -25,8 +25,9 @@
     "build": "del-cli dist && tsc && ncc build --source-map",
     "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
     "lint": "eslint src/**/*.ts",
-    "release": "np --no-publish",
+    "release": "npm run build && np --no-publish",
     "test": "vitest run",
+    "version": "npm run build && git add lib dist",
     "watch": "vitest"
   },
   "prettier": {
