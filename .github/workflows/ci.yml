@@ -62,7 +62,14 @@ jobs:
 
       - uses: ./
         with:
+          message-id: path
+          message-path: |
+            .github/test/file-*.txt
+
+      - uses: ./
+        with:
+          message-id: text
           message: |
-            **Hello ${{ github.run_number }}**
+            **Hello**
             🌏
-            !
+            !            

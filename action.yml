@@ -5,7 +5,7 @@ inputs:
     description: "The message to print."
     required: false
   message-path:
-    description: "A path to a file to print as a message instead of a string."
+    description: "A path or list of paths to a file to print as a message instead of a string."
     required: false
   message-id:
     description: "An optional id to use for this message."

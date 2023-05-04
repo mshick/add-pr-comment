@@ -76,6 +76,23 @@
       },
       {
         "files": [
+          "**/*.test.ts"
+        ],
+        "parser": "@typescript-eslint/parser",
+        "parserOptions": {
+          "ecmaVersion": "latest",
+          "sourceType": "module"
+        },
+        "extends": [
+          "plugin:@typescript-eslint/recommended"
+        ],
+        "rules": {
+          "@typescript-eslint/no-empty-function": "off",
+          "@typescript-eslint/no-explicit-any": "off"
+        }
+      },
+      {
+        "files": [
           "*.json"
         ],
         "plugins": [
@@ -103,8 +120,10 @@
     "dist"
   ],
   "dependencies": {
+    "@actions/artifact": "^1.1.1",
     "@actions/core": "^1.10.0",
     "@actions/github": "^5.1.1",
+    "@actions/glob": "^0.4.0",
     "@actions/http-client": "^2.1.0"
   },
   "devDependencies": {

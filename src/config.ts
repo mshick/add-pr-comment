@@ -1,10 +1,12 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import fs from 'node:fs/promises'
+import { getMessageFromPaths } from './util'
 
 interface Inputs {
-  refreshMessagePosition: boolean
   allowRepeats: boolean
+  attachPath?: string[]
+  commitSha: string
+  issue?: number
   message?: string
   messageId: string
   messagePath?: string
@@ -12,12 +14,11 @@ interface Inputs {
   messageFailure?: string
   messageCancelled?: string
   proxyUrl?: string
+  pullRequestNumber?: number
+  refreshMessagePosition: boolean
+  repo: string
   repoToken: string
   status?: string
-  issue?: number
-  commitSha: string
-  pullRequestNumber?: number
-  repo: string
   owner: string
   updateOnly: boolean
 }
@@ -38,14 +39,14 @@ export async function getInputs(): Promise<Inputs> {
     core.getInput('refresh-message-position', { required: false }) === 'true'
   const updateOnly = core.getInput('update-only', { required: false }) === 'true'
 
-  if (messageInput && messagePath) {
+  if (messageInput && messagePath.length) {
     throw new Error('must specify only one, message or message-path')
   }
 
   let message
 
-  if (messagePath) {
-    message = await fs.readFile(messagePath, { encoding: 'utf8' })
+  if (messagePath.length) {
+    message = await getMessageFromPaths(messagePath)
   } else {
     message = messageInput
   }
@@ -78,16 +79,16 @@ export async function getInputs(): Promise<Inputs> {
   const { payload } = github.context
 
   return {
-    refreshMessagePosition,
     allowRepeats,
+    commitSha: github.context.sha,
+    issue: issue ? Number(issue) : payload.issue?.number,
     message,
     messageId: `<!-- ${messageId} -->`,
     proxyUrl,
+    pullRequestNumber: payload.pull_request?.number,
+    refreshMessagePosition,
     repoToken,
     status,
-    issue: issue ? Number(issue) : payload.issue?.number,
-    pullRequestNumber: payload.pull_request?.number,
-    commitSha: github.context.sha,
     owner: repoOwner || payload.repo.owner,
     repo: repoName || payload.repo.repo,
     updateOnly: updateOnly,
