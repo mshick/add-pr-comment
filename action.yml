@@ -53,9 +53,6 @@ inputs:
   issue:
     description: "Override the message when a run is cancelled."
     required: false
-  attach-path:
-    description: "Path or a list of paths of files to attach. They will be uploaded as artifacts and appended to your message."
-    required: false
 outputs:
   comment-created:
     description: "Whether a comment was created."

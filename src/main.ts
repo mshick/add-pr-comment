@@ -8,14 +8,10 @@ import {
   updateComment,
 } from './comments'
 import { getInputs } from './config'
-import { getWorkflowArtifactDetails } from './files/details'
-import { uploadAttachments } from './files/upload'
 import { getIssueNumberFromCommitPullsList } from './issues'
 import { createCommentProxy } from './proxy'
 
 const run = async (): Promise<void> => {
-  core.info('running action................')
-
   try {
     const {
       allowRepeats,
@@ -29,7 +25,6 @@ const run = async (): Promise<void> => {
       commitSha,
       repo,
       owner,
-      attachPath,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
@@ -68,17 +63,6 @@ const run = async (): Promise<void> => {
     let comment: CreateIssueCommentResponseData | null | undefined
 
     const body = `${messageId}\n\n${message}`
-
-    if (attachPath) {
-      const artifactName = 'TEST_ARTIFACT'
-      for (const attach of attachPath) {
-        await uploadAttachments(attach, artifactName)
-      }
-
-      const artifactDetails = await getWorkflowArtifactDetails(octokit, owner, repo)
-
-      core.info(JSON.stringify(artifactDetails, null, 2))
-    }
 
     if (proxyUrl) {
       comment = await createCommentProxy({

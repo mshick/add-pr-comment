@@ -36,7 +36,6 @@ export async function getInputs(): Promise<Inputs> {
   const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true'
   const refreshMessagePosition =
     core.getInput('refresh-message-position', { required: false }) === 'true'
-  const attachPath = getInputAsArray('attach-path', { required: false })
 
   if (messageInput && messagePath.length) {
     throw new Error('must specify only one, message or message-path')
@@ -79,7 +78,6 @@ export async function getInputs(): Promise<Inputs> {
 
   return {
     allowRepeats,
-    attachPath,
     commitSha: github.context.sha,
     issue: issue ? Number(issue) : payload.issue?.number,
     message,
