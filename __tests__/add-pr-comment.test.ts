@@ -3,10 +3,14 @@ import * as github from '@actions/github'
 import { WebhookPayload } from '@actions/github/lib/interfaces'
 import { rest } from 'msw'
 import { setupServer } from 'msw/node'
+import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
+
+const messagePathFixture = path.resolve(__dirname, './message.txt')
+const messagePathFixturePayload = await fs.readFile(messagePathFixture, 'utf-8')
 
 const repoToken = '12345'
 const commitSha = 'abc123'
@@ -95,6 +99,7 @@ describe('add-pr-comment action', () => {
   beforeEach(() => {
     inputs = { ...defaultInputs }
     issueNumber = defaultIssueNumber
+    messagePayload = undefined
 
     vi.resetModules()
 
@@ -141,10 +146,26 @@ describe('add-pr-comment action', () => {
 
   it('creates a comment with a message-path', async () => {
     inputs.message = undefined
-    inputs['message-path'] = path.resolve(__dirname, './message.txt')
+    inputs['message-path'] = messagePathFixture
     inputs['allow-repeats'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\n${messagePathFixturePayload}`).toEqual(
+      messagePayload?.body,
+    )
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('creates a comment with multiple message-paths concatenated', async () => {
+    inputs.message = undefined
+    inputs['message-path'] = `${messagePathFixture}\n${messagePathFixture}`
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(
+      `<!-- add-pr-comment:add-pr-comment -->\n\n${messagePathFixturePayload}\n${messagePathFixturePayload}`,
+    ).toEqual(messagePayload?.body)
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
