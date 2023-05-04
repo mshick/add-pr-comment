@@ -85,7 +85,7 @@ jobs:
 | allow-repeats            | with     | Boolean flag to allow identical messages to be posted each time this action is run.                                                                                         | no       | false                              |
 | proxy-url                | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                                                                                           | no       |                                    |
 | issue                    | with     | Optional issue number override.                                                                                                                                             | no       |                                    |
-| update-only              | with     | Only update the comment if it already exists.                                                                                                                               | no       |                                    |
+| update-only              | with     | Only update the comment if it already exists.                                                                                                                               | no       | false                              |
 | GITHUB_TOKEN             | env      | Valid GitHub token, can alternatively be defined in the env.                                                                                                                | no       |                                    |
 
 ## Advanced Uses
