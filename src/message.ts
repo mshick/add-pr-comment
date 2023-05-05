@@ -22,15 +22,23 @@ export async function getMessage({
 >) {
   let message
 
+  console.log('a', { message, messagePath })
+
   if (status === 'success') {
+    console.log('aaa')
     if (messageSuccess) {
+      console.log('bbb')
       message = messageSuccess
-    } else if (messagePath?.length) {
-      message = await getMessageFromPaths(messagePath)
+    } else if (messagePath) {
+      console.log('ccc')
+      message = await getMessageFromPath(messagePath)
+      console.log('ddd', message)
     } else {
       message = messageInput
     }
   }
+
+  console.log('b', { message })
 
   if (status === 'failure' && messageFailure) {
     message = messageFailure
@@ -48,13 +56,19 @@ export async function getMessage({
     throw new Error('no message, check your message inputs')
   }
 
+  console.log({ message })
+
   return message
 }
 
-export async function getMessageFromPaths(searchPath: string) {
+export async function getMessageFromPath(searchPath: string) {
   let message = ''
 
+  console.log('hey')
+
   const files = await findFiles(searchPath)
+
+  console.log({ files })
 
   for (const [index, path] of files.entries()) {
     if (index > 0) {

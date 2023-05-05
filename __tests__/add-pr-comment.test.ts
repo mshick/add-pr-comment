@@ -41,6 +41,7 @@ const defaultInputs: Inputs = {
   'repo-token': repoToken,
   'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
+  status: 'success',
 }
 
 const defaultIssueNumber = 1
@@ -95,7 +96,7 @@ const server = setupServer(...handlers)
 
 describe('add-pr-comment action', () => {
   beforeAll(() => {
-    vi.spyOn(console, 'log').mockImplementation(() => {})
+    // vi.spyOn(console, 'log').mockImplementation(() => {})
     vi.spyOn(core, 'debug').mockImplementation(() => {})
     vi.spyOn(core, 'info').mockImplementation(() => {})
     vi.spyOn(core, 'warning').mockImplementation(() => {})
@@ -156,6 +157,11 @@ describe('add-pr-comment action', () => {
     inputs['message-path'] = messagePath1Fixture
     inputs['allow-repeats'] = 'true'
 
+    console.log('......................')
+    console.log(messagePath1FixturePayload)
+    console.log('----------------------')
+    console.log(messagePayload?.body)
+
     await expect(run()).resolves.not.toThrow()
     expect(`<!-- add-pr-comment:add-pr-comment -->\n\n${messagePath1FixturePayload}`).toEqual(
       messagePayload?.body,
@@ -164,7 +170,7 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
-  it('creates a comment with multiple message-paths concatenated', async () => {
+  it.only('creates a comment with multiple message-paths concatenated', async () => {
     inputs.message = undefined
     inputs['message-path'] = `${messagePath1Fixture}\n${messagePath2Fixture}`
     inputs['allow-repeats'] = 'true'

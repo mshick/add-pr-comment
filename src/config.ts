@@ -39,6 +39,7 @@ export async function getInputs(): Promise<Inputs> {
     messageFailure,
     messageCancelled,
     messageSkipped,
+    messagePath,
     proxyUrl,
     pullRequestNumber: payload.pull_request?.number,
     refreshMessagePosition,
