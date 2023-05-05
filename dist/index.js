@@ -110,11 +110,11 @@ async function getInputs() {
     const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true';
     const refreshMessagePosition = core.getInput('refresh-message-position', { required: false }) === 'true';
     const updateOnly = core.getInput('update-only', { required: false }) === 'true';
-    if (messageInput && messagePath.length) {
+    if (messageInput && messagePath) {
         throw new Error('must specify only one, message or message-path');
     }
     let message;
-    if (messagePath.length) {
+    if (messagePath) {
         message = await (0, util_1.getMessageFromPaths)(messagePath);
     }
     else {
