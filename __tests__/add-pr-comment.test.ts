@@ -30,6 +30,7 @@ type Inputs = {
   'message-cancelled'?: string
   'message-skipped'?: string
   'update-only'?: string
+  preformatted?: string
   status?: 'success' | 'failure' | 'cancelled' | 'skipped'
 }
 
@@ -41,6 +42,7 @@ const defaultInputs: Inputs = {
   'repo-token': repoToken,
   'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
+  status: 'success',
 }
 
 const defaultIssueNumber = 1
@@ -95,10 +97,10 @@ const server = setupServer(...handlers)
 
 describe('add-pr-comment action', () => {
   beforeAll(() => {
-    vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.spyOn(core, 'debug').mockImplementation(() => {})
-    vi.spyOn(core, 'info').mockImplementation(() => {})
-    vi.spyOn(core, 'warning').mockImplementation(() => {})
+    // vi.spyOn(console, 'log').mockImplementation(() => {})
+    // vi.spyOn(core, 'debug').mockImplementation(() => {})
+    // vi.spyOn(core, 'info').mockImplementation(() => {})
+    // vi.spyOn(core, 'warning').mockImplementation(() => {})
     server.listen({ onUnhandledRequest: 'error' })
   })
   afterAll(() => server.close())
@@ -391,5 +393,18 @@ describe('add-pr-comment action', () => {
 
     await run()
     expect(messagePayload?.body).toContain('666')
+  })
+
+  it('wraps a message in a codeblock if preformatted is true', async () => {
+    inputs.message = undefined
+    inputs['preformatted'] = 'true'
+    inputs['message-path'] = messagePath1Fixture
+
+    await expect(run()).resolves.not.toThrow()
+    expect(
+      `<!-- add-pr-comment:add-pr-comment -->\n\n\`\`\`\n${messagePath1FixturePayload}\n\`\`\``,
+    ).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 })

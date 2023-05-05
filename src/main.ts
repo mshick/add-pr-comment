@@ -9,13 +9,15 @@ import {
 } from './comments'
 import { getInputs } from './config'
 import { getIssueNumberFromCommitPullsList } from './issues'
+import { getMessage } from './message'
 import { createCommentProxy } from './proxy'
 
 const run = async (): Promise<void> => {
   try {
     const {
       allowRepeats,
-      message,
+      messagePath,
+      messageInput,
       messageId,
       refreshMessagePosition,
       repoToken,
@@ -26,9 +28,26 @@ const run = async (): Promise<void> => {
       repo,
       owner,
       updateOnly,
+      messageCancelled,
+      messageFailure,
+      messageSuccess,
+      messageSkipped,
+      preformatted,
+      status,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
+
+    const message = await getMessage({
+      messagePath,
+      messageInput,
+      messageSkipped,
+      messageCancelled,
+      messageSuccess,
+      messageFailure,
+      preformatted,
+      status,
+    })
 
     let issueNumber
 

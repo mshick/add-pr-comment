@@ -1,27 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { getMessageFromPaths } from './util'
-
-interface Inputs {
-  allowRepeats: boolean
-  attachPath?: string[]
-  commitSha: string
-  issue?: number
-  message?: string
-  messageId: string
-  messagePath?: string
-  messageSuccess?: string
-  messageFailure?: string
-  messageCancelled?: string
-  proxyUrl?: string
-  pullRequestNumber?: number
-  refreshMessagePosition: boolean
-  repo: string
-  repoToken: string
-  status?: string
-  owner: string
-  updateOnly: boolean
-}
+import { Inputs } from './types'
 
 export async function getInputs(): Promise<Inputs> {
   const messageIdInput = core.getInput('message-id', { required: false })
@@ -38,17 +17,10 @@ export async function getInputs(): Promise<Inputs> {
   const refreshMessagePosition =
     core.getInput('refresh-message-position', { required: false }) === 'true'
   const updateOnly = core.getInput('update-only', { required: false }) === 'true'
+  const preformatted = core.getInput('preformatted', { required: false }) === 'true'
 
   if (messageInput && messagePath) {
     throw new Error('must specify only one, message or message-path')
-  }
-
-  let message
-
-  if (messagePath) {
-    message = await getMessageFromPaths(messagePath)
-  } else {
-    message = messageInput
   }
 
   const messageSuccess = core.getInput(`message-success`)
@@ -56,34 +28,20 @@ export async function getInputs(): Promise<Inputs> {
   const messageCancelled = core.getInput(`message-cancelled`)
   const messageSkipped = core.getInput(`message-skipped`)
 
-  if (status === 'success' && messageSuccess) {
-    message = messageSuccess
-  }
-
-  if (status === 'failure' && messageFailure) {
-    message = messageFailure
-  }
-
-  if (status === 'cancelled' && messageCancelled) {
-    message = messageCancelled
-  }
-
-  if (status === 'skipped' && messageSkipped) {
-    message = messageSkipped
-  }
-
-  if (!message) {
-    throw new Error('no message, check your message inputs')
-  }
-
   const { payload } = github.context
 
   return {
     allowRepeats,
     commitSha: github.context.sha,
     issue: issue ? Number(issue) : payload.issue?.number,
-    message,
+    messageInput,
     messageId: `<!-- ${messageId} -->`,
+    messageSuccess,
+    messageFailure,
+    messageCancelled,
+    messageSkipped,
+    messagePath,
+    preformatted,
     proxyUrl,
     pullRequestNumber: payload.pull_request?.number,
     refreshMessagePosition,

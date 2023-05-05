@@ -87,6 +87,7 @@ jobs:
 | issue                    | with     | Optional issue number override.                                                                                                                                             | no       |                                    |
 | update-only              | with     | Only update the comment if it already exists.                                                                                                                               | no       | false                              |
 | GITHUB_TOKEN             | env      | Valid GitHub token, can alternatively be defined in the env.                                                                                                                | no       |                                    |
+| preformatted             | with     | Treat message text as pre-formatted and place it in a codeblock                                                                                                             | no       |                                    |
 
 ## Advanced Uses
 
@@ -169,7 +170,6 @@ jobs:
             message-part-*.txt
 ```
 
-
 ### Bring your own issues
 
 You can set an issue id explicitly. Helpful for cases where you want to post
@@ -202,7 +202,7 @@ jobs:
           issue: ${{ steps.pr.outputs.issue }}
           message: |
             **Howdie!**
-````
+```
 
 ## Contributors ✨
 

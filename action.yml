@@ -56,6 +56,9 @@ inputs:
   update-only:
     description: "Only update the comment if it already exists."
     required: false
+  preformatted:
+    description: "Treat message text (from a file or input) as pre-formatted and place it in a codeblock."
+    required: false    
 outputs:
   comment-created:
     description: "Whether a comment was created."
