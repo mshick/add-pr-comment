@@ -94,7 +94,6 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getInputs = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const github = __importStar(__nccwpck_require__(5438));
-const util_1 = __nccwpck_require__(4024);
 async function getInputs() {
     var _a, _b;
     const messageIdInput = core.getInput('message-id', { required: false });
@@ -110,42 +109,27 @@ async function getInputs() {
     const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true';
     const refreshMessagePosition = core.getInput('refresh-message-position', { required: false }) === 'true';
     const updateOnly = core.getInput('update-only', { required: false }) === 'true';
+    const preformatted = core.getInput('preformatted', { required: false }) === 'true';
     if (messageInput && messagePath) {
         throw new Error('must specify only one, message or message-path');
-    }
-    let message;
-    if (messagePath) {
-        message = await (0, util_1.getMessageFromPaths)(messagePath);
-    }
-    else {
-        message = messageInput;
     }
     const messageSuccess = core.getInput(`message-success`);
     const messageFailure = core.getInput(`message-failure`);
     const messageCancelled = core.getInput(`message-cancelled`);
     const messageSkipped = core.getInput(`message-skipped`);
-    if (status === 'success' && messageSuccess) {
-        message = messageSuccess;
-    }
-    if (status === 'failure' && messageFailure) {
-        message = messageFailure;
-    }
-    if (status === 'cancelled' && messageCancelled) {
-        message = messageCancelled;
-    }
-    if (status === 'skipped' && messageSkipped) {
-        message = messageSkipped;
-    }
-    if (!message) {
-        throw new Error('no message, check your message inputs');
-    }
     const { payload } = github.context;
     return {
         allowRepeats,
         commitSha: github.context.sha,
         issue: issue ? Number(issue) : (_a = payload.issue) === null || _a === void 0 ? void 0 : _a.number,
-        message,
+        messageInput,
         messageId: `<!-- ${messageId} -->`,
+        messageSuccess,
+        messageFailure,
+        messageCancelled,
+        messageSkipped,
+        messagePath,
+        preformatted,
         proxyUrl,
         pullRequestNumber: (_b = payload.pull_request) === null || _b === void 0 ? void 0 : _b.number,
         refreshMessagePosition,
@@ -157,6 +141,67 @@ async function getInputs() {
     };
 }
 exports.getInputs = getInputs;
+
+
+/***/ }),
+
+/***/ 1743:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.findFiles = void 0;
+const core = __importStar(__nccwpck_require__(2186));
+const glob = __importStar(__nccwpck_require__(8090));
+const promises_1 = __importDefault(__nccwpck_require__(3977));
+async function findFiles(searchPath) {
+    const searchResults = [];
+    const globber = await glob.create(searchPath, {
+        followSymbolicLinks: true,
+        implicitDescendants: true,
+        omitBrokenSymbolicLinks: true,
+    });
+    const rawSearchResults = await globber.glob();
+    for (const searchResult of rawSearchResults) {
+        const fileStats = await promises_1.default.stat(searchResult);
+        if (!fileStats.isDirectory()) {
+            core.debug(`File: ${searchResult} was found using the provided searchPath`);
+            searchResults.push(searchResult);
+        }
+        else {
+            core.debug(`Removing ${searchResult} from rawSearchResults because it is a directory`);
+        }
+    }
+    return searchResults;
+}
+exports.findFiles = findFiles;
 
 
 /***/ }),
@@ -216,11 +261,22 @@ const github = __importStar(__nccwpck_require__(5438));
 const comments_1 = __nccwpck_require__(1910);
 const config_1 = __nccwpck_require__(88);
 const issues_1 = __nccwpck_require__(6962);
+const message_1 = __nccwpck_require__(3307);
 const proxy_1 = __nccwpck_require__(8689);
 const run = async () => {
     try {
-        const { allowRepeats, message, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, } = await (0, config_1.getInputs)();
+        const { allowRepeats, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, } = await (0, config_1.getInputs)();
         const octokit = github.getOctokit(repoToken);
+        const message = await (0, message_1.getMessage)({
+            messagePath,
+            messageInput,
+            messageSkipped,
+            messageCancelled,
+            messageSuccess,
+            messageFailure,
+            preformatted,
+            status,
+        });
         let issueNumber;
         if (issue) {
             issueNumber = issue;
@@ -306,6 +362,65 @@ exports["default"] = run;
 
 /***/ }),
 
+/***/ 3307:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getMessageFromPath = exports.getMessage = void 0;
+const promises_1 = __importDefault(__nccwpck_require__(3977));
+const files_1 = __nccwpck_require__(1743);
+async function getMessage({ messageInput, messagePath, messageCancelled, messageSkipped, messageFailure, messageSuccess, preformatted, status, }) {
+    let message;
+    if (status === 'success') {
+        if (messageSuccess) {
+            message = messageSuccess;
+        }
+        else if (messagePath) {
+            message = await getMessageFromPath(messagePath);
+        }
+        else {
+            message = messageInput;
+        }
+    }
+    if (status === 'failure' && messageFailure) {
+        message = messageFailure;
+    }
+    if (status === 'cancelled' && messageCancelled) {
+        message = messageCancelled;
+    }
+    if (status === 'skipped' && messageSkipped) {
+        message = messageSkipped;
+    }
+    if (!message) {
+        throw new Error('no message, check your message inputs');
+    }
+    if (preformatted) {
+        message = `\`\`\`\n${message}\n\`\`\``;
+    }
+    return message;
+}
+exports.getMessage = getMessage;
+async function getMessageFromPath(searchPath) {
+    let message = '';
+    const files = await (0, files_1.findFiles)(searchPath);
+    for (const [index, path] of files.entries()) {
+        if (index > 0) {
+            message += '\n';
+        }
+        message += await promises_1.default.readFile(path, { encoding: 'utf8' });
+    }
+    return message;
+}
+exports.getMessageFromPath = getMessageFromPath;
+
+
+/***/ }),
+
 /***/ 8689:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -323,82 +438,6 @@ async function createCommentProxy(params) {
     return response.result;
 }
 exports.createCommentProxy = createCommentProxy;
-
-
-/***/ }),
-
-/***/ 4024:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.findFiles = exports.getMessageFromPaths = void 0;
-const core = __importStar(__nccwpck_require__(2186));
-const glob = __importStar(__nccwpck_require__(8090));
-const promises_1 = __importDefault(__nccwpck_require__(3977));
-async function getMessageFromPaths(searchPath) {
-    let message = '';
-    const files = await findFiles(searchPath);
-    for (const [index, path] of files.entries()) {
-        if (index > 0) {
-            message += '\n';
-        }
-        message += await promises_1.default.readFile(path, { encoding: 'utf8' });
-    }
-    return message;
-}
-exports.getMessageFromPaths = getMessageFromPaths;
-function getDefaultGlobOptions() {
-    return {
-        followSymbolicLinks: true,
-        implicitDescendants: true,
-        omitBrokenSymbolicLinks: true,
-    };
-}
-async function findFiles(searchPath, globOptions) {
-    const searchResults = [];
-    const globber = await glob.create(searchPath, globOptions || getDefaultGlobOptions());
-    const rawSearchResults = await globber.glob();
-    for (const searchResult of rawSearchResults) {
-        const fileStats = await promises_1.default.stat(searchResult);
-        if (!fileStats.isDirectory()) {
-            core.debug(`File: ${searchResult} was found using the provided searchPath`);
-            searchResults.push(searchResult);
-        }
-        else {
-            core.debug(`Removing ${searchResult} from rawSearchResults because it is a directory`);
-        }
-    }
-    return searchResults;
-}
-exports.findFiles = findFiles;
 
 
 /***/ }),
