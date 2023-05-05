@@ -17,6 +17,7 @@ export async function getInputs(): Promise<Inputs> {
   const refreshMessagePosition =
     core.getInput('refresh-message-position', { required: false }) === 'true'
   const updateOnly = core.getInput('update-only', { required: false }) === 'true'
+  const preformatted = core.getInput('preformatted', { required: false }) === 'true'
 
   if (messageInput && messagePath) {
     throw new Error('must specify only one, message or message-path')
@@ -40,6 +41,7 @@ export async function getInputs(): Promise<Inputs> {
     messageCancelled,
     messageSkipped,
     messagePath,
+    preformatted,
     proxyUrl,
     pullRequestNumber: payload.pull_request?.number,
     refreshMessagePosition,

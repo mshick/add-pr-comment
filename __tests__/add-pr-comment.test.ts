@@ -30,6 +30,7 @@ type Inputs = {
   'message-cancelled'?: string
   'message-skipped'?: string
   'update-only'?: string
+  preformatted?: string
   status?: 'success' | 'failure' | 'cancelled' | 'skipped'
 }
 
@@ -97,9 +98,9 @@ const server = setupServer(...handlers)
 describe('add-pr-comment action', () => {
   beforeAll(() => {
     // vi.spyOn(console, 'log').mockImplementation(() => {})
-    vi.spyOn(core, 'debug').mockImplementation(() => {})
-    vi.spyOn(core, 'info').mockImplementation(() => {})
-    vi.spyOn(core, 'warning').mockImplementation(() => {})
+    // vi.spyOn(core, 'debug').mockImplementation(() => {})
+    // vi.spyOn(core, 'info').mockImplementation(() => {})
+    // vi.spyOn(core, 'warning').mockImplementation(() => {})
     server.listen({ onUnhandledRequest: 'error' })
   })
   afterAll(() => server.close())
@@ -157,11 +158,6 @@ describe('add-pr-comment action', () => {
     inputs['message-path'] = messagePath1Fixture
     inputs['allow-repeats'] = 'true'
 
-    console.log('......................')
-    console.log(messagePath1FixturePayload)
-    console.log('----------------------')
-    console.log(messagePayload?.body)
-
     await expect(run()).resolves.not.toThrow()
     expect(`<!-- add-pr-comment:add-pr-comment -->\n\n${messagePath1FixturePayload}`).toEqual(
       messagePayload?.body,
@@ -170,7 +166,7 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
-  it.only('creates a comment with multiple message-paths concatenated', async () => {
+  it('creates a comment with multiple message-paths concatenated', async () => {
     inputs.message = undefined
     inputs['message-path'] = `${messagePath1Fixture}\n${messagePath2Fixture}`
     inputs['allow-repeats'] = 'true'
@@ -397,5 +393,18 @@ describe('add-pr-comment action', () => {
 
     await run()
     expect(messagePayload?.body).toContain('666')
+  })
+
+  it('wraps a message in a codeblock if preformatted is true', async () => {
+    inputs.message = undefined
+    inputs['preformatted'] = 'true'
+    inputs['message-path'] = messagePath1Fixture
+
+    await expect(run()).resolves.not.toThrow()
+    expect(
+      `<!-- add-pr-comment:add-pr-comment -->\n\n\`\`\`\n${messagePath1FixturePayload}\n\`\`\``,
+    ).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 })

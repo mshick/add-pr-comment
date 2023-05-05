@@ -9,6 +9,7 @@ export async function getMessage({
   messageSkipped,
   messageFailure,
   messageSuccess,
+  preformatted,
   status,
 }: Pick<
   Inputs,
@@ -18,27 +19,20 @@ export async function getMessage({
   | 'messageFailure'
   | 'messageSkipped'
   | 'messagePath'
+  | 'preformatted'
   | 'status'
 >) {
   let message
 
-  console.log('a', { message, messagePath })
-
   if (status === 'success') {
-    console.log('aaa')
     if (messageSuccess) {
-      console.log('bbb')
       message = messageSuccess
     } else if (messagePath) {
-      console.log('ccc')
       message = await getMessageFromPath(messagePath)
-      console.log('ddd', message)
     } else {
       message = messageInput
     }
   }
-
-  console.log('b', { message })
 
   if (status === 'failure' && messageFailure) {
     message = messageFailure
@@ -56,7 +50,9 @@ export async function getMessage({
     throw new Error('no message, check your message inputs')
   }
 
-  console.log({ message })
+  if (preformatted) {
+    message = `\`\`\`\n${message}\n\`\`\``
+  }
 
   return message
 }
@@ -64,11 +60,7 @@ export async function getMessage({
 export async function getMessageFromPath(searchPath: string) {
   let message = ''
 
-  console.log('hey')
-
   const files = await findFiles(searchPath)
-
-  console.log({ files })
 
   for (const [index, path] of files.entries()) {
     if (index > 0) {

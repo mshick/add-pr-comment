@@ -32,18 +32,20 @@ const run = async (): Promise<void> => {
       messageFailure,
       messageSuccess,
       messageSkipped,
+      preformatted,
       status,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
 
-    const message = getMessage({
+    const message = await getMessage({
       messagePath,
       messageInput,
       messageSkipped,
       messageCancelled,
       messageSuccess,
       messageFailure,
+      preformatted,
       status,
     })
 

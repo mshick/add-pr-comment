@@ -10,6 +10,7 @@ export interface Inputs {
   messageFailure?: string
   messageCancelled?: string
   messageSkipped?: string
+  preformatted: boolean
   proxyUrl?: string
   pullRequestNumber?: number
   refreshMessagePosition: boolean
