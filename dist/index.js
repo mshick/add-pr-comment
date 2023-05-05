@@ -376,16 +376,8 @@ const promises_1 = __importDefault(__nccwpck_require__(3977));
 const files_1 = __nccwpck_require__(1743);
 async function getMessage({ messageInput, messagePath, messageCancelled, messageSkipped, messageFailure, messageSuccess, preformatted, status, }) {
     let message;
-    if (status === 'success') {
-        if (messageSuccess) {
-            message = messageSuccess;
-        }
-        else if (messagePath) {
-            message = await getMessageFromPath(messagePath);
-        }
-        else {
-            message = messageInput;
-        }
+    if (status === 'success' && messageSuccess) {
+        message = messageSuccess;
     }
     if (status === 'failure' && messageFailure) {
         message = messageFailure;
@@ -395,6 +387,14 @@ async function getMessage({ messageInput, messagePath, messageCancelled, message
     }
     if (status === 'skipped' && messageSkipped) {
         message = messageSkipped;
+    }
+    if (!message) {
+        if (messagePath) {
+            message = await getMessageFromPath(messagePath);
+        }
+        else {
+            message = messageInput;
+        }
     }
     if (!message) {
         throw new Error('no message, check your message inputs');
