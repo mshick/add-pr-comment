@@ -7,6 +7,7 @@ export async function getInputs(): Promise<Inputs> {
   const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`
   const messageInput = core.getInput('message', { required: false })
   const messagePath = core.getInput('message-path', { required: false })
+  const messagePattern = core.getInput('message-pattern', { required: false })
   const repoOwner = core.getInput('repo-owner', { required: true })
   const repoName = core.getInput('repo-name', { required: true })
   const repoToken = core.getInput('repo-token', { required: true })
@@ -41,6 +42,7 @@ export async function getInputs(): Promise<Inputs> {
     messageCancelled,
     messageSkipped,
     messagePath,
+    messagePattern,
     preformatted,
     proxyUrl,
     pullRequestNumber: payload.pull_request?.number,

@@ -25,6 +25,7 @@ type Inputs = {
   'repo-token': string
   'message-id': string
   'allow-repeats': string
+  'message-pattern'?: string
   'message-success'?: string
   'message-failure'?: string
   'message-cancelled'?: string
@@ -271,7 +272,7 @@ describe('add-pr-comment action', () => {
 
   it('creates a message when the message id does not exist', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-id'] = 'custom-id'
 
     const replyBody = [
@@ -289,7 +290,6 @@ describe('add-pr-comment action', () => {
 
   it('identifies an existing message by id and updates it', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
 
     const commentId = 123
 
@@ -313,7 +313,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a success message on success', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-success'] = '666'
     inputs.status = 'success'
 
@@ -334,7 +334,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a failure message on failure', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-failure'] = '666'
     inputs.status = 'failure'
 
@@ -355,7 +355,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a cancelled message on cancelled', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-cancelled'] = '666'
     inputs.status = 'cancelled'
 
@@ -376,7 +376,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a skipped message on skipped', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-skipped'] = '666'
     inputs.status = 'skipped'
 
@@ -406,5 +406,30 @@ describe('add-pr-comment action', () => {
     ).toEqual(messagePayload?.body)
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('can find and replace text in an existing comment', async () => {
+    inputs.message = 'mars'
+    inputs['message-pattern'] = 'world'
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\n${simpleMessage}`,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\nhello mars`).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
   })
 })

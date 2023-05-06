@@ -21,7 +21,7 @@ export async function getMessage({
   | 'messagePath'
   | 'preformatted'
   | 'status'
->) {
+>): Promise<string> {
   let message
 
   if (status === 'success' && messageSuccess) {
@@ -73,4 +73,20 @@ export async function getMessageFromPath(searchPath: string) {
   }
 
   return message
+}
+
+export function addMessageHeader(messageId: string, message: string) {
+  return `${messageId}\n\n${message}`
+}
+
+export function removeMessageHeader(message: string) {
+  return message.split('\n').slice(2).join('\n')
+}
+
+export function findAndReplaceInMessage(
+  pattern: string,
+  replacement: string,
+  original: string,
+): string {
+  return original.replace(new RegExp(pattern), replacement)
 }

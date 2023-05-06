@@ -1,16 +1,17 @@
 import { GitHub } from '@actions/github/lib/utils'
-import { Endpoints } from '@octokit/types'
+import {
+  CreateIssueCommentResponseData,
+  ExistingIssueComment,
+  ExistingIssueCommentResponseData,
+} from './types'
 
-export type CreateIssueCommentResponseData =
-  Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
-
-export async function getExistingCommentId(
+export async function getExistingComment(
   octokit: InstanceType<typeof GitHub>,
   owner: string,
   repo: string,
   issueNumber: number,
   messageId: string,
-): Promise<number | undefined> {
+): Promise<ExistingIssueComment | undefined> {
   const parameters = {
     owner,
     repo,
@@ -18,7 +19,7 @@ export async function getExistingCommentId(
     per_page: 100,
   }
 
-  let found
+  let found: ExistingIssueCommentResponseData | undefined
 
   for await (const comments of octokit.paginate.iterator(
     octokit.rest.issues.listComments,
@@ -33,7 +34,12 @@ export async function getExistingCommentId(
     }
   }
 
-  return found?.id
+  if (found) {
+    const { id, body } = found
+    return { id, body }
+  }
+
+  return
 }
 
 export async function updateComment(

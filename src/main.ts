@@ -1,16 +1,16 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import {
-  CreateIssueCommentResponseData,
-  createComment,
-  deleteComment,
-  getExistingCommentId,
-  updateComment,
-} from './comments'
+import { createComment, deleteComment, getExistingComment, updateComment } from './comments'
 import { getInputs } from './config'
 import { getIssueNumberFromCommitPullsList } from './issues'
-import { getMessage } from './message'
+import {
+  addMessageHeader,
+  findAndReplaceInMessage,
+  getMessage,
+  removeMessageHeader,
+} from './message'
 import { createCommentProxy } from './proxy'
+import { CreateIssueCommentResponseData, ExistingIssueComment } from './types'
 
 const run = async (): Promise<void> => {
   try {
@@ -34,11 +34,12 @@ const run = async (): Promise<void> => {
       messageSkipped,
       preformatted,
       status,
+      messagePattern,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
 
-    const message = await getMessage({
+    let message = await getMessage({
       messagePath,
       messageInput,
       messageSkipped,
@@ -68,20 +69,20 @@ const run = async (): Promise<void> => {
       return
     }
 
-    let existingCommentId
+    let existingComment: ExistingIssueComment | undefined
 
     if (!allowRepeats) {
       core.debug('repeat comments are disallowed, checking for existing')
 
-      existingCommentId = await getExistingCommentId(octokit, owner, repo, issueNumber, messageId)
+      existingComment = await getExistingComment(octokit, owner, repo, issueNumber, messageId)
 
-      if (existingCommentId) {
-        core.debug(`existing comment found with id: ${existingCommentId}`)
+      if (existingComment) {
+        core.debug(`existing comment found with id: ${existingComment.id}`)
       }
     }
 
     // if no existing comment and updateOnly is true, exit
-    if (!existingCommentId && updateOnly) {
+    if (!existingComment && updateOnly) {
       core.info('no existing comment found and update-only is true, exiting')
       core.setOutput('comment-created', 'false')
       return
@@ -89,11 +90,19 @@ const run = async (): Promise<void> => {
 
     let comment: CreateIssueCommentResponseData | null | undefined
 
-    const body = `${messageId}\n\n${message}`
+    if (messagePattern && existingComment?.body) {
+      message = findAndReplaceInMessage(
+        messagePattern,
+        message,
+        removeMessageHeader(existingComment.body),
+      )
+    }
+
+    const body = addMessageHeader(messageId, message)
 
     if (proxyUrl) {
       comment = await createCommentProxy({
-        commentId: existingCommentId,
+        commentId: existingComment?.id,
         owner,
         repo,
         issueNumber,
@@ -101,13 +110,13 @@ const run = async (): Promise<void> => {
         repoToken,
         proxyUrl,
       })
-      core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true')
-    } else if (existingCommentId) {
+      core.setOutput(existingComment?.id ? 'comment-updated' : 'comment-created', 'true')
+    } else if (existingComment?.id) {
       if (refreshMessagePosition) {
-        await deleteComment(octokit, owner, repo, existingCommentId, body)
+        await deleteComment(octokit, owner, repo, existingComment.id, body)
         comment = await createComment(octokit, owner, repo, issueNumber, body)
       } else {
-        comment = await updateComment(octokit, owner, repo, existingCommentId, body)
+        comment = await updateComment(octokit, owner, repo, existingComment.id, body)
       }
       core.setOutput('comment-updated', 'true')
     } else {
