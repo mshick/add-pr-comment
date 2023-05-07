@@ -107,7 +107,10 @@ export function findAndReplaceInMessage(
 
   for (const [i, f] of find.entries()) {
     const { regExp, modifiers } = splitFind(f)
-    message = message.replace(new RegExp(regExp, modifiers), replacement[i] ?? replacement[0])
+    message = message.replace(
+      new RegExp(regExp, modifiers),
+      replacement[i] ?? replacement.join('\n'),
+    )
   }
 
   return message

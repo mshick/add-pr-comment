@@ -97,10 +97,7 @@ const handlers = [
 const server = setupServer(...handlers)
 
 beforeAll(() => {
-  // vi.spyOn(console, 'log').mockImplementation(() => {})
-  // vi.spyOn(core, 'debug').mockImplementation(() => {})
-  // vi.spyOn(core, 'info').mockImplementation(() => {})
-  // vi.spyOn(core, 'warning').mockImplementation(() => {})
+  vi.spyOn(console, 'log').mockImplementation(() => {})
   server.listen({ onUnhandledRequest: 'error' })
 })
 afterAll(() => server.close())
@@ -513,6 +510,35 @@ describe('find and replace', () => {
     await run()
 
     expect(`<!-- add-pr-comment:add-pr-comment -->\n\nmars\nmars`).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('can multiple find and replace a single pattern with a multiline replacement', async () => {
+    inputs['find'] = 'hello'
+    inputs['message'] = 'h\ne\nl\nl\no'
+
+    const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\nhello\nworld`
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\nh\ne\nl\nl\no\nworld`).toEqual(
+      messagePayload?.body,
+    )
     expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
   })
