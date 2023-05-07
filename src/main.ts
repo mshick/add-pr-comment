@@ -34,7 +34,8 @@ const run = async (): Promise<void> => {
       messageSkipped,
       preformatted,
       status,
-      messagePattern,
+      messageFind,
+      messageReplace,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
@@ -90,12 +91,16 @@ const run = async (): Promise<void> => {
 
     let comment: CreateIssueCommentResponseData | null | undefined
 
-    if (messagePattern && existingComment?.body) {
+    if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
       message = findAndReplaceInMessage(
-        messagePattern,
-        message,
+        messageFind,
+        messageReplace?.length ? messageReplace : [message],
         removeMessageHeader(existingComment.body),
       )
+    }
+
+    if (!message) {
+      throw new Error('no message, check your message inputs')
     }
 
     const body = addMessageHeader(messageId, message)

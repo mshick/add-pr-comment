@@ -8,7 +8,8 @@ export interface Inputs {
   messageInput?: string
   messageId: string
   messagePath?: string
-  messagePattern?: string
+  messageFind?: string[]
+  messageReplace?: string[]
   messageSuccess?: string
   messageFailure?: string
   messageCancelled?: string
