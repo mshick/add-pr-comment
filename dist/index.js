@@ -7,8 +7,8 @@ require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 "use strict";
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.createComment = exports.deleteComment = exports.updateComment = exports.getExistingCommentId = void 0;
-async function getExistingCommentId(octokit, owner, repo, issueNumber, messageId) {
+exports.createComment = exports.deleteComment = exports.updateComment = exports.getExistingComment = void 0;
+async function getExistingComment(octokit, owner, repo, issueNumber, messageId) {
     const parameters = {
         owner,
         repo,
@@ -25,9 +25,13 @@ async function getExistingCommentId(octokit, owner, repo, issueNumber, messageId
             break;
         }
     }
-    return found === null || found === void 0 ? void 0 : found.id;
+    if (found) {
+        const { id, body } = found;
+        return { id, body };
+    }
+    return;
 }
-exports.getExistingCommentId = getExistingCommentId;
+exports.getExistingComment = getExistingComment;
 async function updateComment(octokit, owner, repo, existingCommentId, body) {
     const updatedComment = await octokit.rest.issues.updateComment({
         comment_id: existingCommentId,
@@ -100,6 +104,8 @@ async function getInputs() {
     const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`;
     const messageInput = core.getInput('message', { required: false });
     const messagePath = core.getInput('message-path', { required: false });
+    const messageFind = core.getMultilineInput('find', { required: false });
+    const messageReplace = core.getMultilineInput('replace', { required: false });
     const repoOwner = core.getInput('repo-owner', { required: true });
     const repoName = core.getInput('repo-name', { required: true });
     const repoToken = core.getInput('repo-token', { required: true });
@@ -129,6 +135,8 @@ async function getInputs() {
         messageCancelled,
         messageSkipped,
         messagePath,
+        messageFind,
+        messageReplace,
         preformatted,
         proxyUrl,
         pullRequestNumber: (_b = payload.pull_request) === null || _b === void 0 ? void 0 : _b.number,
@@ -265,9 +273,9 @@ const message_1 = __nccwpck_require__(3307);
 const proxy_1 = __nccwpck_require__(8689);
 const run = async () => {
     try {
-        const { allowRepeats, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, } = await (0, config_1.getInputs)();
+        const { allowRepeats, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await (0, config_1.getInputs)();
         const octokit = github.getOctokit(repoToken);
-        const message = await (0, message_1.getMessage)({
+        let message = await (0, message_1.getMessage)({
             messagePath,
             messageInput,
             messageSkipped,
@@ -293,25 +301,31 @@ const run = async () => {
             core.setOutput('comment-created', 'false');
             return;
         }
-        let existingCommentId;
+        let existingComment;
         if (!allowRepeats) {
             core.debug('repeat comments are disallowed, checking for existing');
-            existingCommentId = await (0, comments_1.getExistingCommentId)(octokit, owner, repo, issueNumber, messageId);
-            if (existingCommentId) {
-                core.debug(`existing comment found with id: ${existingCommentId}`);
+            existingComment = await (0, comments_1.getExistingComment)(octokit, owner, repo, issueNumber, messageId);
+            if (existingComment) {
+                core.debug(`existing comment found with id: ${existingComment.id}`);
             }
         }
         // if no existing comment and updateOnly is true, exit
-        if (!existingCommentId && updateOnly) {
+        if (!existingComment && updateOnly) {
             core.info('no existing comment found and update-only is true, exiting');
             core.setOutput('comment-created', 'false');
             return;
         }
         let comment;
-        const body = `${messageId}\n\n${message}`;
+        if ((messageFind === null || messageFind === void 0 ? void 0 : messageFind.length) && ((messageReplace === null || messageReplace === void 0 ? void 0 : messageReplace.length) || message) && (existingComment === null || existingComment === void 0 ? void 0 : existingComment.body)) {
+            message = (0, message_1.findAndReplaceInMessage)(messageFind, (messageReplace === null || messageReplace === void 0 ? void 0 : messageReplace.length) ? messageReplace : [message], (0, message_1.removeMessageHeader)(existingComment.body));
+        }
+        if (!message) {
+            throw new Error('no message, check your message inputs');
+        }
+        const body = (0, message_1.addMessageHeader)(messageId, message);
         if (proxyUrl) {
             comment = await (0, proxy_1.createCommentProxy)({
-                commentId: existingCommentId,
+                commentId: existingComment === null || existingComment === void 0 ? void 0 : existingComment.id,
                 owner,
                 repo,
                 issueNumber,
@@ -319,15 +333,15 @@ const run = async () => {
                 repoToken,
                 proxyUrl,
             });
-            core.setOutput(existingCommentId ? 'comment-updated' : 'comment-created', 'true');
+            core.setOutput((existingComment === null || existingComment === void 0 ? void 0 : existingComment.id) ? 'comment-updated' : 'comment-created', 'true');
         }
-        else if (existingCommentId) {
+        else if (existingComment === null || existingComment === void 0 ? void 0 : existingComment.id) {
             if (refreshMessagePosition) {
-                await (0, comments_1.deleteComment)(octokit, owner, repo, existingCommentId, body);
+                await (0, comments_1.deleteComment)(octokit, owner, repo, existingComment.id, body);
                 comment = await (0, comments_1.createComment)(octokit, owner, repo, issueNumber, body);
             }
             else {
-                comment = await (0, comments_1.updateComment)(octokit, owner, repo, existingCommentId, body);
+                comment = await (0, comments_1.updateComment)(octokit, owner, repo, existingComment.id, body);
             }
             core.setOutput('comment-updated', 'true');
         }
@@ -371,7 +385,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.getMessageFromPath = exports.getMessage = void 0;
+exports.findAndReplaceInMessage = exports.removeMessageHeader = exports.addMessageHeader = exports.getMessageFromPath = exports.getMessage = void 0;
 const promises_1 = __importDefault(__nccwpck_require__(3977));
 const files_1 = __nccwpck_require__(1743);
 async function getMessage({ messageInput, messagePath, messageCancelled, messageSkipped, messageFailure, messageSuccess, preformatted, status, }) {
@@ -396,13 +410,10 @@ async function getMessage({ messageInput, messagePath, messageCancelled, message
             message = messageInput;
         }
     }
-    if (!message) {
-        throw new Error('no message, check your message inputs');
-    }
     if (preformatted) {
         message = `\`\`\`\n${message}\n\`\`\``;
     }
-    return message;
+    return message !== null && message !== void 0 ? message : '';
 }
 exports.getMessage = getMessage;
 async function getMessageFromPath(searchPath) {
@@ -417,6 +428,39 @@ async function getMessageFromPath(searchPath) {
     return message;
 }
 exports.getMessageFromPath = getMessageFromPath;
+function addMessageHeader(messageId, message) {
+    return `${messageId}\n\n${message}`;
+}
+exports.addMessageHeader = addMessageHeader;
+function removeMessageHeader(message) {
+    return message.split('\n').slice(2).join('\n');
+}
+exports.removeMessageHeader = removeMessageHeader;
+function splitFind(find) {
+    const matches = find.match(/\/((i|g|m|s|u|y){1,6})$/);
+    if (!matches) {
+        return {
+            regExp: find,
+            modifiers: 'gi',
+        };
+    }
+    const [, modifiers] = matches;
+    const regExp = find.replace(modifiers, '').slice(0, -1);
+    return {
+        regExp,
+        modifiers,
+    };
+}
+function findAndReplaceInMessage(find, replacement, original) {
+    var _a;
+    let message = original;
+    for (const [i, f] of find.entries()) {
+        const { regExp, modifiers } = splitFind(f);
+        message = message.replace(new RegExp(regExp, modifiers), (_a = replacement[i]) !== null && _a !== void 0 ? _a : replacement[0]);
+    }
+    return message;
+}
+exports.findAndReplaceInMessage = findAndReplaceInMessage;
 
 
 /***/ }),
