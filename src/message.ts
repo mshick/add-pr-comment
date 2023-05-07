@@ -100,17 +100,14 @@ function splitFind(find: string) {
 
 export function findAndReplaceInMessage(
   find: string[],
-  replacement: string[],
+  replace: string[],
   original: string,
 ): string {
   let message = original
 
   for (const [i, f] of find.entries()) {
     const { regExp, modifiers } = splitFind(f)
-    message = message.replace(
-      new RegExp(regExp, modifiers),
-      replacement[i] ?? replacement.join('\n'),
-    )
+    message = message.replace(new RegExp(regExp, modifiers), replace[i] ?? replace.join('\n'))
   }
 
   return message
