@@ -21,7 +21,7 @@ export async function getMessage({
   | 'messagePath'
   | 'preformatted'
   | 'status'
->) {
+>): Promise<string> {
   let message
 
   if (status === 'success' && messageSuccess) {
@@ -48,15 +48,11 @@ export async function getMessage({
     }
   }
 
-  if (!message) {
-    throw new Error('no message, check your message inputs')
-  }
-
   if (preformatted) {
     message = `\`\`\`\n${message}\n\`\`\``
   }
 
-  return message
+  return message ?? ''
 }
 
 export async function getMessageFromPath(searchPath: string) {
@@ -70,6 +66,48 @@ export async function getMessageFromPath(searchPath: string) {
     }
 
     message += await fs.readFile(path, { encoding: 'utf8' })
+  }
+
+  return message
+}
+
+export function addMessageHeader(messageId: string, message: string) {
+  return `${messageId}\n\n${message}`
+}
+
+export function removeMessageHeader(message: string) {
+  return message.split('\n').slice(2).join('\n')
+}
+
+function splitFind(find: string) {
+  const matches = find.match(/\/((i|g|m|s|u|y){1,6})$/)
+
+  if (!matches) {
+    return {
+      regExp: find,
+      modifiers: 'gi',
+    }
+  }
+
+  const [, modifiers] = matches
+  const regExp = find.replace(modifiers, '').slice(0, -1)
+
+  return {
+    regExp,
+    modifiers,
+  }
+}
+
+export function findAndReplaceInMessage(
+  find: string[],
+  replacement: string[],
+  original: string,
+): string {
+  let message = original
+
+  for (const [i, f] of find.entries()) {
+    const { regExp, modifiers } = splitFind(f)
+    message = message.replace(new RegExp(regExp, modifiers), replacement[i] ?? replacement[0])
   }
 
   return message

@@ -25,6 +25,7 @@ type Inputs = {
   'repo-token': string
   'message-id': string
   'allow-repeats': string
+  'message-pattern'?: string
   'message-success'?: string
   'message-failure'?: string
   'message-cancelled'?: string
@@ -95,55 +96,83 @@ const handlers = [
 
 const server = setupServer(...handlers)
 
+beforeAll(() => {
+  // vi.spyOn(console, 'log').mockImplementation(() => {})
+  // vi.spyOn(core, 'debug').mockImplementation(() => {})
+  // vi.spyOn(core, 'info').mockImplementation(() => {})
+  // vi.spyOn(core, 'warning').mockImplementation(() => {})
+  server.listen({ onUnhandledRequest: 'error' })
+})
+afterAll(() => server.close())
+
+beforeEach(() => {
+  inputs = { ...defaultInputs }
+  issueNumber = defaultIssueNumber
+  messagePayload = undefined
+
+  vi.resetModules()
+
+  github.context.sha = commitSha
+
+  // https://developer.github.com/webhooks/event-payloads/#issues
+  github.context.payload = {
+    pull_request: {
+      number: issueNumber,
+    },
+    repository: {
+      full_name: `${inputs['repo-owner']}/${inputs['repo-name']}`,
+      name: 'bar',
+      owner: {
+        login: 'bar',
+      },
+    },
+  } as WebhookPayload
+})
+
+afterEach(() => {
+  vi.clearAllMocks()
+  server.resetHandlers()
+})
+
+const getInput = (name: string, options?: core.InputOptions) => {
+  const value = inputs[name] ?? ''
+
+  if (options?.required && value === undefined) {
+    throw new Error(`${name} is required`)
+  }
+
+  return value
+}
+
+function getMultilineInput(name, options) {
+  const inputs = getInput(name, options)
+    .split('\n')
+    .filter((x) => x !== '')
+
+  if (options && options.trimWhitespace === false) {
+    return inputs
+  }
+
+  return inputs.map((input) => input.trim())
+}
+
+function getBooleanInput(name, options) {
+  const trueValue = ['true', 'True', 'TRUE']
+  const falseValue = ['false', 'False', 'FALSE']
+  const val = getInput(name, options)
+  if (trueValue.includes(val)) return true
+  if (falseValue.includes(val)) return false
+  throw new TypeError(
+    `Input does not meet YAML 1.2 "Core Schema" specification: ${name}\n` +
+      `Support boolean input list: \`true | True | TRUE | false | False | FALSE\``,
+  )
+}
+
+vi.mocked(core.getInput).mockImplementation(getInput)
+vi.mocked(core.getMultilineInput).mockImplementation(getMultilineInput)
+vi.mocked(core.getBooleanInput).mockImplementation(getBooleanInput)
+
 describe('add-pr-comment action', () => {
-  beforeAll(() => {
-    // vi.spyOn(console, 'log').mockImplementation(() => {})
-    // vi.spyOn(core, 'debug').mockImplementation(() => {})
-    // vi.spyOn(core, 'info').mockImplementation(() => {})
-    // vi.spyOn(core, 'warning').mockImplementation(() => {})
-    server.listen({ onUnhandledRequest: 'error' })
-  })
-  afterAll(() => server.close())
-
-  beforeEach(() => {
-    inputs = { ...defaultInputs }
-    issueNumber = defaultIssueNumber
-    messagePayload = undefined
-
-    vi.resetModules()
-
-    github.context.sha = commitSha
-
-    // https://developer.github.com/webhooks/event-payloads/#issues
-    github.context.payload = {
-      pull_request: {
-        number: issueNumber,
-      },
-      repository: {
-        full_name: `${inputs['repo-owner']}/${inputs['repo-name']}`,
-        name: 'bar',
-        owner: {
-          login: 'bar',
-        },
-      },
-    } as WebhookPayload
-  })
-
-  afterEach(() => {
-    vi.clearAllMocks()
-    server.resetHandlers()
-  })
-
-  vi.mocked(core.getInput).mockImplementation((name: string, options?: core.InputOptions) => {
-    const value = inputs[name] ?? ''
-
-    if (options?.required && value === undefined) {
-      throw new Error(`${name} is required`)
-    }
-
-    return value
-  })
-
   it('creates a comment with message text', async () => {
     inputs.message = simpleMessage
     inputs['allow-repeats'] = 'true'
@@ -271,7 +300,7 @@ describe('add-pr-comment action', () => {
 
   it('creates a message when the message id does not exist', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-id'] = 'custom-id'
 
     const replyBody = [
@@ -289,7 +318,6 @@ describe('add-pr-comment action', () => {
 
   it('identifies an existing message by id and updates it', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
 
     const commentId = 123
 
@@ -313,7 +341,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a success message on success', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-success'] = '666'
     inputs.status = 'success'
 
@@ -334,7 +362,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a failure message on failure', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-failure'] = '666'
     inputs.status = 'failure'
 
@@ -355,7 +383,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a cancelled message on cancelled', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-cancelled'] = '666'
     inputs.status = 'cancelled'
 
@@ -376,7 +404,7 @@ describe('add-pr-comment action', () => {
 
   it('overrides the default message with a skipped message on skipped', async () => {
     inputs.message = simpleMessage
-    inputs['allow-repeats'] = 'false'
+
     inputs['message-skipped'] = '666'
     inputs.status = 'skipped'
 
@@ -406,5 +434,171 @@ describe('add-pr-comment action', () => {
     ).toEqual(messagePayload?.body)
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+})
+
+describe('find and replace', () => {
+  it('can find and replace text in an existing comment', async () => {
+    inputs['find'] = 'world'
+    inputs['replace'] = 'mars'
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\n${simpleMessage}`,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\nhello mars`).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('can multiple find and replace text in an existing comment', async () => {
+    inputs['find'] = 'hello\nworld'
+    inputs['replace'] = 'goodbye\nmars'
+
+    const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\nhello\nworld`
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\ngoodbye\nmars`).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('can multiple find and replace text using a message', async () => {
+    inputs['find'] = 'hello\nworld'
+    inputs['message'] = 'mars'
+
+    const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\nhello\nworld`
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\nmars\nmars`).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('can multiple find and replace text using a message-path', async () => {
+    inputs['find'] = '<< FILE_CONTENTS >>'
+    inputs['message-path'] = messagePath1Fixture
+
+    const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\nhello\n<< FILE_CONTENTS >>\nworld`
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(
+      `<!-- add-pr-comment:add-pr-comment -->\n\nhello\n${messagePath1FixturePayload}\nworld`,
+    ).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('can find and replace patterns and use alternative modifiers', async () => {
+    inputs['find'] = '(o|l)/g'
+    inputs['replace'] = 'YY'
+
+    const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\nHELLO\nworld`
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\nHELLO\nwYYrYYd`).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('can check some boxes with find and replace', async () => {
+    inputs['find'] = '\n\\[ \\]'
+    inputs['replace'] = '[X]'
+
+    const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\n[ ] Hello\n[ ] World`
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+    postIssueCommentsResponse = {
+      id: commentId,
+    }
+
+    await run()
+
+    expect(`<!-- add-pr-comment:add-pr-comment -->\n\n[X] Hello\n[X] World`).toEqual(
+      messagePayload?.body,
+    )
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
   })
 })

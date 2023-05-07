@@ -1,7 +1,9 @@
 # add-pr-comment
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-6-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A GitHub Action which adds a comment to a pull request's issue.
@@ -166,6 +168,136 @@ jobs:
         with:
           message-path: |
             message-part-*.txt
+```
+
+### Find-and-Replace
+
+Patterns can be matched and replaced to update comments. This could be useful
+for some situations, for instance, updating a checklist comment.
+
+Find is a regular expression passed to the [RegExp() constructor](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp/RegExp). You can also
+include modifiers to override the default `gi`.
+
+**Example**
+
+Original message:
+
+```
+[ ] Hello
+[ ] World
+```
+
+Action:
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: mshick/add-pr-comment@v2
+        if: always()
+        with:
+          find: |
+            \n\\[ \\]
+          replace: |
+            [X]
+```
+
+Final message:
+
+```
+[X] Hello
+[X] World
+```
+
+Multiple find and replaces can be used:
+
+**Example**
+
+Original message:
+
+```
+hello world!
+```
+
+Action:
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: mshick/add-pr-comment@v2
+        if: always()
+        with:
+          find: |
+            hello
+            world
+          replace: |
+            goodnight
+            moon
+```
+
+Final message:
+
+```
+goodnight moon!
+```
+
+It defaults to your resolved message (either from `message` or `message-path`) to
+do a replacement:
+
+**Example**
+
+Original message:
+
+```
+hello
+
+<< FILE_CONTENTS >>
+
+world
+```
+
+Action:
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: mshick/add-pr-comment@v2
+        if: always()
+        with:
+          message-path: |
+            message.txt
+          find: |
+            << FILE_CONTENTS >>
+```
+
+Final message:
+
+```
+hello
+
+secret message from message.txt
+
+world
 ```
 
 ### Bring your own issues

@@ -73,4 +73,14 @@ jobs:
           message: |
             **Hello**
             🌏
-            !            
+            !  
+            
+      - uses: ./
+        with:
+          message-id: text
+          find: |
+            Hello
+            🌏
+          replace: |
+            Goodnight
+            🌕
