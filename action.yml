@@ -59,8 +59,10 @@ inputs:
   preformatted:
     description: "Treat message text (from a file or input) as pre-formatted and place it in a codeblock."
     required: false
-  message-pattern:
-    description: "A regular expression to find and replace using the evaluated message."
+  find:
+    description: "A regular expression to find for replacement. Multiple lines become individual regular expressions."
+  replace:
+    description: "A replacement to use, overrides the message. Multple lines can replace same-indexed find patterns."
 outputs:
   comment-created:
     description: "Whether a comment was created."
