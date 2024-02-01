@@ -142,7 +142,7 @@
     "eslint-plugin-prettier": "^4.2.1",
     "msw": "^1.2.1",
     "nock": "^13.3.0",
-    "np": "^7.7.0",
+    "np": "^9.2.0",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4",
     "vitest": "^0.30.1"
