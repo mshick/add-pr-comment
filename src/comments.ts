@@ -64,13 +64,11 @@ export async function deleteComment(
   owner: string,
   repo: string,
   existingCommentId: number,
-  body: string,
 ): Promise<CreateIssueCommentResponseData> {
   const deletedComment = await octokit.rest.issues.deleteComment({
     comment_id: existingCommentId,
     owner,
     repo,
-    body,
   })
 
   return deletedComment.data

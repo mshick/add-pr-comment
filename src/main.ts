@@ -36,6 +36,7 @@ const run = async (): Promise<void> => {
       status,
       messageFind,
       messageReplace,
+      deleteOnStatus,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
@@ -89,6 +90,13 @@ const run = async (): Promise<void> => {
       return
     }
 
+    if (deleteOnStatus && existingComment && deleteOnStatus === status) {
+      core.info('deleting existing comment because delete-comment-on-status matched')
+      await deleteComment(octokit, owner, repo, existingComment.id)
+      core.setOutput('comment-deleted', 'true')
+      return
+    }
+
     let comment: CreateIssueCommentResponseData | null | undefined
 
     if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
@@ -118,7 +126,7 @@ const run = async (): Promise<void> => {
       core.setOutput(existingComment?.id ? 'comment-updated' : 'comment-created', 'true')
     } else if (existingComment?.id) {
       if (refreshMessagePosition) {
-        await deleteComment(octokit, owner, repo, existingComment.id, body)
+        await deleteComment(octokit, owner, repo, existingComment.id)
         comment = await createComment(octokit, owner, repo, issueNumber, body)
       } else {
         comment = await updateComment(octokit, owner, repo, existingComment.id, body)
