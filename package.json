@@ -120,14 +120,12 @@
     "dist"
   ],
   "dependencies": {
-    "@actions/artifact": "^1.1.1",
     "@actions/core": "^1.10.0",
-    "@actions/github": "^5.1.1",
+    "@actions/github": "^6.0.0",
     "@actions/glob": "^0.4.0",
     "@actions/http-client": "^2.1.0"
   },
   "devDependencies": {
-    "@octokit/types": "^9.1.2",
     "@types/node": "^18.15.13",
     "@typescript-eslint/eslint-plugin": "^5.59.0",
     "@typescript-eslint/parser": "^5.59.0",
@@ -140,12 +138,22 @@
     "eslint-plugin-json-format": "^2.0.1",
     "eslint-plugin-mdx": "^2.0.5",
     "eslint-plugin-prettier": "^4.2.1",
-    "msw": "^1.2.1",
+    "msw": "^2.0.0",
     "nock": "^13.3.0",
     "np": "^7.7.0",
     "prettier": "^2.8.7",
     "typescript": "^5.0.4",
-    "vitest": "^0.30.1"
+    "vitest": "^2.0.0"
+  },
+  "overrides": {
+    "lodash": "^4.17.23",
+    "js-yaml": "^4.1.1",
+    "braces": "^3.0.3",
+    "cookie": "^0.7.0",
+    "tmp": "^0.2.4",
+    "esbuild": "^0.25.0",
+    "undici": "^6.23.0",
+    "got": "^11.8.5"
   },
   "engines": {
     "node": "^16.13.0 || ^18.0.0 || ^20.0.0"

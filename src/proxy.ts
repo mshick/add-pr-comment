@@ -1,8 +1,5 @@
 import { HttpClient } from '@actions/http-client'
-import { Endpoints } from '@octokit/types'
-
-type CreateIssueCommentResponseData =
-  Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
+import { CreateIssueCommentResponseData } from './types'
 
 export interface CreateCommentProxyParams {
   repoToken: string

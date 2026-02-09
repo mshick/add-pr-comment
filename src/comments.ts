@@ -2,7 +2,6 @@ import { GitHub } from '@actions/github/lib/utils'
 import {
   CreateIssueCommentResponseData,
   ExistingIssueComment,
-  ExistingIssueCommentResponseData,
 } from './types'
 
 export async function getExistingComment(
@@ -19,7 +18,7 @@ export async function getExistingComment(
     per_page: 100,
   }
 
-  let found: ExistingIssueCommentResponseData | undefined
+  let found: { id: number; body?: string } | undefined
 
   for await (const comments of octokit.paginate.iterator(
     octokit.rest.issues.listComments,

@@ -1,5 +1,3 @@
-import { Endpoints } from '@octokit/types'
-
 export interface Inputs {
   allowRepeats: boolean
   attachPath?: string[]
@@ -25,10 +23,13 @@ export interface Inputs {
   updateOnly: boolean
 }
 
-export type CreateIssueCommentResponseData =
-  Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
+export interface CreateIssueCommentResponseData {
+  id: number
+  body?: string
+  [key: string]: any
+}
 
-export type ExistingIssueCommentResponseData =
-  Endpoints['GET /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data'][0]
-
-export type ExistingIssueComment = Pick<ExistingIssueCommentResponseData, 'id' | 'body'>
+export interface ExistingIssueComment {
+  id: number
+  body?: string
+}

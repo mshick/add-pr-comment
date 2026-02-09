@@ -1,13 +1,38 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { WebhookPayload } from '@actions/github/lib/interfaces'
-import { rest } from 'msw'
+import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import run from '../src/main'
 import apiResponse from './sample-pulls-api-response.json'
+
+// @actions/github@6 uses undici.fetch directly which bypasses msw interception.
+// Override getOctokit to create an Octokit that uses globalThis.fetch instead.
+vi.mock('@actions/github', async () => {
+  const actual = await vi.importActual<typeof import('@actions/github')>('@actions/github')
+  const { Octokit } = await vi.importActual<typeof import('@octokit/core')>('@octokit/core')
+  const { restEndpointMethods } = await vi.importActual<
+    typeof import('@octokit/plugin-rest-endpoint-methods')
+  >('@octokit/plugin-rest-endpoint-methods')
+  const { paginateRest } = await vi.importActual<typeof import('@octokit/plugin-paginate-rest')>(
+    '@octokit/plugin-paginate-rest',
+  )
+
+  const TestOctokit = Octokit.plugin(restEndpointMethods, paginateRest)
+
+  return {
+    ...actual,
+    getOctokit: (token: string) => {
+      return new TestOctokit({
+        auth: `token ${token}`,
+        request: { fetch: globalThis.fetch },
+      })
+    },
+  }
+})
 
 const messagePath1Fixture = path.resolve(__dirname, './message-part-1.txt')
 const messagePath1FixturePayload = await fs.readFile(messagePath1Fixture, 'utf-8')
@@ -66,30 +91,30 @@ let messagePayload: MessagePayload | undefined
 vi.mock('@actions/core')
 
 const handlers = [
-  rest.post(
+  http.post(
     `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
-    async (req, res, ctx) => {
-      messagePayload = await req.json<MessagePayload>()
-      return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
+    async ({ request }) => {
+      messagePayload = (await request.json()) as MessagePayload
+      return HttpResponse.json(postIssueCommentsResponse, { status: 200 })
     },
   ),
-  rest.patch(
+  http.patch(
     `https://api.github.com/repos/:repoUser/:repoName/issues/comments/:commentId`,
-    async (req, res, ctx) => {
-      messagePayload = await req.json<MessagePayload>()
-      return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
+    async ({ request }) => {
+      messagePayload = (await request.json()) as MessagePayload
+      return HttpResponse.json(postIssueCommentsResponse, { status: 200 })
     },
   ),
-  rest.get(
+  http.get(
     `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
-    (req, res, ctx) => {
-      return res(ctx.status(200), ctx.json(getIssueCommentsResponse))
+    () => {
+      return HttpResponse.json(getIssueCommentsResponse, { status: 200 })
     },
   ),
-  rest.get(
+  http.get(
     `https://api.github.com/repos/:repoUser/:repoName/commits/:commitSha/pulls`,
-    (req, res, ctx) => {
-      return res(ctx.status(200), ctx.json(getCommitPullsResponse))
+    () => {
+      return HttpResponse.json(getCommitPullsResponse, { status: 200 })
     },
   ),
 ]
