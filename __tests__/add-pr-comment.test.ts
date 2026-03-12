@@ -109,18 +109,12 @@ const handlers = [
       return HttpResponse.json(postIssueCommentsResponse)
     },
   ),
-  http.get(
-    `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
-    () => {
-      return HttpResponse.json(getIssueCommentsResponse)
-    },
-  ),
-  http.get(
-    `https://api.github.com/repos/:repoUser/:repoName/commits/:commitSha/pulls`,
-    () => {
-      return HttpResponse.json(getCommitPullsResponse)
-    },
-  ),
+  http.get(`https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`, () => {
+    return HttpResponse.json(getIssueCommentsResponse)
+  }),
+  http.get(`https://api.github.com/repos/:repoUser/:repoName/commits/:commitSha/pulls`, () => {
+    return HttpResponse.json(getCommitPullsResponse)
+  }),
 ]
 
 const server = setupServer(...handlers)
