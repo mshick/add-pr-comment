@@ -36,7 +36,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         with:
           message: |
             **Hello**
@@ -58,7 +58,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         with:
           message: |
             **Hello MAIN**
@@ -89,6 +89,28 @@ jobs:
 | find                     | with     | Patterns to find in an existing message and replace with either `replace` text or a resolved `message`. See [Find-and-Replace](#find-and-replace) for more detail.          | no       |                                    |
 | replace                  | with     | Strings to replace a found pattern with. Each new line is a new replacement, or if you only have one pattern, you can replace with a multiline string.                      | no       |                                    |
 
+## Outputs
+
+| Output | Description |
+| --- | --- |
+| `comment-created` | `"true"` if a new comment was created, `"false"` otherwise. |
+| `comment-updated` | `"true"` if an existing comment was updated, `"false"` otherwise. |
+| `comment-id` | The numeric ID of the created or updated comment. |
+
+### Using outputs in subsequent steps
+
+```yaml
+- uses: mshick/add-pr-comment@v3
+  id: comment
+  with:
+    message: "Hello world"
+
+- name: Check outputs
+  run: |
+    echo "Comment created: ${{ steps.comment.outputs.comment-created }}"
+    echo "Comment updated: ${{ steps.comment.outputs.comment-updated }}"
+    echo "Comment ID: ${{ steps.comment.outputs.comment-id }}"
+```
 > **Tip:** By default, comments are "upsert" — a comment is created on the first run and updated on subsequent runs when matched by `message-id`. If you want this create-or-update behavior, you do not need to set `update-only`. Setting `update-only: true` skips comment creation entirely and only updates an existing comment. Use it when you specifically want no comment to appear unless one was already posted by a previous step or run.
 
 ## Advanced Uses
@@ -113,7 +135,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         with:
           message: |
             **Howdie!**
@@ -138,7 +160,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         if: always()
         with:
           message: |
@@ -165,7 +187,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         if: always()
         with:
           message-path: |
@@ -201,7 +223,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         if: always()
         with:
           find: |
@@ -239,7 +261,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         if: always()
         with:
           find: |
@@ -283,7 +305,7 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         if: always()
         with:
           message-path: |
@@ -329,7 +351,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: mshick/add-pr-comment@v2
+      - uses: mshick/add-pr-comment@v3
         with:
           issue: ${{ steps.pr.outputs.issue }}
           message: |
