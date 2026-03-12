@@ -12,6 +12,7 @@ import apiResponse from './sample-pulls-api-response.json'
 const messagePath1Fixture = path.resolve(__dirname, './message-part-1.txt')
 const messagePath1FixturePayload = await fs.readFile(messagePath1Fixture, 'utf-8')
 const messagePath2Fixture = path.resolve(__dirname, './message-part-2.txt')
+const messagePathTooLongFixture = path.resolve(__dirname, './message-too-long.txt')
 
 const repoToken = '12345'
 const commitSha = 'abc123'
@@ -224,6 +225,19 @@ describe('add-pr-comment action', () => {
     expect(
       `<!-- add-pr-comment:add-pr-comment -->\n\n${messagePath1FixturePayload}\n${messagePath1FixturePayload}`,
     ).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('creates a trimmed comment with a message-path', async () => {
+    inputs.message = undefined
+    inputs['message-path'] = messagePathTooLongFixture
+    inputs['allow-repeats'] = 'true'
+
+    let endOfMessage = "...";
+
+    await expect(run()).resolves.not.toThrow()
+    expect(endOfMessage).toEqual(messagePayload?.body.slice(-3))
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
