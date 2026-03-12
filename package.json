@@ -1,6 +1,6 @@
 {
   "name": "@mshick/add-pr-comment",
-  "version": "2.8.2",
+  "version": "3.0.0",
   "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
   "keywords": [
     "GitHub",
@@ -24,7 +24,7 @@
   "scripts": {
     "build": "del-cli dist && tsc && ncc build --source-map",
     "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint src/",
     "prepare": "npm run build && git add lib dist",
     "release": "npm run build && np --no-publish",
     "test": "vitest run",
@@ -39,115 +39,29 @@
     "tabWidth": 2,
     "trailingComma": "all"
   },
-  "eslintConfig": {
-    "env": {
-      "node": true
-    },
-    "settings": {
-      "import/resolver": {
-        "typescript": {}
-      }
-    },
-    "extends": [
-      "eslint:recommended",
-      "plugin:prettier/recommended"
-    ],
-    "rules": {
-      "capitalized-comments": "off",
-      "no-console": "error",
-      "no-unreachable": "error"
-    },
-    "overrides": [
-      {
-        "files": [
-          "**/*.ts"
-        ],
-        "parser": "@typescript-eslint/parser",
-        "parserOptions": {
-          "ecmaVersion": "latest",
-          "sourceType": "module"
-        },
-        "extends": [
-          "plugin:@typescript-eslint/recommended"
-        ],
-        "rules": {
-          "@typescript-eslint/no-explicit-any": "off"
-        }
-      },
-      {
-        "files": [
-          "**/*.test.ts"
-        ],
-        "parser": "@typescript-eslint/parser",
-        "parserOptions": {
-          "ecmaVersion": "latest",
-          "sourceType": "module"
-        },
-        "extends": [
-          "plugin:@typescript-eslint/recommended"
-        ],
-        "rules": {
-          "@typescript-eslint/no-empty-function": "off",
-          "@typescript-eslint/no-explicit-any": "off"
-        }
-      },
-      {
-        "files": [
-          "*.json"
-        ],
-        "plugins": [
-          "json-format"
-        ]
-      },
-      {
-        "files": [
-          "*.mdx",
-          "*.md"
-        ],
-        "settings": {
-          "mdx/code-blocks": false,
-          "mdx/language-mapper": {}
-        },
-        "extends": "plugin:mdx/recommended",
-        "rules": {
-          "indent": "off"
-        }
-      }
-    ]
-  },
-  "eslintIgnore": [
-    "tsconfig.json",
-    "dist"
-  ],
   "dependencies": {
-    "@actions/artifact": "^1.1.1",
-    "@actions/core": "^1.10.0",
-    "@actions/github": "^5.1.1",
-    "@actions/glob": "^0.4.0",
-    "@actions/http-client": "^2.1.0"
+    "@actions/core": "^3.0.0",
+    "@actions/github": "^9.0.0",
+    "@actions/glob": "^0.6.1",
+    "@actions/http-client": "^4.0.0"
   },
   "devDependencies": {
-    "@octokit/types": "^9.1.2",
-    "@types/node": "^18.15.13",
-    "@typescript-eslint/eslint-plugin": "^5.59.0",
-    "@typescript-eslint/parser": "^5.59.0",
-    "@vercel/ncc": "^0.36.1",
-    "del-cli": "^5.0.0",
-    "eslint": "^8.39.0",
-    "eslint-config-prettier": "^8.8.0",
-    "eslint-import-resolver-typescript": "^3.5.5",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-json-format": "^2.0.1",
-    "eslint-plugin-mdx": "^2.0.5",
-    "eslint-plugin-prettier": "^4.2.1",
-    "msw": "^1.2.1",
-    "nock": "^13.3.0",
-    "np": "^7.7.0",
-    "prettier": "^2.8.7",
-    "typescript": "^5.0.4",
-    "vitest": "^0.30.1"
+    "@eslint/js": "^10.0.1",
+    "@octokit/types": "^16.0.0",
+    "@types/node": "^25.5.0",
+    "@vercel/ncc": "^0.38.4",
+    "del-cli": "^7.0.0",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "msw": "^2.12.10",
+    "np": "^11.0.2",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.0",
+    "vitest": "^4.1.0"
   },
   "engines": {
-    "node": "^16.13.0 || ^18.0.0 || ^20.0.0"
+    "node": "^18.0.0 || ^20.0.0 || ^22.0.0 || ^24.0.0"
   }
 }
