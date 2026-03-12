@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.1.0](https://github.com/mshick/add-pr-comment/compare/v3.0.1...v3.1.0) (2026-03-12)
+
+
+### Features
+
+* allow combining message and message-path inputs ([#144](https://github.com/mshick/add-pr-comment/issues/144)) ([2cf2385](https://github.com/mshick/add-pr-comment/commit/2cf2385bb52bc7b732da9c44e6e165d55e40523a))
+
+
+### Bug Fixes
+
+* make inputs with defaults not required ([#142](https://github.com/mshick/add-pr-comment/issues/142)) ([a841d0b](https://github.com/mshick/add-pr-comment/commit/a841d0b7b208c749145ca15b7060608f446eb12a))
+
 ## [3.0.1](https://github.com/mshick/add-pr-comment/compare/v3.0.0...v3.0.1) (2026-03-12)
 
 
