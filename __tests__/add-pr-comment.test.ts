@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { WebhookPayload } from '@actions/github/lib/interfaces'
-import { rest } from 'msw'
+import { http, HttpResponse } from 'msw'
 import { setupServer } from 'msw/node'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
@@ -12,6 +12,7 @@ import apiResponse from './sample-pulls-api-response.json'
 const messagePath1Fixture = path.resolve(__dirname, './message-part-1.txt')
 const messagePath1FixturePayload = await fs.readFile(messagePath1Fixture, 'utf-8')
 const messagePath2Fixture = path.resolve(__dirname, './message-part-2.txt')
+const messagePathTooLongFixture = path.resolve(__dirname, './message-too-long.txt')
 
 const repoToken = '12345'
 const commitSha = 'abc123'
@@ -66,31 +67,48 @@ let messagePayload: MessagePayload | undefined
 
 vi.mock('@actions/core')
 
+// @actions/github v9 uses undici's fetch (not globalThis.fetch) via a proxy wrapper.
+// MSW v2 intercepts globalThis.fetch but not undici's internal fetch.
+// We mock @actions/github to provide an Octokit that uses globalThis.fetch instead.
+vi.mock('@actions/github', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@actions/github')>()
+  const { Octokit } = await import('@octokit/core')
+  const { restEndpointMethods } = await import('@octokit/plugin-rest-endpoint-methods')
+  const { paginateRest } = await import('@octokit/plugin-paginate-rest')
+
+  // Use a wrapper function to always call the current globalThis.fetch at invocation time,
+  // not the one captured at module evaluation time. This ensures MSW's patched fetch is used.
+  const fetchWrapper: typeof globalThis.fetch = (...args) => globalThis.fetch(...args)
+
+  const TestGitHub = Octokit.plugin(restEndpointMethods, paginateRest).defaults({
+    baseUrl: 'https://api.github.com',
+    request: {
+      fetch: fetchWrapper,
+    },
+  })
+
+  return {
+    ...original,
+    getOctokit: (token: string, options?: Record<string, unknown>, ...plugins: any[]) => {
+      const GitHubWithPlugins = plugins.length ? TestGitHub.plugin(...plugins) : TestGitHub
+      return new GitHubWithPlugins({ auth: `token ${token}`, ...options })
+    },
+  }
+})
+
 const handlers = [
-  rest.post(
+  http.post(
     `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
-    async (req, res, ctx) => {
-      messagePayload = await req.json<MessagePayload>()
-      return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
+    async ({ request }) => {
+      messagePayload = (await request.json()) as MessagePayload
+      return HttpResponse.json(postIssueCommentsResponse)
     },
   ),
-  rest.patch(
+  http.patch(
     `https://api.github.com/repos/:repoUser/:repoName/issues/comments/:commentId`,
-    async (req, res, ctx) => {
-      messagePayload = await req.json<MessagePayload>()
-      return res(ctx.status(200), ctx.json(postIssueCommentsResponse))
-    },
-  ),
-  rest.get(
-    `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
-    (req, res, ctx) => {
-      return res(ctx.status(200), ctx.json(getIssueCommentsResponse))
-    },
-  ),
-  rest.get(
-    `https://api.github.com/repos/:repoUser/:repoName/commits/:commitSha/pulls`,
-    (req, res, ctx) => {
-      return res(ctx.status(200), ctx.json(getCommitPullsResponse))
+    async ({ request }) => {
+      messagePayload = (await request.json()) as MessagePayload
+      return HttpResponse.json(postIssueCommentsResponse)
     },
   ),
   rest.delete(
@@ -99,6 +117,12 @@ const handlers = [
       return res(ctx.status(200), ctx.json(deleteIssueCommentResponse))
     },
   ),
+  http.get(`https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`, () => {
+    return HttpResponse.json(getIssueCommentsResponse)
+  }),
+  http.get(`https://api.github.com/repos/:repoUser/:repoName/commits/:commitSha/pulls`, () => {
+    return HttpResponse.json(getCommitPullsResponse)
+  }),
 ]
 
 const server = setupServer(...handlers)
@@ -208,6 +232,19 @@ describe('add-pr-comment action', () => {
     expect(
       `<!-- add-pr-comment:add-pr-comment -->\n\n${messagePath1FixturePayload}\n${messagePath1FixturePayload}`,
     ).toEqual(messagePayload?.body)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('creates a trimmed comment with a message-path', async () => {
+    inputs.message = undefined
+    inputs['message-path'] = messagePathTooLongFixture
+    inputs['allow-repeats'] = 'true'
+
+    let endOfMessage = "...";
+
+    await expect(run()).resolves.not.toThrow()
+    expect(endOfMessage).toEqual(messagePayload?.body.slice(-3))
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
