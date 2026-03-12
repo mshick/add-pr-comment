@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.0.1](https://github.com/mshick/add-pr-comment/compare/v3.0.0...v3.0.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* trim message when exceeds maximum characters ([#124](https://github.com/mshick/add-pr-comment/issues/124)) ([a62f3c4](https://github.com/mshick/add-pr-comment/commit/a62f3c4273107d031c45e0f419476b909ab7af51))
+
 ## [3.0.0](https://github.com/mshick/add-pr-comment/compare/v2.8.2...v3.0.0) (2026-03-12)
 
 
