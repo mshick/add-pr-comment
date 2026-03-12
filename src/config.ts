@@ -21,10 +21,6 @@ export async function getInputs(): Promise<Inputs> {
   const updateOnly = core.getInput('update-only', { required: false }) === 'true'
   const preformatted = core.getInput('preformatted', { required: false }) === 'true'
 
-  if (messageInput && messagePath) {
-    throw new Error('must specify only one, message or message-path')
-  }
-
   const messageSuccess = core.getInput(`message-success`)
   const messageFailure = core.getInput(`message-failure`)
   const messageCancelled = core.getInput(`message-cancelled`)
