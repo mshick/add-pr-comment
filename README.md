@@ -334,6 +334,10 @@ jobs:
             **Howdie!**
 ```
 
+## Caveats
+
+> **`NODE_ENV` is reserved.** This action checks `process.env.NODE_ENV` internally and will not execute when it is set to `"test"`. If your workflow sets `NODE_ENV=test` (for example, in an `env` block), any step that uses this action will be silently skipped. Avoid overriding `NODE_ENV` in steps that use `add-pr-comment`.
+
 ## Contributors ✨
 
 Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
