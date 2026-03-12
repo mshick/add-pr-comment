@@ -139,7 +139,7 @@
     "eslint-plugin-json-format": "^2.0.1",
     "eslint-plugin-mdx": "^2.0.5",
     "eslint-plugin-prettier": "^4.2.1",
-    "msw": "^1.2.1",
+    "msw": "^2.12.10",
     "np": "^11.0.2",
     "prettier": "^2.8.7",
     "typescript": "^5.9.3",
