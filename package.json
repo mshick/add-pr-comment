@@ -46,11 +46,12 @@
     "@actions/http-client": "^4.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@octokit/types": "^16.0.0",
     "@types/node": "^25.5.0",
     "@vercel/ncc": "^0.38.4",
     "del-cli": "^7.0.0",
-    "eslint": "^9.39.4",
+    "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "msw": "^2.12.10",
