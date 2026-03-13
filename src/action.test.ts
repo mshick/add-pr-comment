@@ -34,6 +34,8 @@ type Inputs = {
   'message-cancelled'?: string
   'message-skipped'?: string
   'update-only'?: string
+  'comment-target'?: string
+  'commit-sha'?: string
   preformatted?: string
   find?: string
   replace?: string
@@ -48,6 +50,8 @@ const defaultInputs: Inputs = {
   'repo-token': repoToken,
   'message-id': 'add-pr-comment',
   'allow-repeats': 'false',
+  'comment-target': 'pr',
+  'commit-sha': '',
   status: 'success',
 }
 
@@ -57,6 +61,7 @@ let inputs = defaultInputs
 let issueNumber = defaultIssueNumber
 let getCommitPullsResponse: Record<string, unknown>[] | undefined
 let getIssueCommentsResponse: Record<string, unknown>[] | undefined
+let getCommitCommentsResponse: Record<string, unknown>[] | undefined
 let postIssueCommentsResponse = {
   id: 42,
 }
@@ -120,6 +125,26 @@ const handlers = [
   http.get(`https://api.github.com/repos/:repoUser/:repoName/commits/:commitSha/pulls`, () => {
     return HttpResponse.json(getCommitPullsResponse)
   }),
+  http.get('https://api.github.com/repos/:repoUser/:repoName/commits/:sha/comments', () => {
+    return HttpResponse.json(getCommitCommentsResponse ?? [])
+  }),
+  http.post(
+    'https://api.github.com/repos/:repoUser/:repoName/commits/:sha/comments',
+    async ({ request }) => {
+      messagePayload = (await request.json()) as MessagePayload
+      return HttpResponse.json(postIssueCommentsResponse)
+    },
+  ),
+  http.patch(
+    'https://api.github.com/repos/:repoUser/:repoName/comments/:commentId',
+    async ({ request }) => {
+      messagePayload = (await request.json()) as MessagePayload
+      return HttpResponse.json(postIssueCommentsResponse)
+    },
+  ),
+  http.delete('https://api.github.com/repos/:repoUser/:repoName/comments/:commentId', () => {
+    return new HttpResponse(null, { status: 204 })
+  }),
 ]
 
 const server = setupServer(...handlers)
@@ -134,6 +159,7 @@ beforeEach(() => {
   inputs = { ...defaultInputs }
   issueNumber = defaultIssueNumber
   messagePayload = undefined
+  getCommitCommentsResponse = undefined
 
   vi.resetModules()
 
@@ -670,5 +696,142 @@ describe('find and replace', () => {
     )
     expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+})
+
+describe('commit comments', () => {
+  it('creates a commit comment when comment-target is commit', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs.message = simpleMessage
+    inputs['allow-repeats'] = 'true'
+
+    // No pull_request in payload — simulating a push event
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+  })
+
+  it('updates an existing commit comment with matching message-id', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs.message = simpleMessage
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+
+    const commentId = 123
+    getCommitCommentsResponse = [
+      {
+        id: commentId,
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\nold message`,
+      },
+    ]
+    postIssueCommentsResponse = { id: commentId }
+
+    await run()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+
+  it('does not create a commit comment when update-only is true and none exists', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs.message = simpleMessage
+    inputs['update-only'] = 'true'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+
+    getCommitCommentsResponse = []
+
+    await run()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
+  })
+
+  it('uses commit-sha override when provided', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs['commit-sha'] = 'custom-sha-456'
+    inputs.message = simpleMessage
+    inputs['allow-repeats'] = 'true'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+  })
+
+  it('skips proxy for commit target even when proxy-url is set', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs['proxy-url'] = 'https://proxy.example.com'
+    inputs.message = simpleMessage
+    inputs['allow-repeats'] = 'true'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+
+    await expect(run()).resolves.not.toThrow()
+    // Should create via API directly, not proxy
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+  })
+
+  it('supports find-and-replace on commit comments', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs.find = 'world'
+    inputs.replace = 'mars'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+
+    const commentId = 123
+    getCommitCommentsResponse = [
+      {
+        id: commentId,
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\nhello world`,
+      },
+    ]
+    postIssueCommentsResponse = { id: commentId }
+
+    await run()
+    expect(messagePayload?.body).toBe('<!-- add-pr-comment:add-pr-comment -->\n\nhello mars')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+  })
+
+  it('supports refresh-message-position for commit comments', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs.message = simpleMessage
+    inputs['refresh-message-position'] = 'true'
+
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+
+    const commentId = 123
+    getCommitCommentsResponse = [
+      {
+        id: commentId,
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\nold message`,
+      },
+    ]
+    postIssueCommentsResponse = { id: 42 }
+
+    await run()
+    // Delete old + create new = comment-updated (the re-created one)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-id', 42)
   })
 })

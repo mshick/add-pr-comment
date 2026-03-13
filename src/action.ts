@@ -1,6 +1,12 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { createComment, deleteComment, getExistingComment, updateComment } from './comments.js'
+import {
+  createCommitComment,
+  deleteCommitComment,
+  getExistingCommitComment,
+  updateCommitComment,
+} from './commit-comments.js'
 import { getInputs } from './config.js'
 import { getIssueNumberFromCommitPullsList } from './issues.js'
 import {
@@ -10,12 +16,18 @@ import {
   removeMessageHeader,
 } from './message.js'
 import { createCommentProxy } from './proxy.js'
-import type { CreateIssueCommentResponseData, ExistingIssueComment } from './types.js'
+import type {
+  CreateCommitCommentResponseData,
+  CreateIssueCommentResponseData,
+  ExistingCommitComment,
+  ExistingIssueComment,
+} from './types.js'
 
 export const run = async (): Promise<void> => {
   try {
     const {
       allowRepeats,
+      commentTarget,
       messagePath,
       messageInput,
       messageId,
@@ -50,6 +62,67 @@ export const run = async (): Promise<void> => {
       preformatted,
       status,
     })
+
+    if (commentTarget === 'commit') {
+      // --- Commit comment path ---
+
+      let existingComment: ExistingCommitComment | undefined
+
+      if (!allowRepeats) {
+        core.debug('repeat comments are disallowed, checking for existing commit comment')
+        existingComment = await getExistingCommitComment(octokit, owner, repo, commitSha, messageId)
+
+        if (existingComment) {
+          core.debug(`existing commit comment found with id: ${existingComment.id}`)
+        }
+      }
+
+      if (!existingComment && updateOnly) {
+        core.info('no existing commit comment found and update-only is true, exiting')
+        core.setOutput('comment-created', 'false')
+        return
+      }
+
+      let comment: CreateCommitCommentResponseData | null | undefined
+
+      if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
+        message = findAndReplaceInMessage(
+          messageFind,
+          messageReplace?.length ? messageReplace : [message],
+          removeMessageHeader(existingComment.body),
+        )
+      }
+
+      if (!message) {
+        throw new Error('no message, check your message inputs')
+      }
+
+      const body = addMessageHeader(messageId, message)
+
+      if (existingComment?.id) {
+        if (refreshMessagePosition) {
+          await deleteCommitComment(octokit, owner, repo, existingComment.id)
+          comment = await createCommitComment(octokit, owner, repo, commitSha, body)
+        } else {
+          comment = await updateCommitComment(octokit, owner, repo, existingComment.id, body)
+        }
+        core.setOutput('comment-updated', 'true')
+      } else {
+        comment = await createCommitComment(octokit, owner, repo, commitSha, body)
+        core.setOutput('comment-created', 'true')
+      }
+
+      if (comment) {
+        core.setOutput('comment-id', comment.id)
+      } else {
+        core.setOutput('comment-created', 'false')
+        core.setOutput('comment-updated', 'false')
+      }
+
+      return
+    }
+
+    // --- PR/issue comment path (existing code, unchanged) ---
 
     let issueNumber: number | undefined
 
