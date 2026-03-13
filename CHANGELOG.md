@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.3.0](https://github.com/mshick/add-pr-comment/compare/v3.2.0...v3.3.0) (2026-03-13)
+
+
+### Features
+
+* modernize build pipeline and CI ([#154](https://github.com/mshick/add-pr-comment/issues/154)) ([8ea01c7](https://github.com/mshick/add-pr-comment/commit/8ea01c73d653c4457e7419447c55b89a18da8ba6))
+
+
+### Bug Fixes
+
+* use app token for release-please ([#156](https://github.com/mshick/add-pr-comment/issues/156)) ([8e2d11b](https://github.com/mshick/add-pr-comment/commit/8e2d11beb5d942e3598037e18b497c3dd219d624))
+
 ## [3.2.0](https://github.com/mshick/add-pr-comment/compare/v3.1.0...v3.2.0) (2026-03-13)
 
 ### Features
