@@ -20,11 +20,19 @@
   },
   "license": "MIT",
   "author": "Michael Shick <m@shick.us>",
-  "main": "lib/main.js",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "scripts": {
-    "build": "del-cli dist && tsc && ncc build --source-map",
-    "clean": "rm -rf node_modules dist lib package-lock.json",
+    "build": "npm run package",
+    "bundle": "npm run format:check && npm run package",
+    "clean": "rm -rf node_modules dist coverage package-lock.json",
+    "format:write": "npx prettier --write .",
+    "format:check": "npx prettier --check .",
     "lint": "eslint src/",
+    "package": "npx rimraf ./dist && npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "package:watch": "npm run package -- --watch",
     "test": "vitest run",
     "watch": "vitest"
   },
@@ -46,19 +54,25 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@octokit/types": "^16.0.0",
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^25.5.0",
-    "@vercel/ncc": "^0.38.4",
-    "del-cli": "^7.0.0",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "msw": "^2.12.10",
     "prettier": "^3.8.1",
+    "rimraf": "^6.1.3",
+    "rollup": "^4.59.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.0",
     "vitest": "^4.1.0"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*"
+  },
   "engines": {
-    "node": "^18.0.0 || ^20.0.0 || ^22.0.0 || ^24.0.0"
+    "node": ">=24.0.0"
   }
 }

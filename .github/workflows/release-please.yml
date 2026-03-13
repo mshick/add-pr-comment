@@ -58,7 +58,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/ dist/
+          git add dist/
           git diff-index --quiet HEAD || git commit -m "chore: build dist"
           git push
 
