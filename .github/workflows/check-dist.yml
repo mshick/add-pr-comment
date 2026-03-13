@@ -1,4 +1,4 @@
-name: Check Transpiled JavaScript
+name: Check dist
 
 on:
   pull_request:
@@ -12,8 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  check-dist:
-    name: Check dist/
+  run:
+    name: Run
     runs-on: ubuntu-latest
 
     steps:
