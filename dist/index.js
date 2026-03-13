@@ -33333,7 +33333,7 @@ function error(message, properties = {}) {
  * @param properties optional properties to add to the annotation.
  */
 function warning(message, properties = {}) {
-    issueCommand('warning', toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+    command_issueCommand('warning', utils_toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
 /**
  * Adds a notice issue
@@ -37671,7 +37671,52 @@ function getOctokit(token, options, ...additionalPlugins) {
     return new GitHubWithPlugins(getOctokitOptions(token, options));
 }
 //# sourceMappingURL=github.js.map
+;// CONCATENATED MODULE: ./lib/retry.js
+
+function isRetryableError(error) {
+    if (error && typeof error === 'object' && 'status' in error) {
+        const status = error.status;
+        return status === 403 || status === 429;
+    }
+    return false;
+}
+function getRetryAfterMs(error) {
+    if (error && typeof error === 'object' && 'response' in error) {
+        const response = error.response;
+        const retryAfter = response?.headers?.['retry-after'];
+        if (retryAfter) {
+            const seconds = Number(retryAfter);
+            if (!Number.isNaN(seconds) && seconds > 0) {
+                return seconds * 1000;
+            }
+        }
+    }
+    return undefined;
+}
+async function withRetry(fn, options = {}) {
+    const { maxAttempts = 3, baseDelayMs = 1000 } = options;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        }
+        catch (error) {
+            if (attempt < maxAttempts && isRetryableError(error)) {
+                const retryAfter = getRetryAfterMs(error);
+                const backoff = baseDelayMs * Math.pow(2, attempt - 1);
+                const jitter = Math.random() * baseDelayMs;
+                const delay = retryAfter ?? Math.round(backoff + jitter);
+                warning(`API rate limited (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms`);
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
+            }
+            throw error;
+        }
+    }
+    throw new Error('unreachable');
+}
+
 ;// CONCATENATED MODULE: ./lib/comments.js
+
 async function getExistingComment(octokit, owner, repo, issueNumber, messageId) {
     const parameters = {
         owner,
@@ -37695,30 +37740,30 @@ async function getExistingComment(octokit, owner, repo, issueNumber, messageId) 
     return;
 }
 async function updateComment(octokit, owner, repo, existingCommentId, body) {
-    const updatedComment = await octokit.rest.issues.updateComment({
+    const updatedComment = await withRetry(() => octokit.rest.issues.updateComment({
         comment_id: existingCommentId,
         owner,
         repo,
         body,
-    });
+    }));
     return updatedComment.data;
 }
 async function deleteComment(octokit, owner, repo, existingCommentId, body) {
-    const deletedComment = await octokit.rest.issues.deleteComment({
+    const deletedComment = await withRetry(() => octokit.rest.issues.deleteComment({
         comment_id: existingCommentId,
         owner,
         repo,
         body,
-    });
+    }));
     return deletedComment.data;
 }
 async function createComment(octokit, owner, repo, issueNumber, body) {
-    const createdComment = await octokit.rest.issues.createComment({
+    const createdComment = await withRetry(() => octokit.rest.issues.createComment({
         issue_number: issueNumber,
         owner,
         repo,
         body,
-    });
+    }));
     return createdComment.data;
 }
 
@@ -37773,12 +37818,13 @@ async function getInputs() {
 }
 
 ;// CONCATENATED MODULE: ./lib/issues.js
+
 async function getIssueNumberFromCommitPullsList(octokit, owner, repo, commitSha) {
-    const commitPullsList = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+    const commitPullsList = await withRetry(() => octokit.rest.repos.listPullRequestsAssociatedWithCommit({
         owner,
         repo,
         commit_sha: commitSha,
-    });
+    }));
     return commitPullsList.data.length ? commitPullsList.data?.[0].number : null;
 }
 
