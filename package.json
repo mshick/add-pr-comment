@@ -25,7 +25,7 @@
     "build": "del-cli dist && tsc && ncc build --source-map",
     "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
     "lint": "eslint src/",
-"test": "vitest run",
+    "test": "vitest run",
     "watch": "vitest"
   },
   "prettier": {
