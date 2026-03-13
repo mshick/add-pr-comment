@@ -238,7 +238,7 @@ describe('add-pr-comment action', () => {
     inputs['message-path'] = messagePathTooLongFixture
     inputs['allow-repeats'] = 'true'
 
-    let endOfMessage = "...";
+    const endOfMessage = '...'
 
     await expect(run()).resolves.not.toThrow()
     expect(endOfMessage).toEqual(messagePayload?.body.slice(-3))

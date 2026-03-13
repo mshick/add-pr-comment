@@ -136,6 +136,6 @@ export const run = async (): Promise<void> => {
       core.setOutput('comment-updated', 'false')
     }
   } catch (err) {
-      core.setFailed(err instanceof Error ? err.message : JSON.stringify(err));
+    core.setFailed(err instanceof Error ? err.message : JSON.stringify(err))
   }
 }

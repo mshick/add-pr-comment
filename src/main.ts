@@ -1,3 +1,3 @@
-import { run } from './action';
+import { run } from './action'
 
-export default run;
+export default run
