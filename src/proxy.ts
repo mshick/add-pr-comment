@@ -1,5 +1,5 @@
 import { HttpClient } from '@actions/http-client'
-import { Endpoints } from '@octokit/types'
+import type { Endpoints } from '@octokit/types'
 
 type CreateIssueCommentResponseData =
   Endpoints['POST /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data']
@@ -25,7 +25,7 @@ export async function createCommentProxy(
     `${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
     { comment_id: commentId, body },
     {
-      ['temporary-github-token']: repoToken,
+      'temporary-github-token': repoToken,
     },
   )
 

@@ -33778,7 +33778,7 @@ async function withRetry(fn, options = {}) {
         catch (error) {
             if (attempt < maxAttempts && isRetryableError(error)) {
                 const retryAfter = getRetryAfterMs(error);
-                const backoff = baseDelayMs * Math.pow(2, attempt - 1);
+                const backoff = baseDelayMs * 2 ** (attempt - 1);
                 const jitter = Math.random() * baseDelayMs;
                 const delay = retryAfter ?? Math.round(backoff + jitter);
                 warning(`API rate limited (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms`);
@@ -36114,7 +36114,7 @@ async function getMessageFromPath(searchPath) {
     }
     // return trimmed message if message is too long (maximum is 65536 characters)
     return message.length > maxCharacterLength
-        ? message.substring(0, maxCharacterLength - 3) + '...'
+        ? `${message.substring(0, maxCharacterLength - 3)}...`
         : message;
 }
 function addMessageHeader(messageId, message) {
@@ -36151,7 +36151,7 @@ async function createCommentProxy(params) {
     const { repoToken, owner, repo, issueNumber, body, commentId, proxyUrl } = params;
     const http = new HttpClient('http-client-add-pr-comment');
     const response = await http.postJson(`${proxyUrl}/repos/${owner}/${repo}/issues/${issueNumber}/comments`, { comment_id: commentId, body }, {
-        ['temporary-github-token']: repoToken,
+        'temporary-github-token': repoToken,
     });
     return response.result;
 }

@@ -1,4 +1,4 @@
-import { GitHub } from '@actions/github/lib/utils'
+import type { GitHub } from '@actions/github/lib/utils'
 import { withRetry } from './retry.js'
 
 export async function getIssueNumberFromCommitPullsList(

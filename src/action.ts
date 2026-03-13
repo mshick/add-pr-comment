@@ -10,7 +10,7 @@ import {
   removeMessageHeader,
 } from './message.js'
 import { createCommentProxy } from './proxy.js'
-import { CreateIssueCommentResponseData, ExistingIssueComment } from './types.js'
+import type { CreateIssueCommentResponseData, ExistingIssueComment } from './types.js'
 
 export const run = async (): Promise<void> => {
   try {
@@ -51,7 +51,7 @@ export const run = async (): Promise<void> => {
       status,
     })
 
-    let issueNumber
+    let issueNumber: number | undefined
 
     if (issue) {
       issueNumber = issue

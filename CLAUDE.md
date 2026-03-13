@@ -12,9 +12,9 @@ A GitHub Action that adds comments to pull requests. Supports sticky comments (a
 npm run build          # bundle with Rollup into dist/index.js
 npm test               # vitest run
 npm run watch          # vitest (watch mode)
-npm run lint           # eslint src/
-npm run format:check   # prettier --check .
-npm run format:write   # prettier --write .
+npm run check          # biome check . (lint + format)
+npm run lint           # biome lint .
+npm run format         # biome check --write . (auto-fix)
 npm run clean          # rm -rf node_modules dist coverage package-lock.json
 ```
 
@@ -37,8 +37,8 @@ Tests are in `src/action.test.ts` using Vitest with MSW (Mock Service Worker) fo
 ## Code Style
 
 - Strict TypeScript (ES2022 target, NodeNext module resolution)
-- ESLint with TypeScript recommended + Prettier integration
-- Prettier: single quotes, no semicolons, trailing commas, 100 char width
+- Biome for linting and formatting (replaces ESLint + Prettier)
+- Formatting: single quotes, no semicolons, trailing commas, 100 char width
 - `console` usage is banned in source (use `@actions/core` logging instead)
 - `noUnusedLocals` and `noUnusedParameters` enforced
 
