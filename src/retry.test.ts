@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { withRetry } from '../src/retry'
+import { withRetry } from './retry'
 
 vi.mock('@actions/core')
 

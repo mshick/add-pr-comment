@@ -29,7 +29,7 @@ Entry point is `src/main.ts` which orchestrates:
 
 Type definitions are in `types.ts`. File globbing is in `files.ts`.
 
-Tests are in `__tests__/add-pr-comment.test.ts` using Vitest with MSW (Mock Service Worker) for HTTP mocking against the GitHub API. Test fixtures (message files, sample JSON responses) live alongside the test file.
+Tests are in `src/action.test.ts` using Vitest with MSW (Mock Service Worker) for HTTP mocking against the GitHub API. Test fixtures (message files, sample JSON responses) live in `src/__fixtures__/`.
 
 ## Code Style
 
@@ -41,4 +41,4 @@ Tests are in `__tests__/add-pr-comment.test.ts` using Vitest with MSW (Mock Serv
 
 ## Release Process
 
-Uses release-please on the `master` branch with conventional commits. The `npm run prepare` script auto-builds and stages `lib/` and `dist/` for commits.
+Uses release-please on the `main` branch with conventional commits. PR titles and the first commit on a branch must use conventional commit syntax (e.g., `feat: add new feature`, `fix: resolve bug`). Subsequent commits should use plain descriptive messages without the conventional commit prefix. The `npm run prepare` script auto-builds and stages `lib/` and `dist/` for commits.
