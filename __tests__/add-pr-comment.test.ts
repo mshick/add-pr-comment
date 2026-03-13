@@ -111,12 +111,9 @@ const handlers = [
       return HttpResponse.json(postIssueCommentsResponse)
     },
   ),
-  rest.delete(
-    `https://api.github.com/repos/:repoUser/:repoName/issues/comments/:commentId`,
-    async (req, res, ctx) => {
-      return res(ctx.status(200), ctx.json(deleteIssueCommentResponse))
-    },
-  ),
+  http.delete(`https://api.github.com/repos/:repoUser/:repoName/issues/comments/:commentId`, () => {
+    return HttpResponse.json(deleteIssueCommentResponse)
+  }),
   http.get(`https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`, () => {
     return HttpResponse.json(getIssueCommentsResponse)
   }),
