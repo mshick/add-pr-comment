@@ -60,7 +60,7 @@ let getIssueCommentsResponse: Record<string, unknown>[] | undefined
 let postIssueCommentsResponse = {
   id: 42,
 }
-let deleteIssueCommentResponse = {}
+const deleteIssueCommentResponse = {}
 
 type MessagePayload = {
   comment_id?: number
@@ -680,8 +680,8 @@ describe('find and replace', () => {
 describe('delete on status', () => {
   it('can delete comment if status is matching', async () => {
     inputs['delete-on-status'] = 'success'
-    inputs['status'] = 'success'
-    inputs['message'] = 'hello'
+    inputs.status = 'success'
+    inputs.message = 'hello'
 
     const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\n[ ] Hello\n[ ] World`
 
@@ -703,8 +703,8 @@ describe('delete on status', () => {
 
   it('does not delete comment if status is not matching', async () => {
     inputs['delete-on-status'] = 'success'
-    inputs['status'] = 'failure'
-    inputs['message'] = 'hello'
+    inputs.status = 'failure'
+    inputs.message = 'hello'
 
     getIssueCommentsResponse = []
 
