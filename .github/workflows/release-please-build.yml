@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: checkout repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          token: ${{ secrets.PAT }}
 
       - name: setup node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
