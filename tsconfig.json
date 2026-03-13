@@ -14,6 +14,7 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
+    "importHelpers": false,
     "declaration": false,
     "declarationMap": false,
     "outDir": "./dist",
