@@ -41,11 +41,10 @@ export async function getMessage({
   }
 
   if (!message) {
-    if (messagePath) {
-      message = await getMessageFromPath(messagePath)
-    } else {
-      message = messageInput
-    }
+    const parts: string[] = []
+    if (messageInput) parts.push(messageInput)
+    if (messagePath) parts.push(await getMessageFromPath(messagePath))
+    message = parts.length ? parts.join('\n') : undefined
   }
 
   if (preformatted) {

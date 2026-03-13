@@ -259,12 +259,15 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
-  it('fails when both message and message-path are defined', async () => {
-    inputs.message = 'foobar'
+  it('creates a comment combining message and message-path', async () => {
+    inputs.message = 'Header text'
     inputs['message-path'] = messagePath1Fixture
+    inputs['allow-repeats'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
-    expect(core.setFailed).toHaveBeenCalledWith('must specify only one, message or message-path')
+    expect(messagePayload?.body).toContain('Header text')
+    expect(messagePayload?.body).toContain(messagePath1FixturePayload)
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 
   it('creates a comment in an existing PR', async () => {

@@ -9,22 +9,18 @@ export async function getInputs(): Promise<Inputs> {
   const messagePath = core.getInput('message-path', { required: false })
   const messageFind = core.getMultilineInput('find', { required: false })
   const messageReplace = core.getMultilineInput('replace', { required: false })
-  const repoOwner = core.getInput('repo-owner', { required: true })
-  const repoName = core.getInput('repo-name', { required: true })
-  const repoToken = core.getInput('repo-token', { required: true })
-  const status = core.getInput('status', { required: true })
+  const repoOwner = core.getInput('repo-owner', { required: false })
+  const repoName = core.getInput('repo-name', { required: false })
+  const repoToken = core.getInput('repo-token', { required: false })
+  const status = core.getInput('status', { required: false })
   const issue = core.getInput('issue', { required: false })
   const proxyUrl = core.getInput('proxy-url', { required: false }).replace(/\/$/, '')
-  const allowRepeats = core.getInput('allow-repeats', { required: true }) === 'true'
+  const allowRepeats = core.getInput('allow-repeats', { required: false }) === 'true'
   const refreshMessagePosition =
     core.getInput('refresh-message-position', { required: false }) === 'true'
   const updateOnly = core.getInput('update-only', { required: false }) === 'true'
   const preformatted = core.getInput('preformatted', { required: false }) === 'true'
   const deleteOnStatus = core.getInput('delete-on-status', { required: false })
-
-  if (messageInput && messagePath) {
-    throw new Error('must specify only one, message or message-path')
-  }
 
   const messageSuccess = core.getInput(`message-success`)
   const messageFailure = core.getInput(`message-failure`)

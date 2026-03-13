@@ -1,4 +1,5 @@
 import { GitHub } from '@actions/github/lib/utils'
+import { withRetry } from './retry'
 
 export async function getIssueNumberFromCommitPullsList(
   octokit: InstanceType<typeof GitHub>,
@@ -6,11 +7,13 @@ export async function getIssueNumberFromCommitPullsList(
   repo: string,
   commitSha: string,
 ): Promise<number | null> {
-  const commitPullsList = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
-    owner,
-    repo,
-    commit_sha: commitSha,
-  })
+  const commitPullsList = await withRetry(() =>
+    octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+      owner,
+      repo,
+      commit_sha: commitSha,
+    }),
+  )
 
   return commitPullsList.data.length ? commitPullsList.data?.[0].number : null
 }

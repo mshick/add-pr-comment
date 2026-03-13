@@ -33333,7 +33333,7 @@ function error(message, properties = {}) {
  * @param properties optional properties to add to the annotation.
  */
 function warning(message, properties = {}) {
-    issueCommand('warning', toCommandProperties(properties), message instanceof Error ? message.toString() : message);
+    command_issueCommand('warning', utils_toCommandProperties(properties), message instanceof Error ? message.toString() : message);
 }
 /**
  * Adds a notice issue
@@ -37671,7 +37671,52 @@ function getOctokit(token, options, ...additionalPlugins) {
     return new GitHubWithPlugins(getOctokitOptions(token, options));
 }
 //# sourceMappingURL=github.js.map
+;// CONCATENATED MODULE: ./lib/retry.js
+
+function isRetryableError(error) {
+    if (error && typeof error === 'object' && 'status' in error) {
+        const status = error.status;
+        return status === 403 || status === 429;
+    }
+    return false;
+}
+function getRetryAfterMs(error) {
+    if (error && typeof error === 'object' && 'response' in error) {
+        const response = error.response;
+        const retryAfter = response?.headers?.['retry-after'];
+        if (retryAfter) {
+            const seconds = Number(retryAfter);
+            if (!Number.isNaN(seconds) && seconds > 0) {
+                return seconds * 1000;
+            }
+        }
+    }
+    return undefined;
+}
+async function withRetry(fn, options = {}) {
+    const { maxAttempts = 3, baseDelayMs = 1000 } = options;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        }
+        catch (error) {
+            if (attempt < maxAttempts && isRetryableError(error)) {
+                const retryAfter = getRetryAfterMs(error);
+                const backoff = baseDelayMs * Math.pow(2, attempt - 1);
+                const jitter = Math.random() * baseDelayMs;
+                const delay = retryAfter ?? Math.round(backoff + jitter);
+                warning(`API rate limited (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms`);
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                continue;
+            }
+            throw error;
+        }
+    }
+    throw new Error('unreachable');
+}
+
 ;// CONCATENATED MODULE: ./lib/comments.js
+
 async function getExistingComment(octokit, owner, repo, issueNumber, messageId) {
     const parameters = {
         owner,
@@ -37695,30 +37740,30 @@ async function getExistingComment(octokit, owner, repo, issueNumber, messageId) 
     return;
 }
 async function updateComment(octokit, owner, repo, existingCommentId, body) {
-    const updatedComment = await octokit.rest.issues.updateComment({
+    const updatedComment = await withRetry(() => octokit.rest.issues.updateComment({
         comment_id: existingCommentId,
         owner,
         repo,
         body,
-    });
+    }));
     return updatedComment.data;
 }
 async function deleteComment(octokit, owner, repo, existingCommentId, body) {
-    const deletedComment = await octokit.rest.issues.deleteComment({
+    const deletedComment = await withRetry(() => octokit.rest.issues.deleteComment({
         comment_id: existingCommentId,
         owner,
         repo,
         body,
-    });
+    }));
     return deletedComment.data;
 }
 async function createComment(octokit, owner, repo, issueNumber, body) {
-    const createdComment = await octokit.rest.issues.createComment({
+    const createdComment = await withRetry(() => octokit.rest.issues.createComment({
         issue_number: issueNumber,
         owner,
         repo,
         body,
-    });
+    }));
     return createdComment.data;
 }
 
@@ -37732,19 +37777,16 @@ async function getInputs() {
     const messagePath = getInput('message-path', { required: false });
     const messageFind = getMultilineInput('find', { required: false });
     const messageReplace = getMultilineInput('replace', { required: false });
-    const repoOwner = getInput('repo-owner', { required: true });
-    const repoName = getInput('repo-name', { required: true });
-    const repoToken = getInput('repo-token', { required: true });
-    const status = getInput('status', { required: true });
+    const repoOwner = getInput('repo-owner', { required: false });
+    const repoName = getInput('repo-name', { required: false });
+    const repoToken = getInput('repo-token', { required: false });
+    const status = getInput('status', { required: false });
     const issue = getInput('issue', { required: false });
     const proxyUrl = getInput('proxy-url', { required: false }).replace(/\/$/, '');
-    const allowRepeats = getInput('allow-repeats', { required: true }) === 'true';
+    const allowRepeats = getInput('allow-repeats', { required: false }) === 'true';
     const refreshMessagePosition = getInput('refresh-message-position', { required: false }) === 'true';
     const updateOnly = getInput('update-only', { required: false }) === 'true';
     const preformatted = getInput('preformatted', { required: false }) === 'true';
-    if (messageInput && messagePath) {
-        throw new Error('must specify only one, message or message-path');
-    }
     const messageSuccess = getInput(`message-success`);
     const messageFailure = getInput(`message-failure`);
     const messageCancelled = getInput(`message-cancelled`);
@@ -37776,12 +37818,13 @@ async function getInputs() {
 }
 
 ;// CONCATENATED MODULE: ./lib/issues.js
+
 async function getIssueNumberFromCommitPullsList(octokit, owner, repo, commitSha) {
-    const commitPullsList = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+    const commitPullsList = await withRetry(() => octokit.rest.repos.listPullRequestsAssociatedWithCommit({
         owner,
         repo,
         commit_sha: commitSha,
-    });
+    }));
     return commitPullsList.data.length ? commitPullsList.data?.[0].number : null;
 }
 
@@ -38794,12 +38837,12 @@ async function getMessage({ messageInput, messagePath, messageCancelled, message
         message = messageSkipped;
     }
     if (!message) {
-        if (messagePath) {
-            message = await getMessageFromPath(messagePath);
-        }
-        else {
-            message = messageInput;
-        }
+        const parts = [];
+        if (messageInput)
+            parts.push(messageInput);
+        if (messagePath)
+            parts.push(await getMessageFromPath(messagePath));
+        message = parts.length ? parts.join('\n') : undefined;
     }
     if (preformatted) {
         message = `\`\`\`\n${message}\n\`\`\``;
@@ -38808,6 +38851,7 @@ async function getMessage({ messageInput, messagePath, messageCancelled, message
 }
 async function getMessageFromPath(searchPath) {
     let message = '';
+    const maxCharacterLength = 65536;
     const files = await findFiles(searchPath);
     for (const [index, path] of files.entries()) {
         if (index > 0) {
@@ -38815,7 +38859,10 @@ async function getMessageFromPath(searchPath) {
         }
         message += await promises_default().readFile(path, { encoding: 'utf8' });
     }
-    return message;
+    // return trimmed message if message is too long (maximum is 65536 characters)
+    return message.length > maxCharacterLength
+        ? message.substring(0, maxCharacterLength - 3) + '...'
+        : message;
 }
 function addMessageHeader(messageId, message) {
     return `${messageId}\n\n${message}`;
