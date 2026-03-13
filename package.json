@@ -32,7 +32,7 @@
     "check": "biome check .",
     "format": "biome check --write .",
     "lint": "biome lint .",
-    "package": "npx rimraf ./dist && npx rollup --config rollup.config.mjs",
+    "package": "npx rimraf ./dist && npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "package:watch": "npm run package -- --watch",
     "test": "vitest run --coverage",
     "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
