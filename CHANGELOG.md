@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.4.0](https://github.com/mshick/add-pr-comment/compare/v3.3.0...v3.4.0) (2026-03-13)
+
+
+### Features
+
+* enable immutable releases ([#158](https://github.com/mshick/add-pr-comment/issues/158)) ([e9cf45c](https://github.com/mshick/add-pr-comment/commit/e9cf45c7dafb15ef94edf29cfb27e8b08d5e8f2e))
+
 ## [3.3.0](https://github.com/mshick/add-pr-comment/compare/v3.2.0...v3.3.0) (2026-03-13)
 
 
