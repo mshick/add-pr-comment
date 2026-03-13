@@ -6,7 +6,7 @@ import { setupServer } from 'msw/node'
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import run from '../src/main'
+import { run } from '../src/action'
 import apiResponse from './sample-pulls-api-response.json'
 
 const messagePath1Fixture = path.resolve(__dirname, './message-part-1.txt')
