@@ -1,5 +1,5 @@
 name: 'Add PR Comment'
-description: 'Add a comment to a pull request'
+description: 'Add a comment to a pull request or commit'
 inputs:
   message:
     description: 'The message to print.'

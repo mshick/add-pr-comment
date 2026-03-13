@@ -699,6 +699,18 @@ describe('find and replace', () => {
   })
 })
 
+describe('comment-target validation', () => {
+  it('fails with an invalid comment-target value', async () => {
+    inputs['comment-target'] = 'invalid'
+    inputs.message = simpleMessage
+
+    await run()
+    expect(core.setFailed).toHaveBeenCalledWith(
+      'Invalid comment-target: "invalid". Must be "pr" or "commit".',
+    )
+  })
+})
+
 describe('commit comments', () => {
   it('creates a commit comment when comment-target is commit', async () => {
     inputs['comment-target'] = 'commit'
