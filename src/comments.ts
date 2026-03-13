@@ -1,10 +1,10 @@
-import { GitHub } from '@actions/github/lib/utils'
-import { withRetry } from './retry'
-import {
+import type { GitHub } from '@actions/github/lib/utils'
+import { withRetry } from './retry.js'
+import type {
   CreateIssueCommentResponseData,
   ExistingIssueComment,
   ExistingIssueCommentResponseData,
-} from './types'
+} from './types.js'
 
 export async function getExistingComment(
   octokit: InstanceType<typeof GitHub>,

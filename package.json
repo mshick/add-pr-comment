@@ -1,6 +1,6 @@
 {
   "name": "@mshick/add-pr-comment",
-  "version": "3.2.0",
+  "version": "3.3.0",
   "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
   "keywords": [
     "GitHub",
@@ -19,23 +19,24 @@
     "url": "git+https://github.com/mshick/add-pr-comment.git"
   },
   "license": "MIT",
+  "type": "module",
   "author": "Michael Shick <m@shick.us>",
-  "main": "lib/main.js",
-  "scripts": {
-    "build": "del-cli dist && tsc && ncc build --source-map",
-    "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
-    "lint": "eslint src/",
-    "test": "vitest run",
-    "watch": "vitest"
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
   },
-  "prettier": {
-    "bracketSpacing": true,
-    "jsxSingleQuote": true,
-    "printWidth": 100,
-    "semi": false,
-    "singleQuote": true,
-    "tabWidth": 2,
-    "trailingComma": "all"
+  "scripts": {
+    "build": "npm run package",
+    "bundle": "npm run check && npm run package",
+    "clean": "rm -rf node_modules dist coverage package-lock.json",
+    "check": "biome check .",
+    "format": "biome check --write .",
+    "lint": "biome lint .",
+    "package": "npx rimraf ./dist && npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "package:watch": "npm run package -- --watch",
+    "test": "vitest run --coverage",
+    "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
+    "watch": "vitest"
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
@@ -44,21 +45,25 @@
     "@actions/http-client": "^4.0.0"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@biomejs/biome": "^2.4.6",
     "@octokit/types": "^16.0.0",
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^25.5.0",
-    "@vercel/ncc": "^0.38.4",
-    "del-cli": "^7.0.0",
-    "eslint": "^10.0.3",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-prettier": "^5.5.5",
+    "@vitest/coverage-v8": "^4.1.0",
+    "make-coverage-badge": "^1.2.0",
     "msw": "^2.12.10",
-    "prettier": "^3.8.1",
+    "rimraf": "^6.1.3",
+    "rollup": "^4.59.0",
+    "tslib": "^2.8.1",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.57.0",
     "vitest": "^4.1.0"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "*"
+  },
   "engines": {
-    "node": "^18.0.0 || ^20.0.0 || ^22.0.0 || ^24.0.0"
+    "node": ">=24.0.0"
   }
 }

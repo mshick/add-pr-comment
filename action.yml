@@ -1,78 +1,78 @@
-name: "Add PR Comment"
-description: "Add a comment to a pull request"
+name: 'Add PR Comment'
+description: 'Add a comment to a pull request'
 inputs:
   message:
-    description: "The message to print."
+    description: 'The message to print.'
     required: false
   message-path:
-    description: "A path or list of paths to a file to print as a message instead of a string."
+    description: 'A path or list of paths to a file to print as a message instead of a string.'
     required: false
   message-id:
-    description: "An optional id to use for this message."
-    default: "add-pr-comment"
+    description: 'An optional id to use for this message.'
+    default: 'add-pr-comment'
     required: false
   refresh-message-position:
-    description: "If a message with the same id, this option allow to refresh the position of the message to be the last one posted."
-    default: "false"
+    description: 'If a message with the same id, this option allow to refresh the position of the message to be the last one posted.'
+    default: 'false'
     required: false
   repo-owner:
-    description: "The repo owner."
-    default: "${{ github.repository_owner }}"
+    description: 'The repo owner.'
+    default: '${{ github.repository_owner }}'
     required: false
   repo-name:
-    description: "The repo name."
-    default: "${{ github.event.repository.name }}"
+    description: 'The repo name.'
+    default: '${{ github.event.repository.name }}'
     required: false
   repo-token:
-    description: "A GitHub token for API access. Defaults to {{ github.token }}."
-    default: "${{ github.token }}"
+    description: 'A GitHub token for API access. Defaults to {{ github.token }}.'
+    default: '${{ github.token }}'
     required: false
   allow-repeats:
-    description: "Allow messages to be repeated."
-    default: "false"
+    description: 'Allow messages to be repeated.'
+    default: 'false'
     required: false
   proxy-url:
-    description: "Proxy URL for comment creation"
+    description: 'Proxy URL for comment creation'
     required: false
   status:
-    description: "A job status for status headers. Defaults to {{ job.status }}."
-    default: "${{ job.status }}"
+    description: 'A job status for status headers. Defaults to {{ job.status }}.'
+    default: '${{ job.status }}'
     required: false
   message-success:
-    description: "Override the message when a run is successful."
+    description: 'Override the message when a run is successful.'
     required: false
   message-failure:
-    description: "Override the message when a run fails."
+    description: 'Override the message when a run fails.'
     required: false
   message-cancelled:
-    description: "Override the message when a run is cancelled."
+    description: 'Override the message when a run is cancelled.'
     required: false
   message-skipped:
-    description: "Override the message when a run is skipped."
+    description: 'Override the message when a run is skipped.'
     required: false
   issue:
-    description: "Override the message when a run is cancelled."
+    description: 'Override the message when a run is cancelled.'
     required: false
   update-only:
-    description: "Only update the comment if it already exists."
+    description: 'Only update the comment if it already exists.'
     required: false
   preformatted:
-    description: "Treat message text (from a file or input) as pre-formatted and place it in a codeblock."
+    description: 'Treat message text (from a file or input) as pre-formatted and place it in a codeblock.'
     required: false
   find:
-    description: "A regular expression to find for replacement. Multiple lines become individual regular expressions."
+    description: 'A regular expression to find for replacement. Multiple lines become individual regular expressions.'
   replace:
-    description: "A replacement to use, overrides the message. Multple lines can replace same-indexed find patterns."
+    description: 'A replacement to use, overrides the message. Multple lines can replace same-indexed find patterns.'
 outputs:
   comment-created:
-    description: "Whether a comment was created."
+    description: 'Whether a comment was created.'
   comment-updated:
-    description: "Whether a comment was updated."
+    description: 'Whether a comment was updated.'
   comment-id:
-    description: "If a comment was created or updated, the comment id."
+    description: 'If a comment was created or updated, the comment id.'
 branding:
   icon: message-circle
   color: purple
 runs:
-  using: "node24"
-  main: "dist/index.js"
+  using: 'node24'
+  main: 'dist/index.js'

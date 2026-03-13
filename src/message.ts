@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
-import { findFiles } from './files'
-import { Inputs } from './types'
+import { findFiles } from './files.js'
+import type { Inputs } from './types.js'
 
 export async function getMessage({
   messageInput,
@@ -22,7 +22,7 @@ export async function getMessage({
   | 'preformatted'
   | 'status'
 >): Promise<string> {
-  let message
+  let message: string | undefined
 
   if (status === 'success' && messageSuccess) {
     message = messageSuccess
@@ -70,7 +70,7 @@ export async function getMessageFromPath(searchPath: string) {
 
   // return trimmed message if message is too long (maximum is 65536 characters)
   return message.length > maxCharacterLength
-    ? message.substring(0, maxCharacterLength - 3) + '...'
+    ? `${message.substring(0, maxCharacterLength - 3)}...`
     : message
 }
 

@@ -70,5 +70,8 @@ typings/
 # next.js build output
 .next
 
+# Build intermediate output
+lib/
+
 # Git worktrees
 .worktrees/

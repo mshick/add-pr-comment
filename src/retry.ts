@@ -36,7 +36,7 @@ export async function withRetry<T>(fn: () => Promise<T>, options: RetryOptions =
     } catch (error) {
       if (attempt < maxAttempts && isRetryableError(error)) {
         const retryAfter = getRetryAfterMs(error)
-        const backoff = baseDelayMs * Math.pow(2, attempt - 1)
+        const backoff = baseDelayMs * 2 ** (attempt - 1)
         const jitter = Math.random() * baseDelayMs
         const delay = retryAfter ?? Math.round(backoff + jitter)
         core.warning(`API rate limited (attempt ${attempt}/${maxAttempts}), retrying in ${delay}ms`)
