@@ -1,4 +1,4 @@
-name: Check Transpiled JavaScript
+name: Check dist
 
 on:
   pull_request:
@@ -12,8 +12,8 @@ permissions:
   contents: read
 
 jobs:
-  check-dist:
-    name: Check dist/
+  run:
+    name: Run
     runs-on: ubuntu-latest
 
     steps:
@@ -43,9 +43,9 @@ jobs:
             ls -la ./
             exit 1
           fi
-          if [ "$(git diff --ignore-space-at-eol --text dist/ | wc -l)" -gt "0" ]; then
+          if [ "$(git diff --ignore-space-at-eol --text dist/index.js | wc -l)" -gt "0" ]; then
             echo "Detected uncommitted changes after build. See status below:"
-            git diff --ignore-space-at-eol --text dist/
+            git diff --ignore-space-at-eol --text dist/index.js
             exit 1
           fi
 

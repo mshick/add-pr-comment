@@ -33840,6 +33840,54 @@ async function createComment(octokit, owner, repo, issueNumber, body) {
     return createdComment.data;
 }
 
+async function getExistingCommitComment(octokit, owner, repo, commitSha, messageId) {
+    const parameters = {
+        owner,
+        repo,
+        commit_sha: commitSha,
+        per_page: 100,
+    };
+    let found;
+    for await (const comments of octokit.paginate.iterator(octokit.rest.repos.listCommentsForCommit, parameters)) {
+        found = comments.data.find(({ body }) => {
+            return (body?.search(messageId) ?? -1) > -1;
+        });
+        if (found) {
+            break;
+        }
+    }
+    if (found) {
+        const { id, body } = found;
+        return { id, body };
+    }
+    return;
+}
+async function createCommitComment(octokit, owner, repo, commitSha, body) {
+    const createdComment = await withRetry(() => octokit.rest.repos.createCommitComment({
+        owner,
+        repo,
+        commit_sha: commitSha,
+        body,
+    }));
+    return createdComment.data;
+}
+async function updateCommitComment(octokit, owner, repo, commentId, body) {
+    const updatedComment = await withRetry(() => octokit.rest.repos.updateCommitComment({
+        owner,
+        repo,
+        comment_id: commentId,
+        body,
+    }));
+    return updatedComment.data;
+}
+async function deleteCommitComment(octokit, owner, repo, commentId) {
+    await withRetry(() => octokit.rest.repos.deleteCommitComment({
+        owner,
+        repo,
+        comment_id: commentId,
+    }));
+}
+
 async function getInputs() {
     const messageIdInput = getInput('message-id', { required: false });
     const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`;
@@ -33858,6 +33906,11 @@ async function getInputs() {
     const updateOnly = getInput('update-only', { required: false }) === 'true';
     const preformatted = getInput('preformatted', { required: false }) === 'true';
     const deleteOnStatus = getInput('delete-on-status', { required: false });
+    const commentTarget = getInput('comment-target', { required: false }) || 'pr';
+    if (commentTarget !== 'pr' && commentTarget !== 'commit') {
+        throw new Error(`Invalid comment-target: "${commentTarget}". Must be "pr" or "commit".`);
+    }
+    const commitShaInput = getInput('commit-sha', { required: false });
     const messageSuccess = getInput(`message-success`);
     const messageFailure = getInput(`message-failure`);
     const messageCancelled = getInput(`message-cancelled`);
@@ -33865,7 +33918,8 @@ async function getInputs() {
     const { payload } = context;
     return {
         allowRepeats,
-        commitSha: context.sha,
+        commentTarget: commentTarget,
+        commitSha: commitShaInput || context.sha,
         issue: issue ? Number(issue) : payload.issue?.number,
         messageInput,
         messageId: `<!-- ${messageId} -->`,
@@ -36157,11 +36211,63 @@ async function createCommentProxy(params) {
     return response.result;
 }
 
+async function manageComment(adapter, options) {
+    let { message } = options;
+    const { allowRepeats, updateOnly, refreshMessagePosition, deleteOnStatus, status, messageId, messageFind, messageReplace, } = options;
+    let existingComment;
+    if (!allowRepeats) {
+        debug('repeat comments are disallowed, checking for existing');
+        existingComment = await adapter.getExisting();
+        if (existingComment) {
+            debug(`existing comment found with id: ${existingComment.id}`);
+        }
+    }
+    if (!existingComment && updateOnly) {
+        info('no existing comment found and update-only is true, exiting');
+        setOutput('comment-created', 'false');
+        return;
+    }
+    if (deleteOnStatus && existingComment && deleteOnStatus === status) {
+        info('deleting existing comment because delete-comment-on-status matched');
+        await adapter.delete(existingComment.id);
+        setOutput('comment-deleted', 'true');
+        return;
+    }
+    if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
+        message = findAndReplaceInMessage(messageFind, messageReplace?.length ? messageReplace : [message], removeMessageHeader(existingComment.body));
+    }
+    if (!message) {
+        throw new Error('no message, check your message inputs');
+    }
+    const body = addMessageHeader(messageId, message);
+    let comment;
+    if (existingComment?.id) {
+        if (refreshMessagePosition) {
+            await adapter.delete(existingComment.id);
+            comment = await adapter.create(body);
+        }
+        else {
+            comment = await adapter.update(existingComment.id, body);
+        }
+        setOutput('comment-updated', 'true');
+    }
+    else {
+        comment = await adapter.create(body);
+        setOutput('comment-created', 'true');
+    }
+    if (comment) {
+        setOutput('comment-id', comment.id);
+    }
+    else {
+        setOutput('comment-created', 'false');
+        setOutput('comment-updated', 'false');
+    }
+}
 const run = async () => {
     try {
-        const { allowRepeats, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, deleteOnStatus, } = await getInputs();
+        const { allowRepeats, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
         const octokit = getOctokit(repoToken);
-        let message = await getMessage({
+        const message = await getMessage({
             messagePath,
             messageInput,
             messageSkipped,
@@ -36171,6 +36277,27 @@ const run = async () => {
             preformatted,
             status,
         });
+        const commentOptions = {
+            allowRepeats,
+            updateOnly,
+            refreshMessagePosition,
+            deleteOnStatus,
+            status,
+            messageId,
+            messageFind,
+            messageReplace,
+            message,
+        };
+        if (commentTarget === 'commit') {
+            await manageComment({
+                getExisting: () => getExistingCommitComment(octokit, owner, repo, commitSha, messageId),
+                create: (body) => createCommitComment(octokit, owner, repo, commitSha, body),
+                update: (id, body) => updateCommitComment(octokit, owner, repo, id, body),
+                delete: (id) => deleteCommitComment(octokit, owner, repo, id),
+            }, commentOptions);
+            return;
+        }
+        // --- PR/issue comment path ---
         let issueNumber;
         if (issue) {
             issueNumber = issue;
@@ -36187,36 +36314,26 @@ const run = async () => {
             setOutput('comment-created', 'false');
             return;
         }
-        let existingComment;
-        if (!allowRepeats) {
-            debug('repeat comments are disallowed, checking for existing');
-            existingComment = await getExistingComment(octokit, owner, repo, issueNumber, messageId);
-            if (existingComment) {
-                debug(`existing comment found with id: ${existingComment.id}`);
-            }
-        }
-        // if no existing comment and updateOnly is true, exit
-        if (!existingComment && updateOnly) {
-            info('no existing comment found and update-only is true, exiting');
-            setOutput('comment-created', 'false');
-            return;
-        }
-        if (deleteOnStatus && existingComment && deleteOnStatus === status) {
-            info('deleting existing comment because delete-comment-on-status matched');
-            await deleteComment(octokit, owner, repo, existingComment.id);
-            setOutput('comment-deleted', 'true');
-            return;
-        }
-        let comment;
-        if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
-            message = findAndReplaceInMessage(messageFind, messageReplace?.length ? messageReplace : [message], removeMessageHeader(existingComment.body));
-        }
-        if (!message) {
-            throw new Error('no message, check your message inputs');
-        }
-        const body = addMessageHeader(messageId, message);
         if (proxyUrl) {
-            comment = await createCommentProxy({
+            // Proxy has its own create/update flow, so it's handled separately
+            let existingComment;
+            if (!allowRepeats) {
+                existingComment = await getExistingComment(octokit, owner, repo, issueNumber, messageId);
+            }
+            if (!existingComment && updateOnly) {
+                info('no existing comment found and update-only is true, exiting');
+                setOutput('comment-created', 'false');
+                return;
+            }
+            let msg = message;
+            if (messageFind?.length && (messageReplace?.length || msg) && existingComment?.body) {
+                msg = findAndReplaceInMessage(messageFind, messageReplace?.length ? messageReplace : [msg], removeMessageHeader(existingComment.body));
+            }
+            if (!msg) {
+                throw new Error('no message, check your message inputs');
+            }
+            const body = addMessageHeader(messageId, msg);
+            const comment = await createCommentProxy({
                 commentId: existingComment?.id,
                 owner,
                 repo,
@@ -36226,28 +36343,23 @@ const run = async () => {
                 proxyUrl,
             });
             setOutput(existingComment?.id ? 'comment-updated' : 'comment-created', 'true');
-        }
-        else if (existingComment?.id) {
-            if (refreshMessagePosition) {
-                await deleteComment(octokit, owner, repo, existingComment.id);
-                comment = await createComment(octokit, owner, repo, issueNumber, body);
+            if (comment) {
+                setOutput('comment-id', comment.id);
             }
             else {
-                comment = await updateComment(octokit, owner, repo, existingComment.id, body);
+                setOutput('comment-created', 'false');
+                setOutput('comment-updated', 'false');
             }
-            setOutput('comment-updated', 'true');
+            return;
         }
-        else {
-            comment = await createComment(octokit, owner, repo, issueNumber, body);
-            setOutput('comment-created', 'true');
-        }
-        if (comment) {
-            setOutput('comment-id', comment.id);
-        }
-        else {
-            setOutput('comment-created', 'false');
-            setOutput('comment-updated', 'false');
-        }
+        await manageComment({
+            getExisting: () => getExistingComment(octokit, owner, repo, issueNumber, messageId),
+            create: (body) => createComment(octokit, owner, repo, issueNumber, body),
+            update: (id, body) => updateComment(octokit, owner, repo, id, body),
+            delete: async (id) => {
+                await deleteComment(octokit, owner, repo, id);
+            },
+        }, commentOptions);
     }
     catch (err) {
         setFailed(err instanceof Error ? err.message : JSON.stringify(err));

@@ -1,5 +1,5 @@
 name: 'Add PR Comment'
-description: 'Add a comment to a pull request'
+description: 'Add a comment to a pull request or commit'
 inputs:
   message:
     description: 'The message to print.'
@@ -58,6 +58,13 @@ inputs:
     required: false
   preformatted:
     description: 'Treat message text (from a file or input) as pre-formatted and place it in a codeblock.'
+    required: false
+  comment-target:
+    description: 'Where to post the comment. Use "pr" for pull request/issue comments (default) or "commit" for commit comments.'
+    default: 'pr'
+    required: false
+  commit-sha:
+    description: 'The commit SHA to comment on when comment-target is "commit". Defaults to the current commit.'
     required: false
   find:
     description: 'A regular expression to find for replacement. Multiple lines become individual regular expressions.'

@@ -1,6 +1,12 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { createComment, deleteComment, getExistingComment, updateComment } from './comments.js'
+import {
+  createCommitComment,
+  deleteCommitComment,
+  getExistingCommitComment,
+  updateCommitComment,
+} from './commit-comments.js'
 import { getInputs } from './config.js'
 import { getIssueNumberFromCommitPullsList } from './issues.js'
 import {
@@ -10,12 +16,108 @@ import {
   removeMessageHeader,
 } from './message.js'
 import { createCommentProxy } from './proxy.js'
-import type { CreateIssueCommentResponseData, ExistingIssueComment } from './types.js'
+
+interface CommentAdapter {
+  getExisting(): Promise<{ id: number; body?: string } | undefined>
+  create(body: string): Promise<{ id: number }>
+  update(id: number, body: string): Promise<{ id: number }>
+  delete(id: number): Promise<void>
+}
+
+interface ManageCommentOptions {
+  allowRepeats: boolean
+  updateOnly: boolean
+  refreshMessagePosition: boolean
+  deleteOnStatus?: string
+  status: string
+  messageId: string
+  messageFind?: string[]
+  messageReplace?: string[]
+  message: string | undefined
+}
+
+async function manageComment(
+  adapter: CommentAdapter,
+  options: ManageCommentOptions,
+): Promise<void> {
+  let { message } = options
+  const {
+    allowRepeats,
+    updateOnly,
+    refreshMessagePosition,
+    deleteOnStatus,
+    status,
+    messageId,
+    messageFind,
+    messageReplace,
+  } = options
+
+  let existingComment: { id: number; body?: string } | undefined
+
+  if (!allowRepeats) {
+    core.debug('repeat comments are disallowed, checking for existing')
+    existingComment = await adapter.getExisting()
+
+    if (existingComment) {
+      core.debug(`existing comment found with id: ${existingComment.id}`)
+    }
+  }
+
+  if (!existingComment && updateOnly) {
+    core.info('no existing comment found and update-only is true, exiting')
+    core.setOutput('comment-created', 'false')
+    return
+  }
+
+  if (deleteOnStatus && existingComment && deleteOnStatus === status) {
+    core.info('deleting existing comment because delete-comment-on-status matched')
+    await adapter.delete(existingComment.id)
+    core.setOutput('comment-deleted', 'true')
+    return
+  }
+
+  if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
+    message = findAndReplaceInMessage(
+      messageFind,
+      messageReplace?.length ? messageReplace : [message],
+      removeMessageHeader(existingComment.body),
+    )
+  }
+
+  if (!message) {
+    throw new Error('no message, check your message inputs')
+  }
+
+  const body = addMessageHeader(messageId, message)
+
+  let comment: { id: number } | null | undefined
+
+  if (existingComment?.id) {
+    if (refreshMessagePosition) {
+      await adapter.delete(existingComment.id)
+      comment = await adapter.create(body)
+    } else {
+      comment = await adapter.update(existingComment.id, body)
+    }
+    core.setOutput('comment-updated', 'true')
+  } else {
+    comment = await adapter.create(body)
+    core.setOutput('comment-created', 'true')
+  }
+
+  if (comment) {
+    core.setOutput('comment-id', comment.id)
+  } else {
+    core.setOutput('comment-created', 'false')
+    core.setOutput('comment-updated', 'false')
+  }
+}
 
 export const run = async (): Promise<void> => {
   try {
     const {
       allowRepeats,
+      commentTarget,
       messagePath,
       messageInput,
       messageId,
@@ -28,6 +130,7 @@ export const run = async (): Promise<void> => {
       repo,
       owner,
       updateOnly,
+      deleteOnStatus,
       messageCancelled,
       messageFailure,
       messageSuccess,
@@ -36,12 +139,11 @@ export const run = async (): Promise<void> => {
       status,
       messageFind,
       messageReplace,
-      deleteOnStatus,
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
 
-    let message = await getMessage({
+    const message = await getMessage({
       messagePath,
       messageInput,
       messageSkipped,
@@ -51,6 +153,33 @@ export const run = async (): Promise<void> => {
       preformatted,
       status,
     })
+
+    const commentOptions: ManageCommentOptions = {
+      allowRepeats,
+      updateOnly,
+      refreshMessagePosition,
+      deleteOnStatus,
+      status,
+      messageId,
+      messageFind,
+      messageReplace,
+      message,
+    }
+
+    if (commentTarget === 'commit') {
+      await manageComment(
+        {
+          getExisting: () => getExistingCommitComment(octokit, owner, repo, commitSha, messageId),
+          create: (body) => createCommitComment(octokit, owner, repo, commitSha, body),
+          update: (id, body) => updateCommitComment(octokit, owner, repo, id, body),
+          delete: (id) => deleteCommitComment(octokit, owner, repo, id),
+        },
+        commentOptions,
+      )
+      return
+    }
+
+    // --- PR/issue comment path ---
 
     let issueNumber: number | undefined | null
 
@@ -71,50 +200,37 @@ export const run = async (): Promise<void> => {
       return
     }
 
-    let existingComment: ExistingIssueComment | undefined
-
-    if (!allowRepeats) {
-      core.debug('repeat comments are disallowed, checking for existing')
-
-      existingComment = await getExistingComment(octokit, owner, repo, issueNumber, messageId)
-
-      if (existingComment) {
-        core.debug(`existing comment found with id: ${existingComment.id}`)
-      }
-    }
-
-    // if no existing comment and updateOnly is true, exit
-    if (!existingComment && updateOnly) {
-      core.info('no existing comment found and update-only is true, exiting')
-      core.setOutput('comment-created', 'false')
-      return
-    }
-
-    if (deleteOnStatus && existingComment && deleteOnStatus === status) {
-      core.info('deleting existing comment because delete-comment-on-status matched')
-      await deleteComment(octokit, owner, repo, existingComment.id)
-      core.setOutput('comment-deleted', 'true')
-      return
-    }
-
-    let comment: CreateIssueCommentResponseData | null | undefined
-
-    if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
-      message = findAndReplaceInMessage(
-        messageFind,
-        messageReplace?.length ? messageReplace : [message],
-        removeMessageHeader(existingComment.body),
-      )
-    }
-
-    if (!message) {
-      throw new Error('no message, check your message inputs')
-    }
-
-    const body = addMessageHeader(messageId, message)
-
     if (proxyUrl) {
-      comment = await createCommentProxy({
+      // Proxy has its own create/update flow, so it's handled separately
+      let existingComment: { id: number; body?: string } | undefined
+
+      if (!allowRepeats) {
+        existingComment = await getExistingComment(octokit, owner, repo, issueNumber, messageId)
+      }
+
+      if (!existingComment && updateOnly) {
+        core.info('no existing comment found and update-only is true, exiting')
+        core.setOutput('comment-created', 'false')
+        return
+      }
+
+      let msg = message
+
+      if (messageFind?.length && (messageReplace?.length || msg) && existingComment?.body) {
+        msg = findAndReplaceInMessage(
+          messageFind,
+          messageReplace?.length ? messageReplace : [msg],
+          removeMessageHeader(existingComment.body),
+        )
+      }
+
+      if (!msg) {
+        throw new Error('no message, check your message inputs')
+      }
+
+      const body = addMessageHeader(messageId, msg)
+
+      const comment = await createCommentProxy({
         commentId: existingComment?.id,
         owner,
         repo,
@@ -124,25 +240,28 @@ export const run = async (): Promise<void> => {
         proxyUrl,
       })
       core.setOutput(existingComment?.id ? 'comment-updated' : 'comment-created', 'true')
-    } else if (existingComment?.id) {
-      if (refreshMessagePosition) {
-        await deleteComment(octokit, owner, repo, existingComment.id)
-        comment = await createComment(octokit, owner, repo, issueNumber, body)
+
+      if (comment) {
+        core.setOutput('comment-id', comment.id)
       } else {
-        comment = await updateComment(octokit, owner, repo, existingComment.id, body)
+        core.setOutput('comment-created', 'false')
+        core.setOutput('comment-updated', 'false')
       }
-      core.setOutput('comment-updated', 'true')
-    } else {
-      comment = await createComment(octokit, owner, repo, issueNumber, body)
-      core.setOutput('comment-created', 'true')
+
+      return
     }
 
-    if (comment) {
-      core.setOutput('comment-id', comment.id)
-    } else {
-      core.setOutput('comment-created', 'false')
-      core.setOutput('comment-updated', 'false')
-    }
+    await manageComment(
+      {
+        getExisting: () => getExistingComment(octokit, owner, repo, issueNumber, messageId),
+        create: (body) => createComment(octokit, owner, repo, issueNumber, body),
+        update: (id, body) => updateComment(octokit, owner, repo, id, body),
+        delete: async (id) => {
+          await deleteComment(octokit, owner, repo, id)
+        },
+      },
+      commentOptions,
+    )
   } catch (err) {
     core.setFailed(err instanceof Error ? err.message : JSON.stringify(err))
   }

@@ -22,6 +22,12 @@ export async function getInputs(): Promise<Inputs> {
   const preformatted = core.getInput('preformatted', { required: false }) === 'true'
   const deleteOnStatus = core.getInput('delete-on-status', { required: false })
 
+  const commentTarget = core.getInput('comment-target', { required: false }) || 'pr'
+  if (commentTarget !== 'pr' && commentTarget !== 'commit') {
+    throw new Error(`Invalid comment-target: "${commentTarget}". Must be "pr" or "commit".`)
+  }
+  const commitShaInput = core.getInput('commit-sha', { required: false })
+
   const messageSuccess = core.getInput(`message-success`)
   const messageFailure = core.getInput(`message-failure`)
   const messageCancelled = core.getInput(`message-cancelled`)
@@ -31,7 +37,8 @@ export async function getInputs(): Promise<Inputs> {
 
   return {
     allowRepeats,
-    commitSha: github.context.sha,
+    commentTarget: commentTarget as 'pr' | 'commit',
+    commitSha: commitShaInput || github.context.sha,
     issue: issue ? Number(issue) : payload.issue?.number,
     messageInput,
     messageId: `<!-- ${messageId} -->`,
