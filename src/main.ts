@@ -1,3 +1,2 @@
-import { run } from './action'
-
-export default run
+import { run } from './action';
+run();

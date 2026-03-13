@@ -30480,13 +30480,6 @@ var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
 "use strict";
-// ESM COMPAT FLAG
-__nccwpck_require__.r(__webpack_exports__);
-
-// EXPORTS
-__nccwpck_require__.d(__webpack_exports__, {
-  "default": () => (/* binding */ main)
-});
 
 ;// CONCATENATED MODULE: external "os"
 const external_os_namespaceObject = require("os");
@@ -38905,7 +38898,7 @@ async function createCommentProxy(params) {
     return response.result;
 }
 
-;// CONCATENATED MODULE: ./lib/main.js
+;// CONCATENATED MODULE: ./lib/action.js
 
 
 
@@ -39000,20 +38993,13 @@ const run = async () => {
         }
     }
     catch (err) {
-        if (process.env.NODE_ENV === 'test') {
-            // eslint-disable-next-line no-console
-            console.log(err);
-        }
-        if (err instanceof Error) {
-            setFailed(err.message);
-        }
+        setFailed(err instanceof Error ? err.message : JSON.stringify(err));
     }
 };
-// Don't auto-execute in the test environment
-if (process.env['NODE_ENV'] !== 'test') {
-    run();
-}
-/* harmony default export */ const main = (run);
+
+;// CONCATENATED MODULE: ./lib/main.js
+
+run();
 
 })();
 
