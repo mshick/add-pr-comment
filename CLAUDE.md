@@ -9,18 +9,21 @@ A GitHub Action that adds comments to pull requests. Supports sticky comments (a
 ## Commands
 
 ```bash
-npm run build     # del-cli dist && tsc && ncc build --source-map
-npm test          # vitest run
-npm run watch     # vitest (watch mode)
-npm run lint      # eslint src/
-npm run clean     # rm -rf node_modules dist package-lock.json __tests__/runner/**/*
+npm run build          # bundle with Rollup into dist/index.js
+npm test               # vitest run
+npm run watch          # vitest (watch mode)
+npm run check          # biome check . (lint + format)
+npm run lint           # biome lint .
+npm run format         # biome check --write . (auto-fix)
+npm run clean          # rm -rf node_modules dist coverage package-lock.json
 ```
 
-The build compiles TypeScript to `lib/` then bundles with `@vercel/ncc` into `dist/index.js` for GitHub Actions runtime (Node24).
+The build bundles TypeScript directly into `dist/index.js` using Rollup for GitHub Actions runtime (Node24).
 
 ## Architecture
 
 Entry point is `src/main.ts` which orchestrates:
+
 1. Parse inputs (`config.ts`) from GitHub Actions context
 2. Resolve message content (`message.ts`) — from input string, file glob, or status override
 3. Look up issue/PR number (`issues.ts`) — from event context or commit
@@ -33,12 +36,12 @@ Tests are in `src/action.test.ts` using Vitest with MSW (Mock Service Worker) fo
 
 ## Code Style
 
-- Strict TypeScript (ES2022 target, bundler module resolution)
-- ESLint with TypeScript recommended + Prettier integration
-- Prettier: single quotes, no semicolons, trailing commas, 100 char width
+- Strict TypeScript (ES2022 target, NodeNext module resolution)
+- Biome for linting and formatting (replaces ESLint + Prettier)
+- Formatting: single quotes, no semicolons, trailing commas, 100 char width
 - `console` usage is banned in source (use `@actions/core` logging instead)
 - `noUnusedLocals` and `noUnusedParameters` enforced
 
 ## Release Process
 
-Uses release-please on the `main` branch with conventional commits. PR titles and the first commit on a branch must use conventional commit syntax (e.g., `feat: add new feature`, `fix: resolve bug`). Subsequent commits should use plain descriptive messages without the conventional commit prefix. The `npm run prepare` script auto-builds and stages `lib/` and `dist/` for commits.
+Uses release-please on the `main` branch with conventional commits. PR titles and the first commit on a branch must use conventional commit syntax (e.g., `feat: add new feature`, `fix: resolve bug`). Subsequent commits should use plain descriptive messages without the conventional commit prefix.

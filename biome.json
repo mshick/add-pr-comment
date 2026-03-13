@@ -1,0 +1,130 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.6/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "ignoreUnknown": true,
+    "includes": ["**", "!package-lock.json", "!dist", "!lib", "!badges", "!coverage"]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "lineWidth": 100
+  },
+  "assist": {
+    "actions": {
+      "source": {
+        "recommended": true
+      }
+    }
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "correctness": {
+        "noUnusedImports": "error"
+      },
+      "performance": {
+        "noDelete": {
+          "level": "warn",
+          "fix": "none",
+          "options": {}
+        }
+      },
+      "nursery": {},
+      "style": {
+        "noNonNullAssertion": "warn",
+        "useLiteralEnumMembers": "error",
+        "useAsConstAssertion": "error",
+        "useEnumInitializers": "error",
+        "useSelfClosingElements": "error",
+        "useConst": "error",
+        "useSingleVarDeclarator": "error",
+        "useNumberNamespace": "error",
+        "noInferrableTypes": "error",
+        "useExponentiationOperator": "error",
+        "useTemplate": "error",
+        "useDefaultParameterLast": "error",
+        "useImportType": "error",
+        "useExportType": "error",
+        "noUselessElse": "error",
+        "useShorthandFunctionType": "error",
+        "useNodejsImportProtocol": {
+          "level": "error",
+          "fix": "none",
+          "options": {}
+        },
+        "useDeprecatedReason": "error",
+        "useTrimStartEnd": "error"
+      },
+      "suspicious": {
+        "noConsole": {
+          "level": "error",
+          "options": {
+            "allow": [
+              "assert",
+              "error",
+              "info",
+              "warn",
+              "debug",
+              "trace",
+              "table",
+              "time",
+              "timeEnd"
+            ]
+          }
+        },
+        "noExplicitAny": {
+          "level": "info"
+        },
+        "noImportCycles": "error"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "single",
+      "semicolons": "asNeeded",
+      "trailingCommas": "all"
+    }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.d.ts"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.test.{ts,tsx}"],
+      "linter": {
+        "domains": {
+          "test": "recommended"
+        },
+        "rules": {
+          "complexity": {
+            "useArrowFunction": "off"
+          },
+          "performance": {
+            "noDelete": "off"
+          },
+          "style": {
+            "noNonNullAssertion": "off",
+            "noUnusedTemplateLiteral": "off"
+          },
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
+    }
+  ]
+}

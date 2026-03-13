@@ -37,28 +37,28 @@ jobs:
     # Only run when release-please has an open PR (not on the release itself)
     if: ${{ needs.release-please.outputs.pr_branch != '' && !needs.release-please.outputs.release_created }}
     steps:
-      - name: checkout repo
+      - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           ref: ${{ needs.release-please.outputs.pr_branch }}
           token: ${{ secrets.PAT }}
 
-      - name: setup node.js
+      - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version-file: ".node-version"
+          node-version-file: '.node-version'
 
-      - name: install dependencies
+      - name: Install Dependencies
         run: npm ci
 
-      - name: build action
+      - name: Build Action
         run: npm run build
 
-      - name: Commit dist if changed
+      - name: Commit Dist If Changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add lib/ dist/
+          git add dist/
           git diff-index --quiet HEAD || git commit -m "chore: build dist"
           git push
 
@@ -70,10 +70,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: checkout repo
+      - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: tag major and minor versions
+      - name: Tag Major and Minor Versions
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

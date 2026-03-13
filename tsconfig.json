@@ -1,20 +1,25 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "module": "es2022",
-    "moduleResolution": "bundler",
     "target": "ES2022",
-    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitAny": true,
-    "removeComments": false,
-    "preserveConstEnums": true,
     "resolveJsonModule": true,
-    "rootDir": "src",
-    "outDir": "./lib"
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "declaration": false,
+    "declarationMap": false,
+    "outDir": "./dist",
+    "newLine": "lf",
+    "pretty": true
   },
-  "exclude": ["node_modules", "**/*.test.ts"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist", "coverage", "**/*.test.ts"]
 }
