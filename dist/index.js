@@ -33841,6 +33841,54 @@ async function createComment(octokit, owner, repo, issueNumber, body) {
     return createdComment.data;
 }
 
+async function getExistingCommitComment(octokit, owner, repo, commitSha, messageId) {
+    const parameters = {
+        owner,
+        repo,
+        commit_sha: commitSha,
+        per_page: 100,
+    };
+    let found;
+    for await (const comments of octokit.paginate.iterator(octokit.rest.repos.listCommentsForCommit, parameters)) {
+        found = comments.data.find(({ body }) => {
+            return (body?.search(messageId) ?? -1) > -1;
+        });
+        if (found) {
+            break;
+        }
+    }
+    if (found) {
+        const { id, body } = found;
+        return { id, body };
+    }
+    return;
+}
+async function createCommitComment(octokit, owner, repo, commitSha, body) {
+    const createdComment = await withRetry(() => octokit.rest.repos.createCommitComment({
+        owner,
+        repo,
+        commit_sha: commitSha,
+        body,
+    }));
+    return createdComment.data;
+}
+async function updateCommitComment(octokit, owner, repo, commentId, body) {
+    const updatedComment = await withRetry(() => octokit.rest.repos.updateCommitComment({
+        owner,
+        repo,
+        comment_id: commentId,
+        body,
+    }));
+    return updatedComment.data;
+}
+async function deleteCommitComment(octokit, owner, repo, commentId) {
+    await withRetry(() => octokit.rest.repos.deleteCommitComment({
+        owner,
+        repo,
+        comment_id: commentId,
+    }));
+}
+
 async function getInputs() {
     const messageIdInput = getInput('message-id', { required: false });
     const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`;
@@ -33858,6 +33906,11 @@ async function getInputs() {
     const refreshMessagePosition = getInput('refresh-message-position', { required: false }) === 'true';
     const updateOnly = getInput('update-only', { required: false }) === 'true';
     const preformatted = getInput('preformatted', { required: false }) === 'true';
+    const commentTarget = getInput('comment-target', { required: false }) || 'pr';
+    if (commentTarget !== 'pr' && commentTarget !== 'commit') {
+        throw new Error(`Invalid comment-target: "${commentTarget}". Must be "pr" or "commit".`);
+    }
+    const commitShaInput = getInput('commit-sha', { required: false });
     const messageSuccess = getInput(`message-success`);
     const messageFailure = getInput(`message-failure`);
     const messageCancelled = getInput(`message-cancelled`);
@@ -33865,7 +33918,8 @@ async function getInputs() {
     const { payload } = context;
     return {
         allowRepeats,
-        commitSha: context.sha,
+        commentTarget: commentTarget,
+        commitSha: commitShaInput || context.sha,
         issue: issue ? Number(issue) : payload.issue?.number,
         messageInput,
         messageId: `<!-- ${messageId} -->`,
@@ -36158,7 +36212,7 @@ async function createCommentProxy(params) {
 
 const run = async () => {
     try {
-        const { allowRepeats, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
+        const { allowRepeats, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
         const octokit = getOctokit(repoToken);
         let message = await getMessage({
             messagePath,
@@ -36170,6 +36224,53 @@ const run = async () => {
             preformatted,
             status,
         });
+        if (commentTarget === 'commit') {
+            // --- Commit comment path ---
+            let existingComment;
+            if (!allowRepeats) {
+                debug('repeat comments are disallowed, checking for existing commit comment');
+                existingComment = await getExistingCommitComment(octokit, owner, repo, commitSha, messageId);
+                if (existingComment) {
+                    debug(`existing commit comment found with id: ${existingComment.id}`);
+                }
+            }
+            if (!existingComment && updateOnly) {
+                info('no existing commit comment found and update-only is true, exiting');
+                setOutput('comment-created', 'false');
+                return;
+            }
+            let comment;
+            if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
+                message = findAndReplaceInMessage(messageFind, messageReplace?.length ? messageReplace : [message], removeMessageHeader(existingComment.body));
+            }
+            if (!message) {
+                throw new Error('no message, check your message inputs');
+            }
+            const body = addMessageHeader(messageId, message);
+            if (existingComment?.id) {
+                if (refreshMessagePosition) {
+                    await deleteCommitComment(octokit, owner, repo, existingComment.id);
+                    comment = await createCommitComment(octokit, owner, repo, commitSha, body);
+                }
+                else {
+                    comment = await updateCommitComment(octokit, owner, repo, existingComment.id, body);
+                }
+                setOutput('comment-updated', 'true');
+            }
+            else {
+                comment = await createCommitComment(octokit, owner, repo, commitSha, body);
+                setOutput('comment-created', 'true');
+            }
+            if (comment) {
+                setOutput('comment-id', comment.id);
+            }
+            else {
+                setOutput('comment-created', 'false');
+                setOutput('comment-updated', 'false');
+            }
+            return;
+        }
+        // --- PR/issue comment path (existing code, unchanged) ---
         let issueNumber;
         if (issue) {
             issueNumber = issue;
