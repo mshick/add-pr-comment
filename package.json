@@ -23,7 +23,7 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "del-cli dist && tsc && ncc build --source-map",
-    "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
+    "clean": "rm -rf node_modules dist lib package-lock.json",
     "lint": "eslint src/",
     "test": "vitest run",
     "watch": "vitest"
