@@ -1,2 +1,2 @@
-import { run } from './action';
-run();
+import { run } from './action'
+run()
