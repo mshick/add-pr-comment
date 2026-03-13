@@ -6,7 +6,7 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import apiResponse from './__fixtures__/sample-pulls-api-response.json'
-import { run } from './action'
+import { run } from './action.js'
 
 const messagePath1Fixture = path.resolve(__dirname, './__fixtures__/message-part-1.txt')
 const messagePath1FixturePayload = await fs.readFile(messagePath1Fixture, 'utf-8')

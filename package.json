@@ -19,6 +19,7 @@
     "url": "git+https://github.com/mshick/add-pr-comment.git"
   },
   "license": "MIT",
+  "type": "module",
   "author": "Michael Shick <m@shick.us>",
   "main": "dist/index.js",
   "exports": {

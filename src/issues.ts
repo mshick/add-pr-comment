@@ -1,5 +1,5 @@
 import { GitHub } from '@actions/github/lib/utils'
-import { withRetry } from './retry'
+import { withRetry } from './retry.js'
 
 export async function getIssueNumberFromCommitPullsList(
   octokit: InstanceType<typeof GitHub>,

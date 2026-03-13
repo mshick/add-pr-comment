@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises'
-import { findFiles } from './files'
-import { Inputs } from './types'
+import { findFiles } from './files.js'
+import { Inputs } from './types.js'
 
 export async function getMessage({
   messageInput,

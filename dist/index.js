@@ -1,63 +1,41 @@
-'use strict';
-
-var os = require('os');
-var crypto = require('crypto');
-var fs = require('fs');
-var path = require('path');
-var http = require('http');
-var https = require('https');
-require('net');
-var require$$1 = require('tls');
-var events$1 = require('events');
-var assert = require('assert');
-var require$$6 = require('util');
-var require$$0$1 = require('node:assert');
-var require$$0$3 = require('node:net');
-var require$$2 = require('node:http');
-var require$$0$2 = require('node:stream');
-var require$$0 = require('node:buffer');
-var require$$0$4 = require('node:util');
-var require$$7 = require('node:querystring');
-var require$$8 = require('node:events');
-var require$$0$5 = require('node:diagnostics_channel');
-var require$$5 = require('node:tls');
-var require$$1$2 = require('node:zlib');
-var require$$5$1 = require('node:perf_hooks');
-var require$$8$1 = require('node:util/types');
-var require$$1$1 = require('node:worker_threads');
-var require$$1$3 = require('node:url');
-var require$$5$2 = require('node:async_hooks');
-var require$$1$4 = require('node:console');
-var require$$1$5 = require('node:dns');
-var require$$5$3 = require('string_decoder');
-require('child_process');
-require('timers');
-var fs$1 = require('node:fs/promises');
-require('stream');
-
-function _interopNamespaceDefault(e) {
-    var n = Object.create(null);
-    if (e) {
-        Object.keys(e).forEach(function (k) {
-            if (k !== 'default') {
-                var d = Object.getOwnPropertyDescriptor(e, k);
-                Object.defineProperty(n, k, d.get ? d : {
-                    enumerable: true,
-                    get: function () { return e[k]; }
-                });
-            }
-        });
-    }
-    n.default = e;
-    return Object.freeze(n);
-}
-
-var os__namespace = /*#__PURE__*/_interopNamespaceDefault(os);
-var crypto__namespace = /*#__PURE__*/_interopNamespaceDefault(crypto);
-var fs__namespace = /*#__PURE__*/_interopNamespaceDefault(fs);
-var path__namespace = /*#__PURE__*/_interopNamespaceDefault(path);
-var http__namespace = /*#__PURE__*/_interopNamespaceDefault(http);
-var https__namespace = /*#__PURE__*/_interopNamespaceDefault(https);
+import * as os from 'os';
+import os__default, { EOL } from 'os';
+import * as crypto from 'crypto';
+import * as fs from 'fs';
+import { promises, existsSync, readFileSync } from 'fs';
+import * as path from 'path';
+import * as http from 'http';
+import http__default from 'http';
+import * as https from 'https';
+import https__default from 'https';
+import 'net';
+import require$$1 from 'tls';
+import events$1 from 'events';
+import assert from 'assert';
+import require$$6 from 'util';
+import require$$0$1 from 'node:assert';
+import require$$0$3 from 'node:net';
+import require$$2 from 'node:http';
+import require$$0$2 from 'node:stream';
+import require$$0 from 'node:buffer';
+import require$$0$4 from 'node:util';
+import require$$7 from 'node:querystring';
+import require$$8 from 'node:events';
+import require$$0$5 from 'node:diagnostics_channel';
+import require$$5 from 'node:tls';
+import require$$1$2 from 'node:zlib';
+import require$$5$1 from 'node:perf_hooks';
+import require$$8$1 from 'node:util/types';
+import require$$1$1 from 'node:worker_threads';
+import require$$1$3 from 'node:url';
+import require$$5$2 from 'node:async_hooks';
+import require$$1$4 from 'node:console';
+import require$$1$5 from 'node:dns';
+import require$$5$3 from 'string_decoder';
+import 'child_process';
+import 'timers';
+import fs$1 from 'node:fs/promises';
+import 'stream';
 
 // We use any as a valid input type
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -129,7 +107,7 @@ function toCommandProperties(annotationProperties) {
  */
 function issueCommand(command, properties, message) {
     const cmd = new Command(command, properties, message);
-    process.stdout.write(cmd.toString() + os__namespace.EOL);
+    process.stdout.write(cmd.toString() + os.EOL);
 }
 const CMD_STRING = '::';
 class Command {
@@ -188,15 +166,15 @@ function issueFileCommand(command, message) {
     if (!filePath) {
         throw new Error(`Unable to find environment variable for file command ${command}`);
     }
-    if (!fs__namespace.existsSync(filePath)) {
+    if (!fs.existsSync(filePath)) {
         throw new Error(`Missing file at path: ${filePath}`);
     }
-    fs__namespace.appendFileSync(filePath, `${toCommandValue(message)}${os__namespace.EOL}`, {
+    fs.appendFileSync(filePath, `${toCommandValue(message)}${os.EOL}`, {
         encoding: 'utf8'
     });
 }
 function prepareKeyValueMessage(key, value) {
-    const delimiter = `ghadelimiter_${crypto__namespace.randomUUID()}`;
+    const delimiter = `ghadelimiter_${crypto.randomUUID()}`;
     const convertedValue = toCommandValue(value);
     // These should realistically never happen, but just in case someone finds a
     // way to exploit uuid generation let's not allow keys or values that contain
@@ -207,7 +185,7 @@ function prepareKeyValueMessage(key, value) {
     if (convertedValue.includes(delimiter)) {
         throw new Error(`Unexpected input: value should not contain the delimiter "${delimiter}"`);
     }
-    return `${key}<<${delimiter}${os__namespace.EOL}${convertedValue}${os__namespace.EOL}${delimiter}`;
+    return `${key}<<${delimiter}${os.EOL}${convertedValue}${os.EOL}${delimiter}`;
 }
 
 function getProxyUrl(reqUrl) {
@@ -314,8 +292,8 @@ function requireTunnel$1 () {
 	if (hasRequiredTunnel$1) return tunnel$1;
 	hasRequiredTunnel$1 = 1;
 	var tls = require$$1;
-	var http$1 = http;
-	var https$1 = https;
+	var http = http__default;
+	var https = https__default;
 	var events = events$1;
 	var util = require$$6;
 
@@ -328,13 +306,13 @@ function requireTunnel$1 () {
 
 	function httpOverHttp(options) {
 	  var agent = new TunnelingAgent(options);
-	  agent.request = http$1.request;
+	  agent.request = http.request;
 	  return agent;
 	}
 
 	function httpsOverHttp(options) {
 	  var agent = new TunnelingAgent(options);
-	  agent.request = http$1.request;
+	  agent.request = http.request;
 	  agent.createSocket = createSecureSocket;
 	  agent.defaultPort = 443;
 	  return agent;
@@ -342,13 +320,13 @@ function requireTunnel$1 () {
 
 	function httpOverHttps(options) {
 	  var agent = new TunnelingAgent(options);
-	  agent.request = https$1.request;
+	  agent.request = https.request;
 	  return agent;
 	}
 
 	function httpsOverHttps(options) {
 	  var agent = new TunnelingAgent(options);
-	  agent.request = https$1.request;
+	  agent.request = https.request;
 	  agent.createSocket = createSecureSocket;
 	  agent.defaultPort = 443;
 	  return agent;
@@ -359,7 +337,7 @@ function requireTunnel$1 () {
 	  var self = this;
 	  self.options = options || {};
 	  self.proxyOptions = self.options.proxy || {};
-	  self.maxSockets = self.options.maxSockets || http$1.Agent.defaultMaxSockets;
+	  self.maxSockets = self.options.maxSockets || http.Agent.defaultMaxSockets;
 	  self.requests = [];
 	  self.sockets = [];
 
@@ -28433,7 +28411,7 @@ class HttpClient {
         const info = {};
         info.parsedUrl = requestUrl;
         const usingSsl = info.parsedUrl.protocol === 'https:';
-        info.httpModule = usingSsl ? https__namespace : http__namespace;
+        info.httpModule = usingSsl ? https : http;
         const defaultPort = usingSsl ? 443 : 80;
         info.options = {};
         info.options.host = info.parsedUrl.hostname;
@@ -28547,7 +28525,7 @@ class HttpClient {
         const usingSsl = parsedUrl.protocol === 'https:';
         let maxSockets = 100;
         if (this.requestOptions) {
-            maxSockets = this.requestOptions.maxSockets || http__namespace.globalAgent.maxSockets;
+            maxSockets = this.requestOptions.maxSockets || http.globalAgent.maxSockets;
         }
         // This is `useProxy` again, but we need to check `proxyURl` directly for TypeScripts's flow analysis.
         if (proxyUrl && proxyUrl.hostname) {
@@ -28572,7 +28550,7 @@ class HttpClient {
         // if tunneling agent isn't assigned create a new agent
         if (!agent) {
             const options = { keepAlive: this._keepAlive, maxSockets };
-            agent = usingSsl ? new https__namespace.Agent(options) : new http__namespace.Agent(options);
+            agent = usingSsl ? new https.Agent(options) : new http.Agent(options);
             this._agent = agent;
         }
         if (usingSsl && this._ignoreSslError) {
@@ -28724,7 +28702,7 @@ const lowercaseKeys$1 = (obj) => Object.keys(obj).reduce((c, k) => ((c[k.toLower
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const { access, appendFile, writeFile } = fs.promises;
+const { access, appendFile, writeFile } = promises;
 
 (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -28735,10 +28713,10 @@ const { access, appendFile, writeFile } = fs.promises;
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-const { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs__namespace.promises;
+const { chmod, copyFile, lstat, mkdir, open, readdir, rename, rm, rmdir, stat, symlink, unlink } = fs.promises;
 // export const {open} = 'fs'
 process.platform === 'win32';
-fs__namespace.constants.O_RDONLY;
+fs.constants.O_RDONLY;
 
 (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -28781,8 +28759,8 @@ process.platform === 'win32';
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-os.platform();
-os.arch();
+os__default.platform();
+os__default.arch();
 
 (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
@@ -28855,7 +28833,7 @@ function setOutput(name, value) {
     if (filePath) {
         return issueFileCommand('OUTPUT', prepareKeyValueMessage(name, value));
     }
-    process.stdout.write(os__namespace.EOL);
+    process.stdout.write(os.EOL);
     issueCommand('set-output', { name }, toCommandValue(value));
 }
 //-----------------------------------------------------------------------
@@ -28898,7 +28876,7 @@ function warning(message, properties = {}) {
  * @param message info message
  */
 function info(message) {
-    process.stdout.write(message + os__namespace.EOL);
+    process.stdout.write(message + os.EOL);
 }
 
 class Context {
@@ -28909,12 +28887,12 @@ class Context {
         var _a, _b, _c;
         this.payload = {};
         if (process.env.GITHUB_EVENT_PATH) {
-            if (fs.existsSync(process.env.GITHUB_EVENT_PATH)) {
-                this.payload = JSON.parse(fs.readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: 'utf8' }));
+            if (existsSync(process.env.GITHUB_EVENT_PATH)) {
+                this.payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: 'utf8' }));
             }
             else {
                 const path = process.env.GITHUB_EVENT_PATH;
-                process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${os.EOL}`);
+                process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL}`);
             }
         }
         this.eventName = process.env.GITHUB_EVENT_NAME;
@@ -29108,8 +29086,8 @@ function requireLib () {
 	lib.HttpClient = lib.HttpClientResponse = lib.HttpClientError = lib.MediaTypes = lib.Headers = lib.HttpCodes = void 0;
 	lib.getProxyUrl = getProxyUrl;
 	lib.isHttps = isHttps;
-	const http$1 = __importStar(http);
-	const https$1 = __importStar(https);
+	const http = __importStar(http__default);
+	const https = __importStar(https__default);
 	const pm = __importStar(requireProxy());
 	const tunnel = __importStar(requireTunnel());
 	const undici_1 = requireUndici();
@@ -29534,7 +29512,7 @@ function requireLib () {
 	        const info = {};
 	        info.parsedUrl = requestUrl;
 	        const usingSsl = info.parsedUrl.protocol === 'https:';
-	        info.httpModule = usingSsl ? https$1 : http$1;
+	        info.httpModule = usingSsl ? https : http;
 	        const defaultPort = usingSsl ? 443 : 80;
 	        info.options = {};
 	        info.options.host = info.parsedUrl.hostname;
@@ -29648,7 +29626,7 @@ function requireLib () {
 	        const usingSsl = parsedUrl.protocol === 'https:';
 	        let maxSockets = 100;
 	        if (this.requestOptions) {
-	            maxSockets = this.requestOptions.maxSockets || http$1.globalAgent.maxSockets;
+	            maxSockets = this.requestOptions.maxSockets || http.globalAgent.maxSockets;
 	        }
 	        // This is `useProxy` again, but we need to check `proxyURl` directly for TypeScripts's flow analysis.
 	        if (proxyUrl && proxyUrl.hostname) {
@@ -29673,7 +29651,7 @@ function requireLib () {
 	        // if tunneling agent isn't assigned create a new agent
 	        if (!agent) {
 	            const options = { keepAlive: this._keepAlive, maxSockets };
-	            agent = usingSsl ? new https$1.Agent(options) : new http$1.Agent(options);
+	            agent = usingSsl ? new https.Agent(options) : new http.Agent(options);
 	            this._agent = agent;
 	        }
 	        if (usingSsl && this._ignoreSslError) {
@@ -33981,7 +33959,7 @@ function dirname(p) {
         return p;
     }
     // Get dirname
-    let result = path__namespace.dirname(p);
+    let result = path.dirname(p);
     // Trim trailing slash for Windows UNC root, e.g. \\hello\world\
     if (IS_WINDOWS$4 && /^\\\\[^\\]+\\[^\\]+\\$/.test(result)) {
         result = safeTrimTrailingSeparator(result);
@@ -34038,7 +34016,7 @@ function ensureAbsoluteRoot(root, itemPath) {
     if (root.endsWith('/') || (IS_WINDOWS$4 && root.endsWith('\\'))) ;
     else {
         // Append separator
-        root += path__namespace.sep;
+        root += path.sep;
     }
     return root + itemPath;
 }
@@ -34103,11 +34081,11 @@ function safeTrimTrailingSeparator(p) {
     // Normalize separators
     p = normalizeSeparators(p);
     // No trailing slash
-    if (!p.endsWith(path__namespace.sep)) {
+    if (!p.endsWith(path.sep)) {
         return p;
     }
     // Check '/' on Linux/macOS and '\' on Windows
-    if (p === path__namespace.sep) {
+    if (p === path.sep) {
         return p;
     }
     // On Windows check if drive root. E.g. C:\
@@ -35532,7 +35510,7 @@ class Path {
             itemPath = safeTrimTrailingSeparator(itemPath);
             // Not rooted
             if (!hasRoot(itemPath)) {
-                this.segments = itemPath.split(path__namespace.sep);
+                this.segments = itemPath.split(path.sep);
             }
             // Rooted
             else {
@@ -35541,7 +35519,7 @@ class Path {
                 let dir = dirname(remaining);
                 while (dir !== remaining) {
                     // Add the segment
-                    const basename = path__namespace.basename(remaining);
+                    const basename = path.basename(remaining);
                     this.segments.unshift(basename);
                     // Truncate the last segment
                     remaining = dir;
@@ -35571,7 +35549,7 @@ class Path {
                 // All other segments
                 else {
                     // Must not contain slash
-                    assert(!segment.includes(path__namespace.sep), `Parameter 'itemPath' contains unexpected path separators`);
+                    assert(!segment.includes(path.sep), `Parameter 'itemPath' contains unexpected path separators`);
                     this.segments.push(segment);
                 }
             }
@@ -35584,13 +35562,13 @@ class Path {
         // First segment
         let result = this.segments[0];
         // All others
-        let skipSlash = result.endsWith(path__namespace.sep) || (IS_WINDOWS$2 && /^[A-Z]:$/i.test(result));
+        let skipSlash = result.endsWith(path.sep) || (IS_WINDOWS$2 && /^[A-Z]:$/i.test(result));
         for (let i = 1; i < this.segments.length; i++) {
             if (skipSlash) {
                 skipSlash = false;
             }
             else {
-                result += path__namespace.sep;
+                result += path.sep;
             }
             result += this.segments[i];
         }
@@ -35634,7 +35612,7 @@ class Pattern {
         this.segments = new Path(pattern).segments;
         // Trailing slash indicates the pattern should only match directories, not regular files
         this.trailingSeparator = normalizeSeparators(pattern)
-            .endsWith(path__namespace.sep);
+            .endsWith(path.sep);
         pattern = safeTrimTrailingSeparator(pattern);
         // Search path (literal path prior to the first glob segment)
         let foundGlob = false;
@@ -35668,10 +35646,10 @@ class Pattern {
             // Append a trailing slash. Otherwise Minimatch will not match the directory immediately
             // preceding the globstar. For example, given the pattern `/foo/**`, Minimatch returns
             // false for `/foo` but returns true for `/foo/`. Append a trailing slash to handle that quirk.
-            if (!itemPath.endsWith(path__namespace.sep) && this.isImplicitPattern === false) {
+            if (!itemPath.endsWith(path.sep) && this.isImplicitPattern === false) {
                 // Note, this is safe because the constructor ensures the pattern has an absolute root.
                 // For example, formats like C: and C:foo on Windows are resolved to an absolute root.
-                itemPath = `${itemPath}${path__namespace.sep}`;
+                itemPath = `${itemPath}${path.sep}`;
             }
         }
         else {
@@ -35720,12 +35698,12 @@ class Pattern {
         // Normalize slashes
         pattern = normalizeSeparators(pattern);
         // Replace leading `.` segment
-        if (pattern === '.' || pattern.startsWith(`.${path__namespace.sep}`)) {
+        if (pattern === '.' || pattern.startsWith(`.${path.sep}`)) {
             pattern = Pattern.globEscape(process.cwd()) + pattern.substr(1);
         }
         // Replace leading `~` segment
-        else if (pattern === '~' || pattern.startsWith(`~${path__namespace.sep}`)) {
-            homedir = homedir || os__namespace.homedir();
+        else if (pattern === '~' || pattern.startsWith(`~${path.sep}`)) {
+            homedir = homedir || os.homedir();
             assert(homedir, 'Unable to determine HOME directory');
             assert(hasAbsoluteRoot(homedir), `Expected HOME directory to be a rooted path. Actual '${homedir}'`);
             pattern = Pattern.globEscape(homedir) + pattern.substr(1);
@@ -35911,7 +35889,7 @@ class DefaultGlobber {
                 try {
                     // Intentionally using lstat. Detection for broken symlink
                     // will be performed later (if following symlinks).
-                    yield __await(fs__namespace.promises.lstat(searchPath));
+                    yield __await(fs.promises.lstat(searchPath));
                 }
                 catch (err) {
                     if (err.code === 'ENOENT') {
@@ -35941,7 +35919,7 @@ class DefaultGlobber {
                     continue;
                 }
                 // Hidden file or directory?
-                if (options.excludeHiddenFiles && path__namespace.basename(item.path).match(/^\./)) {
+                if (options.excludeHiddenFiles && path.basename(item.path).match(/^\./)) {
                     continue;
                 }
                 // Directory
@@ -35956,7 +35934,7 @@ class DefaultGlobber {
                     }
                     // Push the child items in reverse
                     const childLevel = item.level + 1;
-                    const childItems = (yield __await(fs__namespace.promises.readdir(item.path))).map(x => new SearchState(path__namespace.join(item.path, x), childLevel));
+                    const childItems = (yield __await(fs.promises.readdir(item.path))).map(x => new SearchState(path.join(item.path, x), childLevel));
                     stack.push(...childItems.reverse());
                 }
                 // File
@@ -36000,7 +35978,7 @@ class DefaultGlobber {
             if (options.followSymbolicLinks) {
                 try {
                     // Use `stat` (following symlinks)
-                    stats = yield fs__namespace.promises.stat(item.path);
+                    stats = yield fs.promises.stat(item.path);
                 }
                 catch (err) {
                     if (err.code === 'ENOENT') {
@@ -36015,12 +35993,12 @@ class DefaultGlobber {
             }
             else {
                 // Use `lstat` (not following symlinks)
-                stats = yield fs__namespace.promises.lstat(item.path);
+                stats = yield fs.promises.lstat(item.path);
             }
             // Note, isDirectory() returns false for the lstat of a symlink
             if (stats.isDirectory() && options.followSymbolicLinks) {
                 // Get the realpath
-                const realPath = yield fs__namespace.promises.realpath(item.path);
+                const realPath = yield fs.promises.realpath(item.path);
                 // Fixup the traversal chain to match the item level
                 while (traversalChain.length >= item.level) {
                     traversalChain.pop();

@@ -1,16 +1,16 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { createComment, deleteComment, getExistingComment, updateComment } from './comments'
-import { getInputs } from './config'
-import { getIssueNumberFromCommitPullsList } from './issues'
+import { createComment, deleteComment, getExistingComment, updateComment } from './comments.js'
+import { getInputs } from './config.js'
+import { getIssueNumberFromCommitPullsList } from './issues.js'
 import {
   addMessageHeader,
   findAndReplaceInMessage,
   getMessage,
   removeMessageHeader,
-} from './message'
-import { createCommentProxy } from './proxy'
-import { CreateIssueCommentResponseData, ExistingIssueComment } from './types'
+} from './message.js'
+import { createCommentProxy } from './proxy.js'
+import { CreateIssueCommentResponseData, ExistingIssueComment } from './types.js'
 
 export const run = async (): Promise<void> => {
   try {

@@ -1,2 +1,2 @@
-import { run } from './action'
+import { run } from './action.js'
 run()
