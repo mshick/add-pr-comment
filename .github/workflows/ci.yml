@@ -30,7 +30,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version-file: '.node-version'
+          node-version-file: ".node-version"
 
       - name: Install Dependencies
         run: |
@@ -51,7 +51,7 @@ jobs:
     name: Dogfood
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
     steps:
       - name: Checkout Repo
@@ -60,7 +60,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
-          node-version-file: '.node-version'
+          node-version-file: ".node-version"
 
       - name: Install Dependencies
         run: |
@@ -94,3 +94,18 @@ jobs:
           replace: |
             Goodnight
             🌕
+
+      - name: Check for dogfood commit
+        id: dogfood-check
+        run: |
+          MSG=$(git log -1 --format=%s)
+          if [[ "$MSG" == dogfood:* ]]; then
+            echo "match=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: ./
+        if: steps.dogfood-check.outputs.match == 'true'
+        with:
+          comment-target: commit
+          commit-sha: ${{ github.event.pull_request.head.sha }}
+          message: 'ruff 🐶'
