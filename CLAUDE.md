@@ -23,6 +23,7 @@ The build bundles TypeScript directly into `dist/index.js` using Rollup for GitH
 ## Architecture
 
 Entry point is `src/main.ts` which orchestrates:
+
 1. Parse inputs (`config.ts`) from GitHub Actions context
 2. Resolve message content (`message.ts`) — from input string, file glob, or status override
 3. Look up issue/PR number (`issues.ts`) — from event context or commit

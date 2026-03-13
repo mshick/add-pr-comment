@@ -36,15 +36,6 @@
     "test": "vitest run",
     "watch": "vitest"
   },
-  "prettier": {
-    "bracketSpacing": true,
-    "jsxSingleQuote": true,
-    "printWidth": 100,
-    "semi": false,
-    "singleQuote": true,
-    "tabWidth": 2,
-    "trailingComma": "all"
-  },
   "dependencies": {
     "@actions/core": "^3.0.0",
     "@actions/github": "^9.0.0",

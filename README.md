@@ -1,7 +1,9 @@
 # add-pr-comment
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+
 [![All Contributors](https://img.shields.io/badge/all_contributors-7-orange.svg?style=flat-square)](#contributors-)
+
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A GitHub Action which adds a comment to a pull request's issue.
@@ -91,11 +93,11 @@ jobs:
 
 ## Outputs
 
-| Output | Description |
-| --- | --- |
-| `comment-created` | `"true"` if a new comment was created, `"false"` otherwise. |
+| Output            | Description                                                       |
+| ----------------- | ----------------------------------------------------------------- |
+| `comment-created` | `"true"` if a new comment was created, `"false"` otherwise.       |
 | `comment-updated` | `"true"` if an existing comment was updated, `"false"` otherwise. |
-| `comment-id` | The numeric ID of the created or updated comment. |
+| `comment-id`      | The numeric ID of the created or updated comment.                 |
 
 ### Using outputs in subsequent steps
 
@@ -103,7 +105,7 @@ jobs:
 - uses: mshick/add-pr-comment@v3
   id: comment
   with:
-    message: "Hello world"
+    message: 'Hello world'
 
 - name: Check outputs
   run: |
@@ -111,6 +113,7 @@ jobs:
     echo "Comment updated: ${{ steps.comment.outputs.comment-updated }}"
     echo "Comment ID: ${{ steps.comment.outputs.comment-id }}"
 ```
+
 > **Tip:** By default, comments are "upsert" — a comment is created on the first run and updated on subsequent runs when matched by `message-id`. If you want this create-or-update behavior, you do not need to set `update-only`. Setting `update-only: true` skips comment creation entirely and only updates an existing comment. Use it when you specifically want no comment to appear unless one was already posted by a previous step or run.
 
 ## Advanced Uses

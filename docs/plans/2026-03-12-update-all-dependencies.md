@@ -190,6 +190,7 @@ npm install --save-dev @octokit/types@latest
 Run: `npm run lint && npm run build && npm test`
 
 Likely issues:
+
 - `GitHub` import from `@actions/github/lib/utils` may have moved — check `comments.ts` and `issues.ts`.
 - `Endpoints` type shape may have changed in `@octokit/types` — check `types.ts` and `proxy.ts`.
 - `WebhookPayload` import in test file may have changed.
@@ -280,6 +281,7 @@ git commit -m "chore: bump vitest to 4"
 This is a **major migration**. MSW v2 completely changed its API.
 
 **Key changes:**
+
 - `rest` is now `http` (import from `msw`)
 - `rest.get(url, (req, res, ctx) => res(ctx.status(200), ctx.json(data)))` becomes `http.get(url, () => HttpResponse.json(data))`
 - `req.json()` becomes `await request.json()` (standard Request object)
@@ -294,6 +296,7 @@ npm install --save-dev msw@latest
 **Step 2: Migrate test file `__tests__/add-pr-comment.test.ts`**
 
 Replace imports:
+
 ```typescript
 // Old
 import { rest } from 'msw'
@@ -305,6 +308,7 @@ import { setupServer } from 'msw/node'
 ```
 
 Replace all handlers. Pattern:
+
 ```typescript
 // Old
 rest.post(url, async (req, res, ctx) => {
@@ -314,7 +318,7 @@ rest.post(url, async (req, res, ctx) => {
 
 // New
 http.post(url, async ({ request }) => {
-  messagePayload = await request.json() as MessagePayload
+  messagePayload = (await request.json()) as MessagePayload
   return HttpResponse.json(postIssueCommentsResponse)
 })
 ```
@@ -370,6 +374,7 @@ git commit -m "chore: bump prettier to 3 and reformat"
 This is the most complex task. ESLint 9+ uses flat config by default. ESLint 10 drops legacy config support. The entire eslint config in `package.json` must be migrated to `eslint.config.mjs`.
 
 **Packages to update together:**
+
 - eslint 8 → 9 (use 9 first, not 10 — better ecosystem compat)
 - @typescript-eslint/eslint-plugin 5 → 8
 - @typescript-eslint/parser 5 → 8
@@ -409,18 +414,14 @@ export default tseslint.config(
   },
   {
     files: ['**/*.ts'],
-    extends: [
-      ...tseslint.configs.recommended,
-    ],
+    extends: [...tseslint.configs.recommended],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
   {
     files: ['**/*.test.ts'],
-    extends: [
-      ...tseslint.configs.recommended,
-    ],
+    extends: [...tseslint.configs.recommended],
     rules: {
       '@typescript-eslint/no-empty-function': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
@@ -446,6 +447,7 @@ npm uninstall eslint-plugin-json-format eslint-plugin-mdx
 **Step 5: Update the lint script in `package.json`**
 
 The current lint script is `eslint src/**/*.ts`. Update to:
+
 ```json
 "lint": "eslint src/"
 ```
