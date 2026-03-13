@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.6.0](https://github.com/mshick/add-pr-comment/compare/v3.5.0...v3.6.0) (2026-03-13)
+
+
+### Features
+
+* add commit comment support ([#163](https://github.com/mshick/add-pr-comment/issues/163)) ([5906ed7](https://github.com/mshick/add-pr-comment/commit/5906ed7b9e50927d804b34b4e43ace2ac43dfca7))
+
 ## [3.5.0](https://github.com/mshick/add-pr-comment/compare/v3.4.0...v3.5.0) (2026-03-13)
 
 
