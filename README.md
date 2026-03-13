@@ -6,6 +6,11 @@
 
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
+[![CI](https://github.com/mshick/add-pr-comment/actions/workflows/ci.yml/badge.svg)](https://github.com/mshick/add-pr-comment/actions/workflows/ci.yml)
+[![Check dist/](https://github.com/mshick/add-pr-comment/actions/workflows/check-dist.yml/badge.svg)](https://github.com/mshick/add-pr-comment/actions/workflows/check-dist.yml)
+[![CodeQL](https://github.com/mshick/add-pr-comment/actions/workflows/codeql.yml/badge.svg)](https://github.com/mshick/add-pr-comment/actions/workflows/codeql.yml)
+[![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
+
 A GitHub Action which adds a comment to a pull request's issue.
 
 This actions also works on [issue](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues),
