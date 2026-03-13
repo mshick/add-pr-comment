@@ -60,6 +60,7 @@ let getIssueCommentsResponse: Record<string, unknown>[] | undefined
 let postIssueCommentsResponse = {
   id: 42,
 }
+const deleteIssueCommentResponse = {}
 
 type MessagePayload = {
   comment_id?: number
@@ -114,6 +115,9 @@ const handlers = [
       return HttpResponse.json(postIssueCommentsResponse)
     },
   ),
+  http.delete(`https://api.github.com/repos/:repoUser/:repoName/issues/comments/:commentId`, () => {
+    return HttpResponse.json(deleteIssueCommentResponse)
+  }),
   http.get(`https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`, () => {
     return HttpResponse.json(getIssueCommentsResponse)
   }),
@@ -670,5 +674,42 @@ describe('find and replace', () => {
     )
     expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', commentId)
+  })
+})
+
+describe('delete on status', () => {
+  it('can delete comment if status is matching', async () => {
+    inputs['delete-on-status'] = 'success'
+    inputs.status = 'success'
+    inputs.message = 'hello'
+
+    const body = `<!-- add-pr-comment:${inputs['message-id']} -->\n\n[ ] Hello\n[ ] World`
+
+    const commentId = 123
+
+    const replyBody = [
+      {
+        id: commentId,
+        body,
+      },
+    ]
+
+    getIssueCommentsResponse = replyBody
+
+    await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-deleted', 'true')
+  })
+
+  it('does not delete comment if status is not matching', async () => {
+    inputs['delete-on-status'] = 'success'
+    inputs.status = 'failure'
+    inputs.message = 'hello'
+
+    getIssueCommentsResponse = []
+
+    await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 })

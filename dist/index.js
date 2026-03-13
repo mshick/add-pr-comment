@@ -33822,12 +33822,11 @@ async function updateComment(octokit, owner, repo, existingCommentId, body) {
     }));
     return updatedComment.data;
 }
-async function deleteComment(octokit, owner, repo, existingCommentId, body) {
+async function deleteComment(octokit, owner, repo, existingCommentId) {
     const deletedComment = await withRetry(() => octokit.rest.issues.deleteComment({
         comment_id: existingCommentId,
         owner,
         repo,
-        body,
     }));
     return deletedComment.data;
 }
@@ -33858,6 +33857,7 @@ async function getInputs() {
     const refreshMessagePosition = getInput('refresh-message-position', { required: false }) === 'true';
     const updateOnly = getInput('update-only', { required: false }) === 'true';
     const preformatted = getInput('preformatted', { required: false }) === 'true';
+    const deleteOnStatus = getInput('delete-on-status', { required: false });
     const messageSuccess = getInput(`message-success`);
     const messageFailure = getInput(`message-failure`);
     const messageCancelled = getInput(`message-cancelled`);
@@ -33885,6 +33885,7 @@ async function getInputs() {
         owner: repoOwner || payload.repo.owner,
         repo: repoName || payload.repo.repo,
         updateOnly: updateOnly,
+        deleteOnStatus,
     };
 }
 
@@ -36158,7 +36159,7 @@ async function createCommentProxy(params) {
 
 const run = async () => {
     try {
-        const { allowRepeats, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
+        const { allowRepeats, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, deleteOnStatus, } = await getInputs();
         const octokit = getOctokit(repoToken);
         let message = await getMessage({
             messagePath,
@@ -36200,6 +36201,12 @@ const run = async () => {
             setOutput('comment-created', 'false');
             return;
         }
+        if (deleteOnStatus && existingComment && deleteOnStatus === status) {
+            info('deleting existing comment because delete-comment-on-status matched');
+            await deleteComment(octokit, owner, repo, existingComment.id);
+            setOutput('comment-deleted', 'true');
+            return;
+        }
         let comment;
         if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
             message = findAndReplaceInMessage(messageFind, messageReplace?.length ? messageReplace : [message], removeMessageHeader(existingComment.body));
@@ -36222,7 +36229,7 @@ const run = async () => {
         }
         else if (existingComment?.id) {
             if (refreshMessagePosition) {
-                await deleteComment(octokit, owner, repo, existingComment.id, body);
+                await deleteComment(octokit, owner, repo, existingComment.id);
                 comment = await createComment(octokit, owner, repo, issueNumber, body);
             }
             else {

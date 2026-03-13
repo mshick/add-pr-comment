@@ -86,6 +86,7 @@ jobs:
 | repo-name                | with     | Name of the repo.                                                                                                                                                           | no       | {{ github.event.repository.name }} |
 | repo-token               | with     | Valid GitHub token, either the temporary token GitHub provides or a personal access token.                                                                                  | no       | {{ github.token }}                 |
 | message-id               | with     | Message id to use when searching existing comments. If found, updates the existing (sticky comment).                                                                        | no       |                                    |
+| delete-on-status         | with     | If specified and a comment exists and the status is matching the value of this option, the comment will be deleted                                                          | no       |                                    |
 | refresh-message-position | with     | Should the sticky message be the last one in the PR's feed.                                                                                                                 | no       | false                              |
 | allow-repeats            | with     | Boolean flag to allow identical messages to be posted each time this action is run.                                                                                         | no       | false                              |
 | proxy-url                | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                                                                                           | no       |                                    |
@@ -364,6 +365,32 @@ jobs:
           issue: ${{ steps.pr.outputs.issue }}
           message: |
             **Howdie!**
+```
+
+### Delete on status
+
+This option can be used if comment needs to be removed if a status is reached.
+
+**Example**
+
+> Here, a comment will be added on failure, but on a subsequent run,
+> if the job reaches success status, the comment will be deleted.
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: mshick/add-pr-comment@v3
+        if: always()
+        with:
+          message-failure: There was a failure
+          delete-on-status: success
 ```
 
 ## Security
