@@ -33822,12 +33822,11 @@ async function updateComment(octokit, owner, repo, existingCommentId, body) {
     }));
     return updatedComment.data;
 }
-async function deleteComment(octokit, owner, repo, existingCommentId, body) {
+async function deleteComment(octokit, owner, repo, existingCommentId) {
     const deletedComment = await withRetry(() => octokit.rest.issues.deleteComment({
         comment_id: existingCommentId,
         owner,
         repo,
-        body,
     }));
     return deletedComment.data;
 }
@@ -33906,6 +33905,7 @@ async function getInputs() {
     const refreshMessagePosition = getInput('refresh-message-position', { required: false }) === 'true';
     const updateOnly = getInput('update-only', { required: false }) === 'true';
     const preformatted = getInput('preformatted', { required: false }) === 'true';
+    const deleteOnStatus = getInput('delete-on-status', { required: false });
     const commentTarget = getInput('comment-target', { required: false }) || 'pr';
     if (commentTarget !== 'pr' && commentTarget !== 'commit') {
         throw new Error(`Invalid comment-target: "${commentTarget}". Must be "pr" or "commit".`);
@@ -33939,6 +33939,7 @@ async function getInputs() {
         owner: repoOwner || payload.repo.owner,
         repo: repoName || payload.repo.repo,
         updateOnly: updateOnly,
+        deleteOnStatus,
     };
 }
 
@@ -36212,7 +36213,7 @@ async function createCommentProxy(params) {
 
 async function manageComment(adapter, options) {
     let { message } = options;
-    const { allowRepeats, updateOnly, refreshMessagePosition, messageId, messageFind, messageReplace, } = options;
+    const { allowRepeats, updateOnly, refreshMessagePosition, deleteOnStatus, status, messageId, messageFind, messageReplace, } = options;
     let existingComment;
     if (!allowRepeats) {
         debug('repeat comments are disallowed, checking for existing');
@@ -36224,6 +36225,12 @@ async function manageComment(adapter, options) {
     if (!existingComment && updateOnly) {
         info('no existing comment found and update-only is true, exiting');
         setOutput('comment-created', 'false');
+        return;
+    }
+    if (deleteOnStatus && existingComment && deleteOnStatus === status) {
+        info('deleting existing comment because delete-comment-on-status matched');
+        await adapter.delete(existingComment.id);
+        setOutput('comment-deleted', 'true');
         return;
     }
     if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
@@ -36258,7 +36265,7 @@ async function manageComment(adapter, options) {
 }
 const run = async () => {
     try {
-        const { allowRepeats, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
+        const { allowRepeats, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
         const octokit = getOctokit(repoToken);
         const message = await getMessage({
             messagePath,
@@ -36274,6 +36281,8 @@ const run = async () => {
             allowRepeats,
             updateOnly,
             refreshMessagePosition,
+            deleteOnStatus,
+            status,
             messageId,
             messageFind,
             messageReplace,
@@ -36348,7 +36357,7 @@ const run = async () => {
             create: (body) => createComment(octokit, owner, repo, issueNumber, body),
             update: (id, body) => updateComment(octokit, owner, repo, id, body),
             delete: async (id) => {
-                await deleteComment(octokit, owner, repo, id, '');
+                await deleteComment(octokit, owner, repo, id);
             },
         }, commentOptions);
     }

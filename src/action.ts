@@ -28,6 +28,8 @@ interface ManageCommentOptions {
   allowRepeats: boolean
   updateOnly: boolean
   refreshMessagePosition: boolean
+  deleteOnStatus?: string
+  status: string
   messageId: string
   messageFind?: string[]
   messageReplace?: string[]
@@ -43,6 +45,8 @@ async function manageComment(
     allowRepeats,
     updateOnly,
     refreshMessagePosition,
+    deleteOnStatus,
+    status,
     messageId,
     messageFind,
     messageReplace,
@@ -62,6 +66,13 @@ async function manageComment(
   if (!existingComment && updateOnly) {
     core.info('no existing comment found and update-only is true, exiting')
     core.setOutput('comment-created', 'false')
+    return
+  }
+
+  if (deleteOnStatus && existingComment && deleteOnStatus === status) {
+    core.info('deleting existing comment because delete-comment-on-status matched')
+    await adapter.delete(existingComment.id)
+    core.setOutput('comment-deleted', 'true')
     return
   }
 
@@ -119,6 +130,7 @@ export const run = async (): Promise<void> => {
       repo,
       owner,
       updateOnly,
+      deleteOnStatus,
       messageCancelled,
       messageFailure,
       messageSuccess,
@@ -146,6 +158,8 @@ export const run = async (): Promise<void> => {
       allowRepeats,
       updateOnly,
       refreshMessagePosition,
+      deleteOnStatus,
+      status,
       messageId,
       messageFind,
       messageReplace,
@@ -167,7 +181,7 @@ export const run = async (): Promise<void> => {
 
     // --- PR/issue comment path ---
 
-    let issueNumber: number | undefined
+    let issueNumber: number | undefined | null
 
     if (issue) {
       issueNumber = issue
@@ -243,7 +257,7 @@ export const run = async (): Promise<void> => {
         create: (body) => createComment(octokit, owner, repo, issueNumber, body),
         update: (id, body) => updateComment(octokit, owner, repo, id, body),
         delete: async (id) => {
-          await deleteComment(octokit, owner, repo, id, '')
+          await deleteComment(octokit, owner, repo, id)
         },
       },
       commentOptions,

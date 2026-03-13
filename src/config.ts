@@ -20,6 +20,7 @@ export async function getInputs(): Promise<Inputs> {
     core.getInput('refresh-message-position', { required: false }) === 'true'
   const updateOnly = core.getInput('update-only', { required: false }) === 'true'
   const preformatted = core.getInput('preformatted', { required: false }) === 'true'
+  const deleteOnStatus = core.getInput('delete-on-status', { required: false })
 
   const commentTarget = core.getInput('comment-target', { required: false }) || 'pr'
   if (commentTarget !== 'pr' && commentTarget !== 'commit') {
@@ -57,5 +58,6 @@ export async function getInputs(): Promise<Inputs> {
     owner: repoOwner || payload.repo.owner,
     repo: repoName || payload.repo.repo,
     updateOnly: updateOnly,
+    deleteOnStatus,
   }
 }

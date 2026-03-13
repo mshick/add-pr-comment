@@ -22,6 +22,7 @@ jobs:
       release_created: ${{ steps.release.outputs.release_created }}
       major: ${{ steps.release.outputs.major }}
       minor: ${{ steps.release.outputs.minor }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
       pr_branch: ${{ steps.release.outputs.pr && fromJSON(steps.release.outputs.pr).headBranchName || '' }}
     steps:
       - uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1
@@ -84,6 +85,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
 
       - name: Tag Major and Minor Versions
         run: |
@@ -97,3 +100,23 @@ jobs:
           git tag -a v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }} -m "Release v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}"
           git push origin v${{ needs.release-please.outputs.major }}
           git push origin v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}
+
+  attest:
+    name: Attest
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      attestations: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Attest Build Provenance
+        uses: actions/attest-build-provenance@96b4a1ef7235a096b17240c259729fdd70c83d45 # v2
+        with:
+          subject-path: dist/index.js
