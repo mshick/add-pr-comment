@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.2.0](https://github.com/mshick/add-pr-comment/compare/v3.1.0...v3.2.0) (2026-03-13)
+
+
+### Features
+
+* add retry with exponential backoff for API rate limits ([#149](https://github.com/mshick/add-pr-comment/issues/149)) ([84d6648](https://github.com/mshick/add-pr-comment/commit/84d6648de2d8abd2f0b92fb5a02510967868c7be))
+
+
+### Bug Fixes
+
+* run build on release-please branch pushes ([#153](https://github.com/mshick/add-pr-comment/issues/153)) ([77e7a3f](https://github.com/mshick/add-pr-comment/commit/77e7a3f23ed676ae99533391acf338c0c6ff7fb3))
+
 ## [3.1.0](https://github.com/mshick/add-pr-comment/compare/v3.0.1...v3.1.0) (2026-03-12)
 
 
