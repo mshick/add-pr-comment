@@ -20,9 +20,69 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
+      major: ${{ steps.release.outputs.major }}
+      minor: ${{ steps.release.outputs.minor }}
+      prs_created: ${{ steps.release.outputs.prs_created }}
+      branch_name: ${{ steps.release.outputs.branch_name }}
     steps:
       - uses: googleapis/release-please-action@16a9c90856f42705d54a6fda1823352bdc62cf38 # v4
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT }}
           release-type: node
+
+  tag:
+    name: Tag
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: tag major and minor versions
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -d v${{ needs.release-please.outputs.major }} || true
+          git tag -d v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }} || true
+          git push origin :v${{ needs.release-please.outputs.major }} || true
+          git push origin :v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }} || true
+          git tag -a v${{ needs.release-please.outputs.major }} -m "Release v${{ needs.release-please.outputs.major }}"
+          git tag -a v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }} -m "Release v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}"
+          git push origin v${{ needs.release-please.outputs.major }}
+          git push origin v${{ needs.release-please.outputs.major }}.${{ needs.release-please.outputs.minor }}
+
+  build:
+    name: Build
+    needs: release-please
+    if: ${{ needs.release-please.outputs.prs_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ needs.release-please.outputs.branch_name }}
+
+      - name: setup node.js
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
+        with:
+          node-version-file: ".node-version"
+
+      - name: install dependencies
+        run: npm ci
+
+      - name: build action
+        run: npm run build
+
+      - name: commit build output
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add lib/ dist/
+          git diff --staged --quiet || git commit -m "chore: build"
+          git push

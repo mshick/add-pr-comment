@@ -25,8 +25,6 @@
     "build": "del-cli dist && tsc && ncc build --source-map",
     "clean": "rm -rf node_modules dist package-lock.json __tests__/runner/**/*",
     "lint": "eslint src/",
-    "prepare": "npm run build && git add lib dist",
-    "release": "npm run build && np --no-publish",
     "test": "vitest run",
     "watch": "vitest"
   },
@@ -55,7 +53,6 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "msw": "^2.12.10",
-    "np": "^11.0.2",
     "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.0",
