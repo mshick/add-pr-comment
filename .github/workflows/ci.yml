@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions: {}
 
 jobs:
   pr-title:
-    name: pr title
+    name: PR Title
     runs-on: ubuntu-slim
     steps:
       - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6
@@ -19,58 +19,58 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test:
-    name: unit tests
+    name: Unit Tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - name: checkout repo
+      - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: setup node.js
+      - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: '.node-version'
 
-      - name: install dependencies
+      - name: Install Dependencies
         run: |
           npm ci
 
-      - name: check formatting
+      - name: Check Formatting
         run: npm run format:check
 
-      - name: lint code
+      - name: Lint Code
         run: |
           npm run lint
 
-      - name: build action
+      - name: Build Action
         run: |
           npm run build
 
-      - name: run tests
+      - name: Run Tests
         run: |
           npm test
 
   dogfood:
-    name: dogfood
+    name: Dogfood
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     steps:
-      - name: checkout repo
+      - name: Checkout Repo
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-      - name: setup node.js
+      - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version-file: '.node-version'
 
-      - name: install dependencies
+      - name: Install Dependencies
         run: |
           npm ci
 
-      - name: Build action
+      - name: Build Action
         run: |
           npm run build
 
