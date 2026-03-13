@@ -2,7 +2,8 @@ import type { Endpoints } from '@octokit/types'
 
 export interface Inputs {
   allowRepeats: boolean
-  attachPath?: string[]
+  attachName: string
+  attachPath?: string
   commentTarget: 'pr' | 'commit'
   commitSha: string
   issue?: number

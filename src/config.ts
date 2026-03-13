@@ -5,6 +5,8 @@ import type { Inputs } from './types.js'
 export async function getInputs(): Promise<Inputs> {
   const messageIdInput = core.getInput('message-id', { required: false })
   const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`
+  const attachPath = core.getInput('attach-path', { required: false })
+  const attachName = core.getInput('attach-name', { required: false }) || 'pr-comment-attachments'
   const messageInput = core.getInput('message', { required: false })
   const messagePath = core.getInput('message-path', { required: false })
   const messageFind = core.getMultilineInput('find', { required: false })
@@ -37,6 +39,8 @@ export async function getInputs(): Promise<Inputs> {
 
   return {
     allowRepeats,
+    attachName,
+    attachPath,
     commentTarget: commentTarget as 'pr' | 'commit',
     commitSha: commitShaInput || github.context.sha,
     issue: issue ? Number(issue) : payload.issue?.number,
