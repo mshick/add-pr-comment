@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.0](https://github.com/mshick/add-pr-comment/compare/v3.6.0...v3.7.0) (2026-03-14)
+
+
+### Features
+
+* add file attachments via artifacts ([#165](https://github.com/mshick/add-pr-comment/issues/165)) ([678e340](https://github.com/mshick/add-pr-comment/commit/678e3402d584de30a0fd466ffaf959f48b20cedc))
+
 ## [3.6.0](https://github.com/mshick/add-pr-comment/compare/v3.5.0...v3.6.0) (2026-03-13)
 
 
