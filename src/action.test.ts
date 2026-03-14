@@ -23,6 +23,8 @@ type Inputs = {
   [key: string]: string | undefined
   message: string | undefined
   'message-path': string | undefined
+  'attach-path'?: string
+  'attach-name'?: string
   'repo-owner': string
   'repo-name': string
   'repo-token': string
@@ -106,6 +108,12 @@ vi.mock('@actions/github', async (importOriginal) => {
   }
 })
 
+vi.mock('@actions/artifact', () => ({
+  DefaultArtifactClient: class {
+    uploadArtifact = vi.fn().mockResolvedValue({ id: 9999, size: 1024 })
+  },
+}))
+
 const handlers = [
   http.post(
     `https://api.github.com/repos/:repoUser/:repoName/issues/:issueNumber/comments`,
@@ -169,6 +177,7 @@ beforeEach(() => {
   vi.resetModules()
 
   github.context.sha = commitSha
+  github.context.runId = 42
 
   // https://developer.github.com/webhooks/event-payloads/#issues
   github.context.payload = {
@@ -493,6 +502,23 @@ describe('add-pr-comment action', () => {
 
     await run()
     expect(messagePayload?.body).toContain('666')
+  })
+
+  it('creates a comment with file attachments', async () => {
+    inputs.message = simpleMessage
+    inputs['attach-path'] = messagePath1Fixture
+    inputs['attach-name'] = 'test-artifact'
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('hello world')
+    expect(messagePayload?.body).toContain('**Attachments:**')
+    expect(messagePayload?.body).toContain('test-artifact')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith(
+      'artifact-url',
+      expect.stringContaining('/artifacts/9999'),
+    )
   })
 
   it('wraps a message in a codeblock if preformatted is true', async () => {

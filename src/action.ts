@@ -1,5 +1,6 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import { uploadAttachments } from './attachments.js'
 import { createComment, deleteComment, getExistingComment, updateComment } from './comments.js'
 import {
   createCommitComment,
@@ -8,6 +9,7 @@ import {
   updateCommitComment,
 } from './commit-comments.js'
 import { getInputs } from './config.js'
+import { findFiles } from './files.js'
 import { getIssueNumberFromCommitPullsList } from './issues.js'
 import {
   addMessageHeader,
@@ -117,6 +119,9 @@ export const run = async (): Promise<void> => {
   try {
     const {
       allowRepeats,
+      attachName,
+      attachPath,
+      attachText,
       commentTarget,
       messagePath,
       messageInput,
@@ -143,7 +148,7 @@ export const run = async (): Promise<void> => {
 
     const octokit = github.getOctokit(repoToken)
 
-    const message = await getMessage({
+    let message = await getMessage({
       messagePath,
       messageInput,
       messageSkipped,
@@ -153,6 +158,21 @@ export const run = async (): Promise<void> => {
       preformatted,
       status,
     })
+
+    if (attachPath) {
+      const files = await findFiles(attachPath)
+      if (files.length) {
+        const attachment = await uploadAttachments({
+          files,
+          name: attachName,
+          owner,
+          repo,
+          text: attachText,
+        })
+        message = (message ?? '') + attachment.markdown
+        core.setOutput('artifact-url', attachment.url)
+      }
+    }
 
     const commentOptions: ManageCommentOptions = {
       allowRepeats,

@@ -39,6 +39,7 @@
     "watch": "vitest"
   },
   "dependencies": {
+    "@actions/artifact": "^6.2.1",
     "@actions/core": "^3.0.0",
     "@actions/github": "^9.0.0",
     "@actions/glob": "^0.6.1",
@@ -48,6 +49,7 @@
     "@biomejs/biome": "^2.4.6",
     "@octokit/types": "^16.0.0",
     "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
     "@types/node": "^25.5.0",

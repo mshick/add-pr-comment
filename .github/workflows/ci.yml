@@ -84,6 +84,8 @@ jobs:
             **Hello**
             🌏
             !
+          attach-path: .github/test/file-*.txt
+          attach-name: dogfood-files
 
       - uses: ./
         with:

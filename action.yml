@@ -7,6 +7,16 @@ inputs:
   message-path:
     description: 'A path or list of paths to a file to print as a message instead of a string.'
     required: false
+  attach-path:
+    description: 'A file path or glob pattern for files to upload as artifacts and link in the comment.'
+    required: false
+  attach-name:
+    description: 'Name for the uploaded artifact. Defaults to pr-comment-attachments.'
+    default: 'pr-comment-attachments'
+    required: false
+  attach-text:
+    description: 'Markdown text appended for attachments. Use %ARTIFACT_URL% as a placeholder for the download link.'
+    required: false
   message-id:
     description: 'An optional id to use for this message.'
     default: 'add-pr-comment'
@@ -77,6 +87,8 @@ outputs:
     description: 'Whether a comment was updated.'
   comment-id:
     description: 'If a comment was created or updated, the comment id.'
+  artifact-url:
+    description: 'If files were attached, the URL to download the artifact.'
 branding:
   icon: message-circle
   color: purple
