@@ -9,6 +9,7 @@ import {
   updateCommitComment,
 } from './commit-comments.js'
 import { getInputs } from './config.js'
+import { findFiles } from './files.js'
 import { getIssueNumberFromCommitPullsList } from './issues.js'
 import {
   addMessageHeader,
@@ -16,7 +17,6 @@ import {
   getMessage,
   removeMessageHeader,
 } from './message.js'
-import { findFiles } from './files.js'
 import { createCommentProxy } from './proxy.js'
 
 interface CommentAdapter {

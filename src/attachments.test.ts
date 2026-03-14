@@ -24,7 +24,8 @@ describe('uploadAttachments', () => {
 
     expect(result).toEqual({
       url: 'https://github.com/foo/bar/actions/runs/42/artifacts/9999',
-      markdown: '\n---\n**Attachments:** [my-artifact](https://github.com/foo/bar/actions/runs/42/artifacts/9999)\n',
+      markdown:
+        '\n---\n**Attachments:** [my-artifact](https://github.com/foo/bar/actions/runs/42/artifacts/9999)\n',
     })
   })
 })
