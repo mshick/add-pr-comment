@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.8.0](https://github.com/mshick/add-pr-comment/compare/v3.7.0...v3.8.0) (2026-03-14)
+
+
+### Features
+
+* automatic message truncation for oversized comments ([#167](https://github.com/mshick/add-pr-comment/issues/167)) ([38989f3](https://github.com/mshick/add-pr-comment/commit/38989f396057a576bf9584d56295f40c6e4bd1df))
+
 ## [3.7.0](https://github.com/mshick/add-pr-comment/compare/v3.6.0...v3.7.0) (2026-03-14)
 
 
