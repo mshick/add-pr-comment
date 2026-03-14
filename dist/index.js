@@ -120247,7 +120247,7 @@ const SIMPLE_SUFFIX = '\n\n---\n**This message was truncated.**';
 function artifactSuffix(url) {
     return `\n\n---\n**This message was truncated.** [Download full message](${url})`;
 }
-async function truncateMessage(message, mode, headerLength) {
+async function truncateMessage(message, mode, headerLength, messageId) {
     const budget = SAFE_BODY_LENGTH - headerLength;
     if (message.length <= budget) {
         return { message, truncated: false };
@@ -120263,7 +120263,8 @@ async function truncateMessage(message, mode, headerLength) {
         const tmpFile = path$2.join(tmpDir, 'truncated-message.txt');
         await fs$2.writeFile(tmpFile, message, 'utf8');
         const client = new DefaultArtifactClient();
-        const artifactName = 'full-comment-message';
+        const safeName = messageId ? messageId.replace(/[^a-zA-Z0-9-]/g, '-') : 'message';
+        const artifactName = `full-comment-${safeName}`;
         const { id } = await client.uploadArtifact(artifactName, [tmpFile], tmpDir);
         if (!id) {
             throw new Error('No artifact ID returned');
@@ -120439,12 +120440,15 @@ const run = async () => {
         }
         const headerLength = messageId.length + 2; // messageId + '\n\n' from addMessageHeader
         if (message) {
-            const truncateResult = await truncateMessage(message, truncate, headerLength);
+            const truncateResult = await truncateMessage(message, truncate, headerLength, messageId);
             message = truncateResult.message;
             setOutput('truncated', truncateResult.truncated ? 'true' : 'false');
             if (truncateResult.artifactUrl) {
                 setOutput('truncated-artifact-url', truncateResult.artifactUrl);
             }
+        }
+        else {
+            setOutput('truncated', 'false');
         }
         const commentOptions = {
             allowRepeats,

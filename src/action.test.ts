@@ -110,9 +110,11 @@ vi.mock('@actions/github', async (importOriginal) => {
   }
 })
 
+const mockUploadArtifact = vi.fn().mockResolvedValue({ id: 9999, size: 1024 })
+
 vi.mock('@actions/artifact', () => ({
   DefaultArtifactClient: class {
-    uploadArtifact = vi.fn().mockResolvedValue({ id: 9999, size: 1024 })
+    uploadArtifact = mockUploadArtifact
   },
 }))
 
@@ -321,6 +323,23 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith(
       'truncated-artifact-url',
       expect.stringContaining('/artifacts/9999'),
+    )
+    expect(messagePayload?.body.length).toBeLessThanOrEqual(61440)
+  })
+
+  it('falls back to simple truncation when artifact upload fails', async () => {
+    mockUploadArtifact.mockRejectedValueOnce(new Error('Upload failed'))
+
+    inputs.message = 'x'.repeat(70000)
+    inputs.truncate = 'artifact'
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('**This message was truncated.**')
+    expect(messagePayload?.body).not.toContain('Download full message')
+    expect(core.setOutput).toHaveBeenCalledWith('truncated', 'true')
+    expect(core.warning).toHaveBeenCalledWith(
+      expect.stringContaining('falling back to simple truncation'),
     )
     expect(messagePayload?.body.length).toBeLessThanOrEqual(61440)
   })

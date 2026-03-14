@@ -27,6 +27,7 @@ export async function truncateMessage(
   message: string,
   mode: 'artifact' | 'simple',
   headerLength: number,
+  messageId?: string,
 ): Promise<TruncateResult> {
   const budget = SAFE_BODY_LENGTH - headerLength
 
@@ -48,7 +49,8 @@ export async function truncateMessage(
     await fs.writeFile(tmpFile, message, 'utf8')
 
     const client = new DefaultArtifactClient()
-    const artifactName = 'full-comment-message'
+    const safeName = messageId ? messageId.replace(/[^a-zA-Z0-9-]/g, '-') : 'message'
+    const artifactName = `full-comment-${safeName}`
     const { id } = await client.uploadArtifact(artifactName, [tmpFile], tmpDir)
 
     if (!id) {
