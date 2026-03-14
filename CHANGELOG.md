@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.0](https://github.com/mshick/add-pr-comment/compare/v3.8.0...v3.9.0) (2026-03-14)
+
+
+### Features
+
+* add library exports for programmatic usage ([#169](https://github.com/mshick/add-pr-comment/issues/169)) ([277cebd](https://github.com/mshick/add-pr-comment/commit/277cebd817f74153d8c88986b77f0e75976e00af))
+
 ## [3.8.0](https://github.com/mshick/add-pr-comment/compare/v3.7.0...v3.8.0) (2026-03-14)
 
 
