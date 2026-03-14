@@ -118076,6 +118076,11 @@ async function getInputs() {
     const refreshMessagePosition = getInput('refresh-message-position', { required: false }) === 'true';
     const updateOnly = getInput('update-only', { required: false }) === 'true';
     const preformatted = getInput('preformatted', { required: false }) === 'true';
+    const truncateInput = getInput('truncate', { required: false }) || 'artifact';
+    if (truncateInput !== 'artifact' && truncateInput !== 'simple') {
+        throw new Error(`Invalid truncate mode: "${truncateInput}". Must be "artifact" or "simple".`);
+    }
+    const truncate = truncateInput;
     const deleteOnStatus = getInput('delete-on-status', { required: false });
     const commentTarget = getInput('comment-target', { required: false }) || 'pr';
     if (commentTarget !== 'pr' && commentTarget !== 'commit') {
@@ -118105,6 +118110,7 @@ async function getInputs() {
         messageFind,
         messageReplace,
         preformatted,
+        truncate,
         proxyUrl,
         pullRequestNumber: payload.pull_request?.number,
         refreshMessagePosition,
@@ -120234,6 +120240,47 @@ async function getIssueNumberFromCommitPullsList(octokit, owner, repo, commitSha
     return commitPullsList.data.length ? commitPullsList.data?.[0].number : null;
 }
 
+const MAX_COMMENT_LENGTH = 65536;
+const TRUNCATION_BUFFER = 4096;
+const SAFE_BODY_LENGTH = MAX_COMMENT_LENGTH - TRUNCATION_BUFFER;
+const SIMPLE_SUFFIX = '\n\n---\n**This message was truncated.**';
+function artifactSuffix(url) {
+    return `\n\n---\n**This message was truncated.** [Download full message](${url})`;
+}
+async function truncateMessage(message, mode, headerLength, messageId) {
+    const budget = SAFE_BODY_LENGTH - headerLength;
+    if (message.length <= budget) {
+        return { message, truncated: false };
+    }
+    warning(`Message length ${message.length} exceeds safe limit ${budget}, truncating`);
+    if (mode === 'simple') {
+        const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX;
+        return { message: truncated, truncated: true };
+    }
+    // artifact mode: upload full message, truncate comment with link
+    try {
+        const tmpDir = process.env.RUNNER_TEMP || os$1.tmpdir();
+        const tmpFile = path$2.join(tmpDir, 'truncated-message.txt');
+        await fs$2.writeFile(tmpFile, message, 'utf8');
+        const client = new DefaultArtifactClient();
+        const safeName = messageId ? messageId.replace(/[^a-zA-Z0-9-]/g, '-') : 'message';
+        const artifactName = `full-comment-${safeName}`;
+        const { id } = await client.uploadArtifact(artifactName, [tmpFile], tmpDir);
+        if (!id) {
+            throw new Error('No artifact ID returned');
+        }
+        const { repo, owner } = context$2.repo;
+        const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${context$2.runId}/artifacts/${id}`;
+        const suffix = artifactSuffix(artifactUrl);
+        const truncated = message.substring(0, budget - suffix.length) + suffix;
+        return { message: truncated, truncated: true, artifactUrl };
+    }
+    catch {
+        warning('Failed to upload truncated message artifact, falling back to simple truncation');
+        const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX;
+        return { message: truncated, truncated: true };
+    }
+}
 async function getMessage({ messageInput, messagePath, messageCancelled, messageSkipped, messageFailure, messageSuccess, preformatted, status, }) {
     let message;
     if (status === 'success' && messageSuccess) {
@@ -120263,7 +120310,6 @@ async function getMessage({ messageInput, messagePath, messageCancelled, message
 }
 async function getMessageFromPath(searchPath) {
     let message = '';
-    const maxCharacterLength = 65536;
     const files = await findFiles(searchPath);
     for (const [index, path] of files.entries()) {
         if (index > 0) {
@@ -120271,10 +120317,7 @@ async function getMessageFromPath(searchPath) {
         }
         message += await fs$2.readFile(path, { encoding: 'utf8' });
     }
-    // return trimmed message if message is too long (maximum is 65536 characters)
-    return message.length > maxCharacterLength
-        ? `${message.substring(0, maxCharacterLength - 3)}...`
-        : message;
+    return message;
 }
 function addMessageHeader(messageId, message) {
     return `${messageId}\n\n${message}`;
@@ -120369,7 +120412,7 @@ async function manageComment(adapter, options) {
 }
 const run = async () => {
     try {
-        const { allowRepeats, attachName, attachPath, attachText, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
+        const { allowRepeats, attachName, attachPath, attachText, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, truncate, } = await getInputs();
         const octokit = getOctokit(repoToken);
         let message = await getMessage({
             messagePath,
@@ -120394,6 +120437,18 @@ const run = async () => {
                 message = (message ?? '') + attachment.markdown;
                 setOutput('artifact-url', attachment.url);
             }
+        }
+        const headerLength = messageId.length + 2; // messageId + '\n\n' from addMessageHeader
+        if (message) {
+            const truncateResult = await truncateMessage(message, truncate, headerLength, messageId);
+            message = truncateResult.message;
+            setOutput('truncated', truncateResult.truncated ? 'true' : 'false');
+            if (truncateResult.artifactUrl) {
+                setOutput('truncated-artifact-url', truncateResult.artifactUrl);
+            }
+        }
+        else {
+            setOutput('truncated', 'false');
         }
         const commentOptions = {
             allowRepeats,

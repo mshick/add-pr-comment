@@ -69,6 +69,10 @@ inputs:
   preformatted:
     description: 'Treat message text (from a file or input) as pre-formatted and place it in a codeblock.'
     required: false
+  truncate:
+    description: 'Truncation mode when the message exceeds the safe comment length. "artifact" (default) uploads the full message as a downloadable artifact and links it. "simple" truncates with a notice.'
+    default: 'artifact'
+    required: false
   comment-target:
     description: 'Where to post the comment. Use "pr" for pull request/issue comments (default) or "commit" for commit comments.'
     default: 'pr'
@@ -89,6 +93,10 @@ outputs:
     description: 'If a comment was created or updated, the comment id.'
   artifact-url:
     description: 'If files were attached, the URL to download the artifact.'
+  truncated:
+    description: 'Whether the message was truncated.'
+  truncated-artifact-url:
+    description: 'If the message was truncated in artifact mode, the URL to download the full message.'
 branding:
   icon: message-circle
   color: purple

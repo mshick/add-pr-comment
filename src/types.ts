@@ -18,6 +18,7 @@ export interface Inputs {
   messageCancelled?: string
   messageSkipped?: string
   preformatted: boolean
+  truncate: 'artifact' | 'simple'
   proxyUrl?: string
   pullRequestNumber?: number
   refreshMessagePosition: boolean

@@ -1,6 +1,75 @@
 import fs from 'node:fs/promises'
+import os from 'node:os'
+import path from 'node:path'
+import { DefaultArtifactClient } from '@actions/artifact'
+import * as core from '@actions/core'
+import * as github from '@actions/github'
 import { findFiles } from './files.js'
 import type { Inputs } from './types.js'
+
+const MAX_COMMENT_LENGTH = 65536
+const TRUNCATION_BUFFER = 4096
+const SAFE_BODY_LENGTH = MAX_COMMENT_LENGTH - TRUNCATION_BUFFER
+
+const SIMPLE_SUFFIX = '\n\n---\n**This message was truncated.**'
+
+function artifactSuffix(url: string) {
+  return `\n\n---\n**This message was truncated.** [Download full message](${url})`
+}
+
+export interface TruncateResult {
+  message: string
+  truncated: boolean
+  artifactUrl?: string
+}
+
+export async function truncateMessage(
+  message: string,
+  mode: 'artifact' | 'simple',
+  headerLength: number,
+  messageId?: string,
+): Promise<TruncateResult> {
+  const budget = SAFE_BODY_LENGTH - headerLength
+
+  if (message.length <= budget) {
+    return { message, truncated: false }
+  }
+
+  core.warning(`Message length ${message.length} exceeds safe limit ${budget}, truncating`)
+
+  if (mode === 'simple') {
+    const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX
+    return { message: truncated, truncated: true }
+  }
+
+  // artifact mode: upload full message, truncate comment with link
+  try {
+    const tmpDir = process.env.RUNNER_TEMP || os.tmpdir()
+    const tmpFile = path.join(tmpDir, 'truncated-message.txt')
+    await fs.writeFile(tmpFile, message, 'utf8')
+
+    const client = new DefaultArtifactClient()
+    const safeName = messageId ? messageId.replace(/[^a-zA-Z0-9-]/g, '-') : 'message'
+    const artifactName = `full-comment-${safeName}`
+    const { id } = await client.uploadArtifact(artifactName, [tmpFile], tmpDir)
+
+    if (!id) {
+      throw new Error('No artifact ID returned')
+    }
+
+    const { repo, owner } = github.context.repo
+    const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}/artifacts/${id}`
+
+    const suffix = artifactSuffix(artifactUrl)
+    const truncated = message.substring(0, budget - suffix.length) + suffix
+
+    return { message: truncated, truncated: true, artifactUrl }
+  } catch {
+    core.warning('Failed to upload truncated message artifact, falling back to simple truncation')
+    const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX
+    return { message: truncated, truncated: true }
+  }
+}
 
 export async function getMessage({
   messageInput,
@@ -56,7 +125,6 @@ export async function getMessage({
 
 export async function getMessageFromPath(searchPath: string) {
   let message = ''
-  const maxCharacterLength = 65536
 
   const files = await findFiles(searchPath)
 
@@ -68,10 +136,7 @@ export async function getMessageFromPath(searchPath: string) {
     message += await fs.readFile(path, { encoding: 'utf8' })
   }
 
-  // return trimmed message if message is too long (maximum is 65536 characters)
-  return message.length > maxCharacterLength
-    ? `${message.substring(0, maxCharacterLength - 3)}...`
-    : message
+  return message
 }
 
 export function addMessageHeader(messageId: string, message: string) {

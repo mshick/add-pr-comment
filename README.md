@@ -27,6 +27,7 @@ and any other event where an issue can be found directly on the payload or via a
 - Supports a proxy for fork-based PRs. [See below](#proxy-for-fork-based-prs).
 - Supports creating a message from a file path.
 - Supports [file attachments](#file-attachments) via GitHub Artifacts.
+- Automatic [message truncation](#message-truncation) for oversized messages (e.g., large Terraform plans).
 
 ## Usage
 
@@ -98,6 +99,7 @@ jobs:
 | attach-path              | with     | A file path or glob pattern for files to upload as artifacts and link in the comment. See [File Attachments](#file-attachments).                                            | no       |                                    |
 | attach-name              | with     | Name for the uploaded artifact.                                                                                                                                             | no       | pr-comment-attachments             |
 | attach-text              | with     | Markdown content for the attachment section. Always separated from the comment by a horizontal rule. Supports `%ARTIFACT_URL%` and `%ATTACH_NAME%` template variables.      | no       | (see [File Attachments](#file-attachments)) |
+| truncate                 | with     | Truncation mode when the message exceeds the safe comment length. See [Message Truncation](#message-truncation).                                                            | no       | artifact                           |
 
 ## Outputs
 
@@ -107,6 +109,8 @@ jobs:
 | `comment-updated` | `"true"` if an existing comment was updated, `"false"` otherwise. |
 | `comment-id`      | The numeric ID of the created or updated comment.                 |
 | `artifact-url`    | If files were attached, the URL to download the artifact.         |
+| `truncated`       | `"true"` if the message was truncated, `"false"` otherwise.      |
+| `truncated-artifact-url` | If truncated in artifact mode, the URL to download the full message. |
 
 ### Using outputs in subsequent steps
 
@@ -396,6 +400,72 @@ The `attach-text` input supports two template variables:
 | ---------------- | ---------------------------------- |
 | `%ARTIFACT_URL%` | The artifact download URL          |
 | `%ATTACH_NAME%`  | The value of the `attach-name` input |
+
+### Message Truncation
+
+GitHub's API limits comment bodies to 65,536 characters. Messages that exceed this limit (common with large Terraform plans, verbose test output, etc.) would previously cause the action to fail with an "Argument list too long" or API error.
+
+This action automatically truncates oversized messages to stay within a safe limit (61,440 characters, which includes a 4,096 character buffer). The `truncate` input controls what happens with the full message:
+
+| Mode | Behavior |
+| ---- | -------- |
+| `artifact` (default) | The full, untruncated message is uploaded as a downloadable GitHub Artifact. The comment is truncated and a download link is appended. |
+| `simple` | The comment is truncated and a notice is appended. No artifact is uploaded. |
+
+If artifact upload fails (e.g., permissions, network issues), the action automatically falls back to simple truncation.
+
+**Example — default artifact mode**
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: terraform plan -no-color > plan.txt
+      - uses: mshick/add-pr-comment@v3
+        with:
+          message-path: plan.txt
+```
+
+If the plan output exceeds the safe limit, the comment will be truncated and end with:
+
+> **This message was truncated.** [Download full message](https://github.com/...)
+
+**Example — simple mode (no artifact)**
+
+```yaml
+- uses: mshick/add-pr-comment@v3
+  with:
+    message-path: plan.txt
+    truncate: simple
+```
+
+The comment will be truncated and end with:
+
+> **This message was truncated.**
+
+**Using the truncation outputs**
+
+```yaml
+- uses: mshick/add-pr-comment@v3
+  id: comment
+  with:
+    message-path: plan.txt
+
+- name: Check if truncated
+  if: steps.comment.outputs.truncated == 'true'
+  run: |
+    echo "Message was truncated"
+    echo "Full message: ${{ steps.comment.outputs.truncated-artifact-url }}"
+```
+
+> **Tip:** For very large outputs like Terraform plans, prefer using `message-path` over the `message` input. The `message` input is passed via environment variables, which have OS-level size limits that can cause failures before the action even runs. File-based input via `message-path` avoids this entirely.
 
 ### Bring your own issues
 
