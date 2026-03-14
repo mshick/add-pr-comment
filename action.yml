@@ -14,6 +14,10 @@ inputs:
     description: 'Name for the uploaded artifact. Defaults to pr-comment-attachments.'
     default: 'pr-comment-attachments'
     required: false
+  attach-text:
+    description: 'Markdown text appended for attachments. Use %ARTIFACT_URL% as a placeholder for the download link.'
+    default: '\n---\n**Attachments:** [%ATTACH_NAME%](%ARTIFACT_URL%)\n'
+    required: false
   message-id:
     description: 'An optional id to use for this message.'
     default: 'add-pr-comment'

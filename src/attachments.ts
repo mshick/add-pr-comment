@@ -7,6 +7,7 @@ interface UploadAttachmentsOptions {
   name: string
   owner: string
   repo: string
+  text: string
 }
 
 interface UploadAttachmentsResult {
@@ -19,6 +20,7 @@ export async function uploadAttachments({
   name,
   owner,
   repo,
+  text,
 }: UploadAttachmentsOptions): Promise<UploadAttachmentsResult> {
   const client = new DefaultArtifactClient()
   const rootDirectory = path.resolve(commonDirectory(files))
@@ -29,7 +31,7 @@ export async function uploadAttachments({
   }
 
   const url = `https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}/artifacts/${id}`
-  const markdown = `\n---\n**Attachments:** [${name}](${url})\n`
+  const markdown = text.replaceAll('%ARTIFACT_URL%', url).replaceAll('%ATTACH_NAME%', name)
 
   return { url, markdown }
 }

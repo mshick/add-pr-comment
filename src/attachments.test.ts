@@ -20,6 +20,7 @@ describe('uploadAttachments', () => {
       name: 'my-artifact',
       owner: 'foo',
       repo: 'bar',
+      text: '\n---\n**Attachments:** [%ATTACH_NAME%](%ARTIFACT_URL%)\n',
     })
 
     expect(result).toEqual({
@@ -27,5 +28,19 @@ describe('uploadAttachments', () => {
       markdown:
         '\n---\n**Attachments:** [my-artifact](https://github.com/foo/bar/actions/runs/42/artifacts/9999)\n',
     })
+  })
+
+  it('supports custom text templates', async () => {
+    const result = await uploadAttachments({
+      files: ['/path/to/report.html'],
+      name: 'my-artifact',
+      owner: 'foo',
+      repo: 'bar',
+      text: '\nDownload: %ARTIFACT_URL%',
+    })
+
+    expect(result.markdown).toBe(
+      '\nDownload: https://github.com/foo/bar/actions/runs/42/artifacts/9999',
+    )
   })
 })

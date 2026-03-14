@@ -4,6 +4,7 @@ export interface Inputs {
   allowRepeats: boolean
   attachName: string
   attachPath?: string
+  attachText: string
   commentTarget: 'pr' | 'commit'
   commitSha: string
   issue?: number

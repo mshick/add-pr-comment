@@ -121,6 +121,7 @@ export const run = async (): Promise<void> => {
       allowRepeats,
       attachName,
       attachPath,
+      attachText,
       commentTarget,
       messagePath,
       messageInput,
@@ -161,7 +162,13 @@ export const run = async (): Promise<void> => {
     if (attachPath) {
       const files = await findFiles(attachPath)
       if (files.length) {
-        const attachment = await uploadAttachments({ files, name: attachName, owner, repo })
+        const attachment = await uploadAttachments({
+          files,
+          name: attachName,
+          owner,
+          repo,
+          text: attachText,
+        })
         message = (message ?? '') + attachment.markdown
         core.setOutput('artifact-url', attachment.url)
       }

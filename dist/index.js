@@ -117887,7 +117887,7 @@ If the error persists, please check whether Actions and API requests are operati
     }
 }
 
-async function uploadAttachments({ files, name, owner, repo, }) {
+async function uploadAttachments({ files, name, owner, repo, text, }) {
     const client = new DefaultArtifactClient();
     const rootDirectory = path$2.resolve(commonDirectory(files));
     const { id } = await client.uploadArtifact(name, files, rootDirectory);
@@ -117895,7 +117895,7 @@ async function uploadAttachments({ files, name, owner, repo, }) {
         throw new Error('Artifact upload failed — no artifact ID returned');
     }
     const url = `https://github.com/${owner}/${repo}/actions/runs/${context$2.runId}/artifacts/${id}`;
-    const markdown = `\n---\n**Attachments:** [${name}](${url})\n`;
+    const markdown = text.replaceAll('%ARTIFACT_URL%', url).replaceAll('%ATTACH_NAME%', name);
     return { url, markdown };
 }
 function commonDirectory(files) {
@@ -118059,6 +118059,8 @@ async function getInputs() {
     const messageId = messageIdInput === '' ? 'add-pr-comment' : `add-pr-comment:${messageIdInput}`;
     const attachPath = getInput('attach-path', { required: false });
     const attachName = getInput('attach-name', { required: false }) || 'pr-comment-attachments';
+    const attachText = getInput('attach-text', { required: false }) ||
+        '\n---\n**Attachments:** [%ATTACH_NAME%](%ARTIFACT_URL%)\n';
     const messageInput = getInput('message', { required: false });
     const messagePath = getInput('message-path', { required: false });
     const messageFind = getMultilineInput('find', { required: false });
@@ -118088,6 +118090,7 @@ async function getInputs() {
         allowRepeats,
         attachName,
         attachPath,
+        attachText,
         commentTarget: commentTarget,
         commitSha: commitShaInput || context$2.sha,
         issue: issue ? Number(issue) : payload.issue?.number,
@@ -120365,7 +120368,7 @@ async function manageComment(adapter, options) {
 }
 const run = async () => {
     try {
-        const { allowRepeats, attachName, attachPath, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
+        const { allowRepeats, attachName, attachPath, attachText, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, } = await getInputs();
         const octokit = getOctokit(repoToken);
         let message = await getMessage({
             messagePath,
@@ -120380,7 +120383,13 @@ const run = async () => {
         if (attachPath) {
             const files = await findFiles(attachPath);
             if (files.length) {
-                const attachment = await uploadAttachments({ files, name: attachName, owner, repo });
+                const attachment = await uploadAttachments({
+                    files,
+                    name: attachName,
+                    owner,
+                    repo,
+                    text: attachText,
+                });
                 message = (message ?? '') + attachment.markdown;
                 setOutput('artifact-url', attachment.url);
             }
