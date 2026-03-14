@@ -9,9 +9,9 @@
 [![CodeQL](https://github.com/mshick/add-pr-comment/actions/workflows/codeql.yml/badge.svg)](https://github.com/mshick/add-pr-comment/actions/workflows/codeql.yml)
 [![Coverage](./badges/coverage.svg)](./badges/coverage.svg)
 
-A GitHub Action which adds a comment to a pull request's issue.
+A GitHub Action which adds a comment to a pull request issue or commit.
 
-This actions also works on [issue](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues),
+This action also works on [issue](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#issues),
 [issue_comment](https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#issue_comment),
 [deployment_status](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#deployment_status),
 [push](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#push)
@@ -28,6 +28,8 @@ and any other event where an issue can be found directly on the payload or via a
 - Supports creating a message from a file path.
 - Supports [file attachments](#file-attachments) via GitHub Artifacts.
 - Automatic [message truncation](#message-truncation) for oversized messages (e.g., large Terraform plans).
+- Supports [commit comments](#commit-comments) in addition to PR/issue comments.
+- Available as a [library](#programmatic-usage) for use in custom actions and scripts.
 
 ## Usage
 
@@ -100,6 +102,8 @@ jobs:
 | attach-name              | with     | Name for the uploaded artifact.                                                                                                                                             | no       | pr-comment-attachments             |
 | attach-text              | with     | Markdown content for the attachment section. Always separated from the comment by a horizontal rule. Supports `%ARTIFACT_URL%` and `%ATTACH_NAME%` template variables.      | no       | (see [File Attachments](#file-attachments)) |
 | truncate                 | with     | Truncation mode when the message exceeds the safe comment length. See [Message Truncation](#message-truncation).                                                            | no       | artifact                           |
+| comment-target           | with     | Where to post the comment. Use `pr` for pull request/issue comments or `commit` for commit comments. See [Commit Comments](#commit-comments).                              | no       | pr                                 |
+| commit-sha               | with     | The commit SHA to comment on when `comment-target` is `commit`. Defaults to the current commit.                                                                             | no       | {{ github.sha }}                   |
 
 ## Outputs
 
@@ -467,6 +471,42 @@ The comment will be truncated and end with:
 
 > **Tip:** For very large outputs like Terraform plans, prefer using `message-path` over the `message` input. The `message` input is passed via environment variables, which have OS-level size limits that can cause failures before the action even runs. File-based input via `message-path` avoids this entirely.
 
+### Commit Comments
+
+Instead of posting to a pull request or issue, you can post comments directly on a commit. This is useful for workflows triggered by `push` events or when you want feedback attached to a specific commit rather than a PR conversation.
+
+**Example**
+
+```yaml
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: mshick/add-pr-comment@v3
+        with:
+          comment-target: commit
+          message: |
+            Build succeeded for ${{ github.sha }}
+```
+
+You can also specify a different commit SHA:
+
+```yaml
+- uses: mshick/add-pr-comment@v3
+  with:
+    comment-target: commit
+    commit-sha: ${{ github.event.before }}
+    message: |
+      Comparing changes since this commit.
+```
+
+> **Note:** Commit comments use a different GitHub API than issue/PR comments. Sticky comments (`message-id`), `update-only`, `refresh-message-position`, and `delete-on-status` all work with commit comments. The `proxy-url` option is not supported for commit comments.
+
 ### Bring your own issues
 
 You can set an issue id explicitly. Helpful for cases where you want to post
@@ -527,17 +567,40 @@ jobs:
           delete-on-status: success
 ```
 
+## Programmatic Usage
+
+This package also exports its core functions as a library, so you can use them in your own custom GitHub Actions or scripts.
+
+```bash
+npm install @mshick/add-pr-comment
+```
+
+```typescript
+import {
+  createComment,
+  getExistingComment,
+  updateComment,
+  deleteComment,
+  createCommitComment,
+  getMessage,
+  truncateMessage,
+  uploadAttachments,
+} from '@mshick/add-pr-comment'
+```
+
+The library exports functions for managing both issue/PR comments and commit comments, file discovery, message resolution, truncation, attachments, and proxy support. Type definitions are included.
+
 ## Security
 
 ### Version Pinning
 
 There are three ways to reference this action, from most to least secure:
 
-1. **Commit SHA (most secure)**: `uses: mshick/add-pr-comment@e07b0eebc684bdbab7289553add0e8e2e81cdd68` — immutable, can never change.
-2. **Semver tag (recommended)**: `uses: mshick/add-pr-comment@v3.3.0` — protected by tag rulesets, cannot be moved or deleted once created.
+1. **Commit SHA (most secure)**: `uses: mshick/add-pr-comment@ffd016c7e151d97d69d21a843022fd4cd5b96fe5` — immutable, can never change.
+2. **Semver tag (recommended)**: `uses: mshick/add-pr-comment@v3.9.0` — protected by tag rulesets, cannot be moved or deleted once created.
 3. **Major version tag (convenient but less secure)**: `uses: mshick/add-pr-comment@v3` — floating tag that is updated on each release to point to the latest version. While convenient, floating tags are a potential security risk as they could theoretically be re-pointed to a different commit.
 
-For maximum security, pin to a full semver tag or commit SHA. Semver tags (e.g., `v3.3.0`) in this repository are protected by GitHub tag rulesets and cannot be modified after creation.
+For maximum security, pin to a full semver tag or commit SHA. Semver tags (e.g., `v3.9.0`) in this repository are protected by GitHub tag rulesets and cannot be modified after creation.
 
 Releases include build provenance attestations generated by [`actions/attest-build-provenance`](https://github.com/actions/attest-build-provenance), which can be used to verify that the release was produced by the official CI pipeline.
 
