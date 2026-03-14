@@ -40,6 +40,7 @@ type Inputs = {
   'commit-sha'?: string
   'delete-on-status'?: string
   preformatted?: string
+  truncate?: string
   find?: string
   replace?: string
   status?: 'success' | 'failure' | 'cancelled' | 'skipped'
@@ -55,6 +56,7 @@ const defaultInputs: Inputs = {
   'allow-repeats': 'false',
   'comment-target': 'pr',
   'commit-sha': '',
+  truncate: 'simple',
   status: 'success',
 }
 
