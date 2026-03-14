@@ -275,17 +275,54 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
   })
 
-  it('creates a trimmed comment with a message-path', async () => {
+  it('creates a truncated comment with a message-path', async () => {
     inputs.message = undefined
     inputs['message-path'] = messagePathTooLongFixture
     inputs['allow-repeats'] = 'true'
 
-    const endOfMessage = '...'
-
     await expect(run()).resolves.not.toThrow()
-    expect(endOfMessage).toEqual(messagePayload?.body.slice(-3))
+    expect(messagePayload?.body).toContain('**This message was truncated.**')
+    expect(core.setOutput).toHaveBeenCalledWith('truncated', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
     expect(core.setOutput).toHaveBeenCalledWith('comment-id', postIssueCommentsResponse.id)
+    // Body should be well under the safe limit
+    expect(messagePayload?.body.length).toBeLessThanOrEqual(61440)
+  })
+
+  it('truncates a direct message that exceeds the safe limit', async () => {
+    inputs.message = 'x'.repeat(70000)
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('**This message was truncated.**')
+    expect(core.setOutput).toHaveBeenCalledWith('truncated', 'true')
+    expect(messagePayload?.body.length).toBeLessThanOrEqual(61440)
+  })
+
+  it('does not truncate a message under the safe limit', async () => {
+    inputs.message = simpleMessage
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).not.toContain('**This message was truncated.**')
+    expect(core.setOutput).toHaveBeenCalledWith('truncated', 'false')
+  })
+
+  it('truncates with artifact upload in artifact mode', async () => {
+    inputs.message = 'x'.repeat(70000)
+    inputs.truncate = 'artifact'
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('**This message was truncated.**')
+    expect(messagePayload?.body).toContain('Download full message')
+    expect(messagePayload?.body).toContain('/artifacts/9999')
+    expect(core.setOutput).toHaveBeenCalledWith('truncated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith(
+      'truncated-artifact-url',
+      expect.stringContaining('/artifacts/9999'),
+    )
+    expect(messagePayload?.body.length).toBeLessThanOrEqual(61440)
   })
 
   it('supports globs in message paths', async () => {
