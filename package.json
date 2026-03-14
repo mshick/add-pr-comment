@@ -1,7 +1,7 @@
 {
   "name": "@mshick/add-pr-comment",
   "version": "3.8.0",
-  "description": "A GitHub Action which adds a comment to a Pull Request Issue.",
+  "description": "A GitHub Action which adds a comment to a pull request issue or commit.",
   "keywords": [
     "GitHub",
     "Actions",
@@ -21,17 +21,26 @@
   "license": "MIT",
   "type": "module",
   "author": "Michael Shick <m@shick.us>",
-  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "lib"
+  ],
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "exports": {
-    ".": "./dist/index.js"
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
   },
   "scripts": {
-    "build": "npm run package",
+    "build": "npm run package && npm run build:lib",
     "bundle": "npm run check && npm run package",
-    "clean": "rm -rf node_modules dist coverage package-lock.json",
-    "check": "biome check .",
+    "build:lib": "npx rimraf ./lib && tsc --project tsconfig.lib.json",
+    "clean": "rm -rf node_modules dist lib coverage package-lock.json",
+    "check": "tsc --noEmit",
     "format": "biome check --write .",
-    "lint": "biome lint .",
+    "lint": "biome check .",
     "package": "npx rimraf ./dist && npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "package:watch": "npm run package -- --watch",
     "test": "vitest run --coverage",

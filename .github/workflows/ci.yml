@@ -37,6 +37,9 @@ jobs:
           npm ci
 
       - name: Check Lint and Formatting
+        run: npm run lint
+
+      - name: Check Types
         run: npm run check
 
       - name: Build Action
@@ -112,4 +115,4 @@ jobs:
         with:
           comment-target: commit
           commit-sha: ${{ github.event.pull_request.head.sha }}
-          message: 'ruff 🐶'
+          message: "ruff 🐶"

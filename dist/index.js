@@ -118024,7 +118024,7 @@ async function getExistingCommitComment(octokit, owner, repo, commitSha, message
         }
     }
     if (found) {
-        const { id, body } = found;
+        const { id, body = '' } = found;
         return { id, body };
     }
     return;

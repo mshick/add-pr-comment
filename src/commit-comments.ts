@@ -32,7 +32,7 @@ export async function getExistingCommitComment(
   }
 
   if (found) {
-    const { id, body } = found
+    const { id, body = '' } = found
     return { id, body }
   }
 
