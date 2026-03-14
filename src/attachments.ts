@@ -2,7 +2,7 @@ import path from 'node:path'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as github from '@actions/github'
 
-interface UploadAttachmentsOptions {
+export interface UploadAttachmentsOptions {
   files: string[]
   name: string
   owner: string
@@ -10,7 +10,7 @@ interface UploadAttachmentsOptions {
   text: string
 }
 
-interface UploadAttachmentsResult {
+export interface UploadAttachmentsResult {
   url: string
   markdown: string
 }
