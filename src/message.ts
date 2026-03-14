@@ -1,6 +1,6 @@
+import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
-import fs from 'node:fs/promises'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
@@ -42,27 +42,31 @@ export async function truncateMessage(
   }
 
   // artifact mode: upload full message, truncate comment with link
-  const tmpDir = process.env.RUNNER_TEMP || os.tmpdir()
-  const tmpFile = path.join(tmpDir, 'truncated-message.txt')
-  await fs.writeFile(tmpFile, message, 'utf8')
+  try {
+    const tmpDir = process.env.RUNNER_TEMP || os.tmpdir()
+    const tmpFile = path.join(tmpDir, 'truncated-message.txt')
+    await fs.writeFile(tmpFile, message, 'utf8')
 
-  const client = new DefaultArtifactClient()
-  const artifactName = 'full-comment-message'
-  const { id } = await client.uploadArtifact(artifactName, [tmpFile], tmpDir)
+    const client = new DefaultArtifactClient()
+    const artifactName = 'full-comment-message'
+    const { id } = await client.uploadArtifact(artifactName, [tmpFile], tmpDir)
 
-  if (!id) {
+    if (!id) {
+      throw new Error('No artifact ID returned')
+    }
+
+    const { repo, owner } = github.context.repo
+    const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}/artifacts/${id}`
+
+    const suffix = artifactSuffix(artifactUrl)
+    const truncated = message.substring(0, budget - suffix.length) + suffix
+
+    return { message: truncated, truncated: true, artifactUrl }
+  } catch {
     core.warning('Failed to upload truncated message artifact, falling back to simple truncation')
     const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX
     return { message: truncated, truncated: true }
   }
-
-  const { repo, owner } = github.context.repo
-  const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}/artifacts/${id}`
-
-  const suffix = artifactSuffix(artifactUrl)
-  const truncated = message.substring(0, budget - suffix.length) + suffix
-
-  return { message: truncated, truncated: true, artifactUrl }
 }
 
 export async function getMessage({
