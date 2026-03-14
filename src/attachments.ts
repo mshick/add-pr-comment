@@ -1,6 +1,6 @@
-import path from 'node:path'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as github from '@actions/github'
+import path from 'node:path'
 
 export interface UploadAttachmentsOptions {
   files: string[]

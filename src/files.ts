@@ -1,6 +1,6 @@
-import fs from 'node:fs/promises'
 import * as core from '@actions/core'
 import * as glob from '@actions/glob'
+import fs from 'node:fs/promises'
 
 export async function findFiles(searchPath: string): Promise<string[]> {
   const searchResults: string[] = []
