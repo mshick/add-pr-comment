@@ -97,7 +97,7 @@ jobs:
 | replace                  | with     | Strings to replace a found pattern with. Each new line is a new replacement, or if you only have one pattern, you can replace with a multiline string.                      | no       |                                    |
 | attach-path              | with     | A file path or glob pattern for files to upload as artifacts and link in the comment. See [File Attachments](#file-attachments).                                            | no       |                                    |
 | attach-name              | with     | Name for the uploaded artifact.                                                                                                                                             | no       | pr-comment-attachments             |
-| attach-text              | with     | Markdown text appended for attachments. Supports `%ARTIFACT_URL%` and `%ATTACH_NAME%` template variables.                                                                  | no       | (see [File Attachments](#file-attachments)) |
+| attach-text              | with     | Markdown content for the attachment section. Always separated from the comment by a horizontal rule. Supports `%ARTIFACT_URL%` and `%ATTACH_NAME%` template variables.      | no       | (see [File Attachments](#file-attachments)) |
 
 ## Outputs
 
@@ -338,7 +338,7 @@ world
 
 ### File Attachments
 
-You can attach files to your PR comments by uploading them as GitHub Artifacts and embedding download links in the comment body. Files matching the `attach-path` glob are uploaded as a single artifact, and a markdown section with the download link is appended to your comment.
+You can attach files to your PR comments by uploading them as GitHub Artifacts and embedding download links in the comment body. Files matching the `attach-path` glob are uploaded as a single artifact, and a markdown section with the download link is appended to your comment, separated by a horizontal rule.
 
 > **Note:** Artifact download URLs require GitHub authentication and expire based on your repository's retention settings (default 90 days). Images will not render inline — they appear as download links. This is a GitHub platform limitation.
 
@@ -387,9 +387,7 @@ jobs:
             Tests passed with 85% line coverage.
           attach-path: coverage/*
           attach-name: coverage-report
-          attach-text: |
-
-            📎 [Download %ATTACH_NAME%](%ARTIFACT_URL%)
+          attach-text: '📎 [Download %ATTACH_NAME%](%ARTIFACT_URL%)'
 ```
 
 The `attach-text` input supports two template variables:

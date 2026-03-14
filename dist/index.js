@@ -117895,7 +117895,8 @@ async function uploadAttachments({ files, name, owner, repo, text, }) {
         throw new Error('Artifact upload failed — no artifact ID returned');
     }
     const url = `https://github.com/${owner}/${repo}/actions/runs/${context$2.runId}/artifacts/${id}`;
-    const markdown = text.replaceAll('%ARTIFACT_URL%', url).replaceAll('%ATTACH_NAME%', name);
+    const rendered = text.replaceAll('%ARTIFACT_URL%', url).replaceAll('%ATTACH_NAME%', name);
+    const markdown = `\n---\n${rendered}\n`;
     return { url, markdown };
 }
 function commonDirectory(files) {
@@ -118060,7 +118061,7 @@ async function getInputs() {
     const attachPath = getInput('attach-path', { required: false });
     const attachName = getInput('attach-name', { required: false }) || 'pr-comment-attachments';
     const attachText = getInput('attach-text', { required: false }) ||
-        '\n---\n**Attachments:** [%ATTACH_NAME%](%ARTIFACT_URL%)\n';
+        '**Attachments:** [%ATTACH_NAME%](%ARTIFACT_URL%)';
     const messageInput = getInput('message', { required: false });
     const messagePath = getInput('message-path', { required: false });
     const messageFind = getMultilineInput('find', { required: false });

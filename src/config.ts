@@ -9,7 +9,7 @@ export async function getInputs(): Promise<Inputs> {
   const attachName = core.getInput('attach-name', { required: false }) || 'pr-comment-attachments'
   const attachText =
     core.getInput('attach-text', { required: false }) ||
-    '\n---\n**Attachments:** [%ATTACH_NAME%](%ARTIFACT_URL%)\n'
+    '**Attachments:** [%ATTACH_NAME%](%ARTIFACT_URL%)'
   const messageInput = core.getInput('message', { required: false })
   const messagePath = core.getInput('message-path', { required: false })
   const messageFind = core.getMultilineInput('find', { required: false })

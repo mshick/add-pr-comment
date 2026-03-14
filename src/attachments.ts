@@ -31,7 +31,8 @@ export async function uploadAttachments({
   }
 
   const url = `https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}/artifacts/${id}`
-  const markdown = text.replaceAll('%ARTIFACT_URL%', url).replaceAll('%ATTACH_NAME%', name)
+  const rendered = text.replaceAll('%ARTIFACT_URL%', url).replaceAll('%ATTACH_NAME%', name)
+  const markdown = `\n---\n${rendered}\n`
 
   return { url, markdown }
 }
