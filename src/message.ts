@@ -1,9 +1,9 @@
-import { DefaultArtifactClient } from '@actions/artifact'
-import * as core from '@actions/core'
-import * as github from '@actions/github'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { DefaultArtifactClient } from '@actions/artifact'
+import * as core from '@actions/core'
+import * as github from '@actions/github'
 import { findFiles } from './files.js'
 import type { Inputs } from './types.js'
 

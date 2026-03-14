@@ -1,33 +1,33 @@
 export { run } from './action.js'
-export { uploadAttachments } from './attachments.js'
 export type { UploadAttachmentsOptions, UploadAttachmentsResult } from './attachments.js'
+export { uploadAttachments } from './attachments.js'
 export {
   createComment,
   deleteComment,
   getExistingComment,
-  updateComment
+  updateComment,
 } from './comments.js'
 export {
   createCommitComment,
   deleteCommitComment,
   getExistingCommitComment,
-  updateCommitComment
+  updateCommitComment,
 } from './commit-comments.js'
 export { findFiles } from './files.js'
 export { getIssueNumberFromCommitPullsList } from './issues.js'
+export type { TruncateResult } from './message.js'
 export {
   addMessageHeader,
   findAndReplaceInMessage,
   getMessage,
   getMessageFromPath,
   removeMessageHeader,
-  truncateMessage
+  truncateMessage,
 } from './message.js'
-export type { TruncateResult } from './message.js'
-export { createCommentProxy } from './proxy.js'
 export type { CreateCommentProxyParams } from './proxy.js'
-export { withRetry } from './retry.js'
+export { createCommentProxy } from './proxy.js'
 export type { RetryOptions } from './retry.js'
+export { withRetry } from './retry.js'
 export type {
   CreateCommitCommentResponseData,
   CreateIssueCommentResponseData,
@@ -35,6 +35,5 @@ export type {
   ExistingCommitCommentResponseData,
   ExistingIssueComment,
   ExistingIssueCommentResponseData,
-  Inputs
+  Inputs,
 } from './types.js'
-
