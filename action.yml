@@ -84,6 +84,8 @@ inputs:
     description: 'A regular expression to find for replacement. Multiple lines become individual regular expressions.'
   replace:
     description: 'A replacement to use, overrides the message. Multple lines can replace same-indexed find patterns.'
+  delete-on-status:
+    description: 'Delete comment on specified status.'
 outputs:
   comment-created:
     description: 'Whether a comment was created.'
