@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.9.1](https://github.com/mshick/add-pr-comment/compare/v3.9.0...v3.9.1) (2026-03-31)
+
+
+### Bug Fixes
+
+* input `delete-on-status` not declared ([#175](https://github.com/mshick/add-pr-comment/issues/175)) ([108eeca](https://github.com/mshick/add-pr-comment/commit/108eeca085f6dfe103fbe745a5b402fa225cfdbe))
+
 ## [3.9.0](https://github.com/mshick/add-pr-comment/compare/v3.8.0...v3.9.0) (2026-03-14)
 
 
