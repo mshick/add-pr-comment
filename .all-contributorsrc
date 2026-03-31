@@ -77,6 +77,15 @@
       "contributions": [
         "code"
       ]
+    },
+    {
+      "login": "anne-pc",
+      "name": "Jiří Majer",
+      "avatar_url": "https://avatars.githubusercontent.com/u/27091643?v=4",
+      "profile": "https://github.com/anne-pc",
+      "contributions": [
+        "code"
+      ]
     }
   ],
   "contributorsPerLine": 7,
