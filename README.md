@@ -1,7 +1,7 @@
 # add-pr-comment
 
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-8-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-9-orange.svg?style=flat-square)](#contributors-)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 [![CI](https://github.com/mshick/add-pr-comment/actions/workflows/ci.yml/badge.svg)](https://github.com/mshick/add-pr-comment/actions/workflows/ci.yml)
@@ -624,6 +624,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
     </tr>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/manan-jadhav-ab"><img src="https://avatars.githubusercontent.com/u/166636237?v=4?s=100" width="100px;" alt="Manan Jadhav"/><br /><sub><b>Manan Jadhav</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=manan-jadhav-ab" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/anne-pc"><img src="https://avatars.githubusercontent.com/u/27091643?v=4?s=100" width="100px;" alt="Jiří Majer"/><br /><sub><b>Jiří Majer</b></sub></a><br /><a href="https://github.com/mshick/add-pr-comment/commits?author=anne-pc" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
