@@ -507,6 +507,8 @@ You can also specify a different commit SHA:
 
 > **Note:** Commit comments use a different GitHub API than issue/PR comments. Sticky comments (`message-id`), `update-only`, `refresh-message-position`, and `delete-on-status` all work with commit comments. The `proxy-url` option is not supported for commit comments.
 
+> **Important:** The `commit` comment target requires that commit comments are enabled on your repository. GitHub now allows repository admins to [disable comments on individual commits](https://github.blog/changelog/2026-03-25-disable-comments-on-individual-commits/). If commit comments are disabled, this action will fail when using `comment-target: commit`.
+
 ### Bring your own issues
 
 You can set an issue id explicitly. Helpful for cases where you want to post
