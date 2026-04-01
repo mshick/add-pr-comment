@@ -1,10 +1,9 @@
 {
-  "name": "add-pr-comment",
+  "name": "@mshick/add-pr-comment",
   "version": "3.9.1",
   "description": "A GitHub Action which adds a comment to a pull request issue or commit.",
   "keywords": [
-    "GitHub",
-    "Actions",
+    "GitHub Actions",
     "javascript",
     "pull request",
     "comments",
