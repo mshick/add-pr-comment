@@ -1,5 +1,5 @@
 {
-  "name": "@mshick/add-pr-comment",
+  "name": "add-pr-comment",
   "version": "3.9.1",
   "description": "A GitHub Action which adds a comment to a pull request issue or commit.",
   "keywords": [
