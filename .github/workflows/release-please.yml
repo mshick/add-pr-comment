@@ -6,10 +6,7 @@ on:
     branches:
       - main
 
-permissions:
-  contents: write
-  pull-requests: write
-  id-token: write
+permissions: {}
 
 env:
   DO_NOT_TRACK: 1
@@ -18,6 +15,7 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       major: ${{ steps.release.outputs.major }}
@@ -40,6 +38,7 @@ jobs:
   build-dist:
     name: Build dist
     runs-on: ubuntu-latest
+    permissions: {}
     needs: release-please
     # Only run when release-please has an open PR (not on the release itself)
     if: ${{ needs.release-please.outputs.pr_branch != '' && !needs.release-please.outputs.release_created }}
