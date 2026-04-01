@@ -575,7 +575,7 @@ jobs:
 This package also exports its core functions as a library, so you can use them in your own custom GitHub Actions or scripts.
 
 ```bash
-npm install add-pr-comment
+npm add @mshick/add-pr-comment
 ```
 
 ```typescript
@@ -588,7 +588,7 @@ import {
   getMessage,
   truncateMessage,
   uploadAttachments,
-} from 'add-pr-comment'
+} from '@mshick/add-pr-comment'
 ```
 
 The library exports functions for managing both issue/PR comments and commit comments, file discovery, message resolution, truncation, attachments, and proxy support. Type definitions are included.
