@@ -3,8 +3,7 @@
   "version": "3.9.1",
   "description": "A GitHub Action which adds a comment to a pull request issue or commit.",
   "keywords": [
-    "GitHub",
-    "Actions",
+    "GitHub Actions",
     "javascript",
     "pull request",
     "comments",
@@ -22,7 +21,6 @@
   "type": "module",
   "author": "Michael Shick <m@shick.us>",
   "files": [
-    "dist",
     "lib"
   ],
   "main": "./lib/index.js",
@@ -34,15 +32,13 @@
     }
   },
   "scripts": {
-    "build": "npm run package && npm run build:lib",
-    "bundle": "npm run check && npm run package",
+    "build": "npx rimraf ./dist && npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
     "build:lib": "npx rimraf ./lib && tsc --project tsconfig.lib.json",
     "clean": "rm -rf node_modules dist lib coverage package-lock.json",
     "check": "tsc --noEmit",
     "format": "biome check --write .",
     "lint": "biome check .",
-    "package": "npx rimraf ./dist && npx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
-    "package:watch": "npm run package -- --watch",
+    "prepack": "npm run build:lib",
     "test": "vitest run --coverage",
     "coverage": "npx make-coverage-badge --output-path ./badges/coverage.svg",
     "watch": "vitest"

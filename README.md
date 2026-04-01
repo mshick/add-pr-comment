@@ -575,7 +575,7 @@ jobs:
 This package also exports its core functions as a library, so you can use them in your own custom GitHub Actions or scripts.
 
 ```bash
-npm install @mshick/add-pr-comment
+npm add @mshick/add-pr-comment
 ```
 
 ```typescript
