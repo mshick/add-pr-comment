@@ -59,7 +59,7 @@ describe('truncateMessage', () => {
 
   it('breaks at a newline when available', async () => {
     // Build a message with lines separated by newlines
-    const line = 'x'.repeat(80) + '\n'
+    const line = `${'x'.repeat(80)}\n`
     const longMessage = line.repeat(Math.ceil(70000 / line.length))
 
     const result = await truncateMessage(longMessage, 'simple', 50)
