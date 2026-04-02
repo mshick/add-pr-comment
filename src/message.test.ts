@@ -82,6 +82,17 @@ describe('truncateMessage', () => {
     expect(result.message.length).toBeLessThanOrEqual(65536)
   })
 
+  it('enforces budget even when markdown termination adds characters', async () => {
+    // Code fence at the start means terminateMarkdown will add \n``` (4 chars)
+    const longMessage = `\`\`\`\n${'x'.repeat(70000)}\n\`\`\``
+
+    const result = await truncateMessage(longMessage, 'simple', 50)
+
+    expect(result.truncated).toBe(true)
+    // SAFE_BODY_LENGTH (61440) - headerLength (50) = 61390 budget
+    expect(result.message.length).toBeLessThanOrEqual(61390)
+  })
+
   it('terminates incomplete bold markdown after truncation', async () => {
     // Message with unclosed bold that gets cut
     const longMessage = `**bold text that is very long ${'x'.repeat(70000)}`

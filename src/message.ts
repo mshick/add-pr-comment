@@ -49,6 +49,20 @@ function artifactSuffix(url: string, separator: string) {
   return `\n\n${separator}\n**This message was truncated.** [Download full message](${url})`
 }
 
+// Reserve space for closing markers that terminateMarkdown may add (e.g. \n``` or \n$$)
+const TERMINATION_RESERVE = 16
+
+function truncateAndTerminate(message: string, budget: number, suffix: string): string {
+  const maxCutLength = budget - suffix.length
+  const breakAt = findBreakpoint(message, maxCutLength - TERMINATION_RESERVE)
+  let cut = terminateMarkdown(message.substring(0, breakAt))
+  // Safety net: if termination still exceeds budget, hard-truncate
+  if (cut.length > maxCutLength) {
+    cut = cut.substring(0, maxCutLength)
+  }
+  return cut + suffix
+}
+
 export interface TruncateResult {
   message: string
   truncated: boolean
@@ -73,9 +87,7 @@ export async function truncateMessage(
 
   if (mode === 'simple') {
     const suffix = simpleSuffix(separator)
-    const breakAt = findBreakpoint(message, budget - suffix.length)
-    const cut = terminateMarkdown(message.substring(0, breakAt))
-    const truncated = cut + suffix
+    const truncated = truncateAndTerminate(message, budget, suffix)
     return { message: truncated, truncated: true }
   }
 
@@ -98,17 +110,13 @@ export async function truncateMessage(
     const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}/artifacts/${id}`
 
     const suffix = artifactSuffix(artifactUrl, separator)
-    const breakAt = findBreakpoint(message, budget - suffix.length)
-    const cut = terminateMarkdown(message.substring(0, breakAt))
-    const truncated = cut + suffix
+    const truncated = truncateAndTerminate(message, budget, suffix)
 
     return { message: truncated, truncated: true, artifactUrl }
   } catch {
     core.warning('Failed to upload truncated message artifact, falling back to simple truncation')
     const suffix = simpleSuffix(separator)
-    const breakAt = findBreakpoint(message, budget - suffix.length)
-    const cut = terminateMarkdown(message.substring(0, breakAt))
-    const truncated = cut + suffix
+    const truncated = truncateAndTerminate(message, budget, suffix)
     return { message: truncated, truncated: true }
   }
 }

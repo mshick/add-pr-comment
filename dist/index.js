@@ -120432,6 +120432,18 @@ function simpleSuffix(separator) {
 function artifactSuffix(url, separator) {
     return `\n\n${separator}\n**This message was truncated.** [Download full message](${url})`;
 }
+// Reserve space for closing markers that terminateMarkdown may add (e.g. \n``` or \n$$)
+const TERMINATION_RESERVE = 16;
+function truncateAndTerminate(message, budget, suffix) {
+    const maxCutLength = budget - suffix.length;
+    const breakAt = findBreakpoint(message, maxCutLength - TERMINATION_RESERVE);
+    let cut = terminateMarkdown(message.substring(0, breakAt));
+    // Safety net: if termination still exceeds budget, hard-truncate
+    if (cut.length > maxCutLength) {
+        cut = cut.substring(0, maxCutLength);
+    }
+    return cut + suffix;
+}
 async function truncateMessage(message, mode, headerLength, messageId, truncateSeparator) {
     const budget = SAFE_BODY_LENGTH - headerLength;
     const separator = truncateSeparator || DEFAULT_SEPARATOR;
@@ -120441,9 +120453,7 @@ async function truncateMessage(message, mode, headerLength, messageId, truncateS
     warning(`Message length ${message.length} exceeds safe limit ${budget}, truncating`);
     if (mode === 'simple') {
         const suffix = simpleSuffix(separator);
-        const breakAt = findBreakpoint(message, budget - suffix.length);
-        const cut = terminateMarkdown(message.substring(0, breakAt));
-        const truncated = cut + suffix;
+        const truncated = truncateAndTerminate(message, budget, suffix);
         return { message: truncated, truncated: true };
     }
     // artifact mode: upload full message, truncate comment with link
@@ -120461,17 +120471,13 @@ async function truncateMessage(message, mode, headerLength, messageId, truncateS
         const { repo, owner } = context$2.repo;
         const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${context$2.runId}/artifacts/${id}`;
         const suffix = artifactSuffix(artifactUrl, separator);
-        const breakAt = findBreakpoint(message, budget - suffix.length);
-        const cut = terminateMarkdown(message.substring(0, breakAt));
-        const truncated = cut + suffix;
+        const truncated = truncateAndTerminate(message, budget, suffix);
         return { message: truncated, truncated: true, artifactUrl };
     }
     catch {
         warning('Failed to upload truncated message artifact, falling back to simple truncation');
         const suffix = simpleSuffix(separator);
-        const breakAt = findBreakpoint(message, budget - suffix.length);
-        const cut = terminateMarkdown(message.substring(0, breakAt));
-        const truncated = cut + suffix;
+        const truncated = truncateAndTerminate(message, budget, suffix);
         return { message: truncated, truncated: true };
     }
 }
