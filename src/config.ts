@@ -30,6 +30,7 @@ export async function getInputs(): Promise<Inputs> {
     throw new Error(`Invalid truncate mode: "${truncateInput}". Must be "artifact" or "simple".`)
   }
   const truncate = truncateInput as 'artifact' | 'simple'
+  const truncateSeparator = core.getInput('truncate-separator', { required: false })
   const deleteOnStatus = core.getInput('delete-on-status', { required: false })
 
   const commentTarget = core.getInput('comment-target', { required: false }) || 'pr'
@@ -64,6 +65,7 @@ export async function getInputs(): Promise<Inputs> {
     messageReplace,
     preformatted,
     truncate,
+    truncateSeparator: truncateSeparator || undefined,
     proxyUrl,
     pullRequestNumber: payload.pull_request?.number,
     refreshMessagePosition,
