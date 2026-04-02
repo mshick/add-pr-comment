@@ -4,6 +4,7 @@ import path from 'node:path'
 import { DefaultArtifactClient } from '@actions/artifact'
 import * as core from '@actions/core'
 import * as github from '@actions/github'
+import remend, { isWithinCodeBlock, isWithinMathBlock } from 'remend'
 import { findFiles } from './files.js'
 import type { Inputs } from './types.js'
 
@@ -11,10 +12,26 @@ const MAX_COMMENT_LENGTH = 65536
 const TRUNCATION_BUFFER = 4096
 const SAFE_BODY_LENGTH = MAX_COMMENT_LENGTH - TRUNCATION_BUFFER
 
-const SIMPLE_SUFFIX = '\n\n---\n**This message was truncated.**'
+const DEFAULT_SEPARATOR = '---'
 
-function artifactSuffix(url: string) {
-  return `\n\n---\n**This message was truncated.** [Download full message](${url})`
+function terminateMarkdown(text: string): string {
+  let result = remend(text)
+  const end = result.length - 1
+  if (isWithinCodeBlock(result, end)) {
+    result += '\n```'
+  }
+  if (isWithinMathBlock(result, end)) {
+    result += '\n$$'
+  }
+  return result
+}
+
+function simpleSuffix(separator: string) {
+  return `\n\n${separator}\n**This message was truncated.**`
+}
+
+function artifactSuffix(url: string, separator: string) {
+  return `\n\n${separator}\n**This message was truncated.** [Download full message](${url})`
 }
 
 export interface TruncateResult {
@@ -28,8 +45,10 @@ export async function truncateMessage(
   mode: 'artifact' | 'simple',
   headerLength: number,
   messageId?: string,
+  truncateSeparator?: string,
 ): Promise<TruncateResult> {
   const budget = SAFE_BODY_LENGTH - headerLength
+  const separator = truncateSeparator || DEFAULT_SEPARATOR
 
   if (message.length <= budget) {
     return { message, truncated: false }
@@ -38,7 +57,9 @@ export async function truncateMessage(
   core.warning(`Message length ${message.length} exceeds safe limit ${budget}, truncating`)
 
   if (mode === 'simple') {
-    const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX
+    const suffix = simpleSuffix(separator)
+    const cut = terminateMarkdown(message.substring(0, budget - suffix.length))
+    const truncated = cut + suffix
     return { message: truncated, truncated: true }
   }
 
@@ -60,13 +81,16 @@ export async function truncateMessage(
     const { repo, owner } = github.context.repo
     const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${github.context.runId}/artifacts/${id}`
 
-    const suffix = artifactSuffix(artifactUrl)
-    const truncated = message.substring(0, budget - suffix.length) + suffix
+    const suffix = artifactSuffix(artifactUrl, separator)
+    const cut = terminateMarkdown(message.substring(0, budget - suffix.length))
+    const truncated = cut + suffix
 
     return { message: truncated, truncated: true, artifactUrl }
   } catch {
     core.warning('Failed to upload truncated message artifact, falling back to simple truncation')
-    const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX
+    const suffix = simpleSuffix(separator)
+    const cut = terminateMarkdown(message.substring(0, budget - suffix.length))
+    const truncated = cut + suffix
     return { message: truncated, truncated: true }
   }
 }

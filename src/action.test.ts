@@ -41,6 +41,7 @@ type Inputs = {
   'delete-on-status'?: string
   preformatted?: string
   truncate?: string
+  'truncate-separator'?: string
   find?: string
   replace?: string
   status?: 'success' | 'failure' | 'cancelled' | 'skipped'
@@ -299,6 +300,30 @@ describe('add-pr-comment action', () => {
     expect(messagePayload?.body).toContain('**This message was truncated.**')
     expect(core.setOutput).toHaveBeenCalledWith('truncated', 'true')
     expect(messagePayload?.body.length).toBeLessThanOrEqual(61440)
+  })
+
+  it('truncates with a custom separator', async () => {
+    inputs.message = 'x'.repeat(70000)
+    inputs['allow-repeats'] = 'true'
+    inputs['truncate-separator'] = '```\n\n---'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('\n\n```\n\n---\n**This message was truncated.**')
+    expect(core.setOutput).toHaveBeenCalledWith('truncated', 'true')
+    expect(messagePayload?.body.length).toBeLessThanOrEqual(61440)
+  })
+
+  it('terminates incomplete markdown when truncating', async () => {
+    // Message with an unclosed code fence
+    inputs.message = `\`\`\`\n${'x'.repeat(70000)}\n\`\`\``
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('**This message was truncated.**')
+    const beforeSuffix = messagePayload?.body.split('\n\n---\n**This message was truncated.**')[0]
+    // remend + terminateMarkdown should close the open code fence
+    const fences = beforeSuffix?.match(/```/g) || []
+    expect(fences.length % 2).toBe(0)
   })
 
   it('does not truncate a message under the safe limit', async () => {

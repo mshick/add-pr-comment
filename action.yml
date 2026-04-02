@@ -73,6 +73,9 @@ inputs:
     description: 'Truncation mode when the message exceeds the safe comment length. "artifact" (default) uploads the full message as a downloadable artifact and links it. "simple" truncates with a notice.'
     default: 'artifact'
     required: false
+  truncate-separator:
+    description: 'Custom separator inserted before the truncation notice. Useful for closing markdown blocks (e.g., "```\n\n---" to close a code fence). Defaults to "---".'
+    required: false
   comment-target:
     description: 'Where to post the comment. Use "pr" for pull request/issue comments (default) or "commit" for commit comments.'
     default: 'pr'

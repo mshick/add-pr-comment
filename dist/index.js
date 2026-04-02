@@ -118212,6 +118212,7 @@ async function getInputs() {
         throw new Error(`Invalid truncate mode: "${truncateInput}". Must be "artifact" or "simple".`);
     }
     const truncate = truncateInput;
+    const truncateSeparator = getInput('truncate-separator', { required: false });
     const deleteOnStatus = getInput('delete-on-status', { required: false });
     const commentTarget = getInput('comment-target', { required: false }) || 'pr';
     if (commentTarget !== 'pr' && commentTarget !== 'commit') {
@@ -118242,6 +118243,7 @@ async function getInputs() {
         messageReplace,
         preformatted,
         truncate,
+        truncateSeparator: truncateSeparator || undefined,
         proxyUrl,
         pullRequestNumber: payload.pull_request?.number,
         refreshMessagePosition,
@@ -120371,21 +120373,61 @@ async function getIssueNumberFromCommitPullsList(octokit, owner, repo, commitSha
     return commitPullsList.data.length ? commitPullsList.data?.[0].number : null;
 }
 
+var cn=Object.defineProperty,un=Object.defineProperties;var fn=Object.getOwnPropertyDescriptors;var $=Object.getOwnPropertySymbols;var dn=Object.prototype.hasOwnProperty,gn=Object.prototype.propertyIsEnumerable;var O=(n,r,e)=>r in n?cn(n,r,{enumerable:true,configurable:true,writable:true,value:e}):n[r]=e,I=(n,r)=>{for(var e in r||(r={}))dn.call(r,e)&&O(n,e,r[e]);if($)for(var e of $(r))gn.call(r,e)&&O(n,e,r[e]);return n},k=(n,r)=>un(n,fn(r));var c=(n,r)=>{let e=false,i=false;for(let s=0;s<r;s+=1){if(n[s]==="\\"&&s+1<n.length&&n[s+1]==="`"){s+=1;continue}if(n.substring(s,s+3)==="```"){i=!i,s+=2;continue}!i&&n[s]==="`"&&(e=!e);}return e||i},hn=(n,r)=>{let e=n.substring(r,r+3)==="```",i=r>0&&n.substring(r-1,r+2)==="```",s=r>1&&n.substring(r-2,r+1)==="```";return e||i||s},L=n=>{let r=0;for(let e=0;e<n.length;e+=1){if(n[e]==="\\"&&e+1<n.length&&n[e+1]==="`"){e+=1;continue}n[e]==="`"&&!hn(n,e)&&(r+=1);}return r},f=(n,r)=>{let e=false,i=false,s=-1;for(let o=0;o<n.length;o+=1){if(n[o]==="\\"&&o+1<n.length&&n[o+1]==="`"){o+=1;continue}if(n.substring(o,o+3)==="```"){i=!i,o+=2;continue}if(!i&&n[o]==="`")if(e){if(s<r&&r<o)return  true;e=false,s=-1;}else e=true,s=o;}return  false};var mn=/^(\s*(?:[-*+]|\d+[.)]) +)>(=?\s*[$]?\d)/gm,E=n=>!n||typeof n!="string"||!n.includes(">")?n:n.replace(mn,(r,e,i,s)=>c(n,s)?r:`${e}\\>${i}`);var M=/(\*\*)([^*]*\*?)$/,N=/(__)([^_]*?)$/,y=/(\*\*\*)([^*]*?)$/,R=/(\*)([^*]*?)$/,U=/(_)([^_]*?)$/,W=/(`)([^`]*?)$/,K=/(~~)([^~]*?)$/,d=/^[\s_~*`]*$/,b=/^[\s]*[-*+][\s]+$/,H=/[\p{L}\p{N}_]/u,D=/^```[^`\n]*```?$/,w=/^\*{4,}$/;var G=/(__)([^_]+)_$/,F=/(~~)([^~]+)~$/;var T=/~~/g;var g=n=>{if(!n)return  false;let r=n.charCodeAt(0);return r>=48&&r<=57||r>=65&&r<=90||r>=97&&r<=122||r===95?true:H.test(n)},pn=(n,r)=>{let e=false;for(let i=0;i<r;i+=1)n[i]==="`"&&n[i+1]==="`"&&n[i+2]==="`"&&(e=!e,i+=2);return e},X=(n,r)=>{let e=1;for(let i=r-1;i>=0;i-=1)if(n[i]==="]")e+=1;else if(n[i]==="["&&(e-=1,e===0))return i;return  -1},C=(n,r)=>{let e=1;for(let i=r+1;i<n.length;i+=1)if(n[i]==="[")e+=1;else if(n[i]==="]"&&(e-=1,e===0))return i;return  -1},h=(n,r)=>{let e=false,i=false;for(let s=0;s<n.length&&s<r;s+=1){if(n[s]==="\\"&&n[s+1]==="$"){s+=1;continue}n[s]==="$"&&(n[s+1]==="$"?(i=!i,s+=1,e=false):i||(e=!e));}return e||i},In=(n,r)=>{for(let e=r;e<n.length;e+=1){if(n[e]===")")return  true;if(n[e]===`
+`)return  false}return  false},m=(n,r)=>{for(let e=r-1;e>=0;e-=1){if(n[e]===")")return  false;if(n[e]==="(")return e>0&&n[e-1]==="]"?In(n,r):false;if(n[e]===`
+`)return  false}return  false},z=(n,r)=>{for(let e=r-1;e>=0;e-=1){if(n[e]===">")return  false;if(n[e]==="<"){let i=e+1<n.length?n[e+1]:"";return i>="a"&&i<="z"||i>="A"&&i<="Z"||i==="/"}if(n[e]===`
+`)return  false}return  false},p=(n,r,e)=>{let i=0;for(let l=r-1;l>=0;l-=1)if(n[l]===`
+`){i=l+1;break}let s=n.length;for(let l=r;l<n.length;l+=1)if(n[l]===`
+`){s=l;break}let o=n.substring(i,s),t=0,a=false;for(let l of o)if(l===e)t+=1;else if(l!==" "&&l!=="	"){a=true;break}return t>=3&&!a};var kn=(n,r,e,i)=>e==="\\"||n.includes("$")&&h(n,r)?true:e!=="*"&&i==="*"?(r<n.length-2?n[r+2]:"")!=="*":!!(e==="*"||e&&i&&g(e)&&g(i)||(!e||e===" "||e==="	"||e===`
+`)&&(!i||i===" "||i==="	"||i===`
+`)),Y=n=>{let r=0,e=false,i=n.length;for(let s=0;s<i;s+=1){if(n[s]==="`"&&s+2<i&&n[s+1]==="`"&&n[s+2]==="`"){e=!e,s+=2;continue}if(e||n[s]!=="*")continue;let o=s>0?n[s-1]:"",t=s<i-1?n[s+1]:"";kn(n,s,o,t)||(r+=1);}return r},bn=(n,r,e,i)=>!!(e==="\\"||n.includes("$")&&h(n,r)||m(n,r)||z(n,r)||e==="_"||i==="_"||e&&i&&g(e)&&g(i)),Tn=n=>{let r=0,e=false,i=n.length;for(let s=0;s<i;s+=1){if(n[s]==="`"&&s+2<i&&n[s+1]==="`"&&n[s+2]==="`"){e=!e,s+=2;continue}if(e||n[s]!=="_")continue;let o=s>0?n[s-1]:"",t=s<i-1?n[s+1]:"";bn(n,s,o,t)||(r+=1);}return r},Cn=n=>{let r=0,e=0,i=false;for(let s=0;s<n.length;s+=1){if(n[s]==="`"&&s+2<n.length&&n[s+1]==="`"&&n[s+2]==="`"){e>=3&&(r+=Math.floor(e/3)),e=0,i=!i,s+=2;continue}i||(n[s]==="*"?e+=1:(e>=3&&(r+=Math.floor(e/3)),e=0));}return e>=3&&(r+=Math.floor(e/3)),r},A=n=>{let r=0,e=false;for(let i=0;i<n.length;i+=1){if(n[i]==="`"&&i+2<n.length&&n[i+1]==="`"&&n[i+2]==="`"){e=!e,i+=2;continue}e||n[i]==="*"&&i+1<n.length&&n[i+1]==="*"&&(r+=1,i+=1);}return r},v=n=>{let r=0,e=false;for(let i=0;i<n.length;i+=1){if(n[i]==="`"&&i+2<n.length&&n[i+1]==="`"&&n[i+2]==="`"){e=!e,i+=2;continue}e||n[i]==="_"&&i+1<n.length&&n[i+1]==="_"&&(r+=1,i+=1);}return r},An=(n,r,e)=>{if(!r||d.test(r))return  true;let s=n.substring(0,e).lastIndexOf(`
+`),o=s===-1?0:s+1,t=n.substring(o,e);return b.test(t)&&r.includes(`
+`)?true:p(n,e,"*")},j=n=>{let r=n.match(M);if(!r)return n;let e=r[2],i=n.lastIndexOf(r[1]);return c(n,i)||f(n,i)||An(n,e,i)?n:A(n)%2===1?e.endsWith("*")?`${n}*`:`${n}**`:n},Bn=(n,r,e)=>{if(!r||d.test(r))return  true;let s=n.substring(0,e).lastIndexOf(`
+`),o=s===-1?0:s+1,t=n.substring(o,e);return b.test(t)&&r.includes(`
+`)?true:p(n,e,"_")},Q=n=>{let r=n.match(N);if(!r){let o=n.match(G);if(o){let t=n.lastIndexOf(o[1]);if(!(c(n,t)||f(n,t))&&v(n)%2===1)return `${n}_`}return n}let e=r[2],i=n.lastIndexOf(r[1]);return c(n,i)||f(n,i)||Bn(n,e,i)?n:v(n)%2===1?`${n}__`:n},Sn=n=>{let r=false;for(let e=0;e<n.length;e+=1){if(n[e]==="`"&&e+2<n.length&&n[e+1]==="`"&&n[e+2]==="`"){r=!r,e+=2;continue}if(!r&&n[e]==="*"&&n[e-1]!=="*"&&n[e+1]!=="*"&&n[e-1]!=="\\"&&!h(n,e)){let i=e>0?n[e-1]:"",s=e<n.length-1?n[e+1]:"";if((!i||i===" "||i==="	"||i===`
+`)&&(!s||s===" "||s==="	"||s===`
+`)||i&&s&&g(i)&&g(s))continue;return e}}return  -1},Z=n=>{if(!n.match(R))return n;let e=Sn(n);if(e===-1||c(n,e)||f(n,e))return n;let i=n.substring(e+1);return !i||d.test(i)?n:Y(n)%2===1?`${n}*`:n},q=n=>{let r=false;for(let e=0;e<n.length;e+=1){if(n[e]==="`"&&e+2<n.length&&n[e+1]==="`"&&n[e+2]==="`"){r=!r,e+=2;continue}if(!r&&n[e]==="_"&&n[e-1]!=="_"&&n[e+1]!=="_"&&n[e-1]!=="\\"&&!h(n,e)&&!m(n,e)){let i=e>0?n[e-1]:"",s=e<n.length-1?n[e+1]:"";if(i&&s&&g(i)&&g(s))continue;return e}}return  -1},_n=n=>{let r=n.length;for(;r>0&&n[r-1]===`
+`;)r-=1;if(r<n.length){let e=n.slice(0,r),i=n.slice(r);return `${e}_${i}`}return `${n}_`},Pn=n=>{if(!n.endsWith("**"))return null;let r=n.slice(0,-2);if(A(r)%2!==1)return null;let i=r.indexOf("**"),s=q(r);return i!==-1&&s!==-1&&i<s?`${r}_**`:null},J=n=>{if(!n.match(U))return n;let e=q(n);if(e===-1)return n;let i=n.substring(e+1);if(!i||d.test(i)||c(n,e)||f(n,e))return n;if(Tn(n)%2===1){let o=Pn(n);return o!==null?o:_n(n)}return n},$n=n=>{let r=A(n),e=Y(n);return r%2===0&&e%2===0},On=(n,r,e)=>!r||d.test(r)||c(n,e)||f(n,e)?true:p(n,e,"*"),V=n=>{if(w.test(n))return n;let r=n.match(y);if(!r)return n;let e=r[2],i=n.lastIndexOf(r[1]);return On(n,e,i)?n:Cn(n)%2===1?$n(n)?n:`${n}***`:n};var Ln=/<[a-zA-Z/][^>]*$/,x=n=>{let r=n.match(Ln);return !r||r.index===void 0||c(n,r.index)?n:n.substring(0,r.index).trimEnd()};var En=n=>!n.match(D)||n.includes(`
+`)?null:n.endsWith("``")&&!n.endsWith("```")?`${n}\``:n,Mn=n=>(n.match(/```/g)||[]).length%2===1,nn=n=>{let r=En(n);if(r!==null)return r;let e=n.match(W);if(e&&!Mn(n)){let i=e[2];if(!i||d.test(i))return n;if(L(n)%2===1)return `${n}\``}return n};var en=(n,r)=>r>=2&&n.substring(r-2,r+1)==="```"||r>=1&&n.substring(r-1,r+2)==="```"||r<=n.length-3&&n.substring(r,r+3)==="```",Nn=n=>{let r=0,e=false;for(let i=0;i<n.length-1;i+=1)n[i]==="`"&&!en(n,i)&&(e=!e),!e&&n[i]==="$"&&n[i+1]==="$"&&(r+=1,i+=1);return r},yn=n=>{let r=0,e=false;for(let i=0;i<n.length;i+=1){if(n[i]==="\\"){i+=1;continue}if(n[i]==="`"&&!en(n,i)){e=!e;continue}!e&&n[i]==="$"&&(i+1<n.length&&n[i+1]==="$"?i+=1:r+=1);}return r},Rn=n=>{if(n.endsWith("$")&&!n.endsWith("$$"))return `${n}$`;let r=n.indexOf("$$");return r!==-1&&n.indexOf(`
+`,r)!==-1&&!n.endsWith(`
+`)?`${n}
+$$`:`${n}$$`},rn=n=>Nn(n)%2===0?n:Rn(n),sn=n=>yn(n)%2===1?`${n}$`:n;var Un=(n,r,e)=>{if(n.substring(r+2).includes(")"))return null;let s=X(n,r);if(s===-1||c(n,s))return null;let o=s>0&&n[s-1]==="!",t=o?s-1:s,a=n.substring(0,t);if(o)return a;let l=n.substring(s+1,r);return e==="text-only"?`${a}${l}`:`${a}[${l}](streamdown:incomplete-link)`},on=(n,r)=>{for(let e=0;e<r;e++)if(n[e]==="["&&!c(n,e)){if(e>0&&n[e-1]==="!")continue;let i=C(n,e);if(i===-1)return e;if(i+1<n.length&&n[i+1]==="("){let s=n.indexOf(")",i+2);s!==-1&&(e=s);}}return r},Wn=(n,r,e)=>{let i=r>0&&n[r-1]==="!",s=i?r-1:r;if(!n.substring(r+1).includes("]")){let a=n.substring(0,s);if(i)return a;if(e==="text-only"){let l=on(n,r);return n.substring(0,l)+n.substring(l+1)}return `${n}](streamdown:incomplete-link)`}if(C(n,r)===-1){let a=n.substring(0,s);if(i)return a;if(e==="text-only"){let l=on(n,r);return n.substring(0,l)+n.substring(l+1)}return `${n}](streamdown:incomplete-link)`}return null},B=(n,r="protocol")=>{let e=n.lastIndexOf("](");if(e!==-1&&!c(n,e)){let i=Un(n,e,r);if(i!==null)return i}for(let i=n.length-1;i>=0;i-=1)if(n[i]==="["&&!c(n,i)){let s=Wn(n,i,r);if(s!==null)return s}return n};var Kn=/^-{1,2}$/,Hn=/^[\s]*-{1,2}[\s]+$/,Dn=/^={1,2}$/,wn=/^[\s]*={1,2}[\s]+$/,ln=n=>{if(!n||typeof n!="string")return n;let r=n.lastIndexOf(`
+`);if(r===-1)return n;let e=n.substring(r+1),i=n.substring(0,r),s=e.trim();if(Kn.test(s)&&!e.match(Hn)){let t=i.split(`
+`).at(-1);if(t&&t.trim().length>0)return `${n}\u200B`}if(Dn.test(s)&&!e.match(wn)){let t=i.split(`
+`).at(-1);if(t&&t.trim().length>0)return `${n}\u200B`}return n};var Gn=new RegExp("(?<=[\\p{L}\\p{N}_])~(?!~)(?=[\\p{L}\\p{N}_])","gu"),tn=n=>!n||typeof n!="string"||!n.includes("~")?n:n.replace(Gn,(r,e)=>c(n,e)?r:"\\~");var an=n=>{var e,i;let r=n.match(K);if(r){let s=r[2];if(!s||d.test(s))return n;let o=n.lastIndexOf(r[1]);if(c(n,o)||f(n,o))return n;if(((e=n.match(T))==null?void 0:e.length)%2===1)return `${n}~~`}else {let s=n.match(F);if(s){let o=n.lastIndexOf(s[0].slice(0,2));if(c(n,o)||f(n,o))return n;if(((i=n.match(T))==null?void 0:i.length)%2===1)return `${n}~`}}return n};var S=n=>n!==false,Fn=n=>n===true,u={SINGLE_TILDE:0,COMPARISON_OPERATORS:5,HTML_TAGS:10,SETEXT_HEADINGS:15,LINKS:20,BOLD_ITALIC:30,BOLD:35,ITALIC_DOUBLE_UNDERSCORE:40,ITALIC_SINGLE_ASTERISK:41,ITALIC_SINGLE_UNDERSCORE:42,INLINE_CODE:50,STRIKETHROUGH:60,KATEX:70,INLINE_KATEX:75,DEFAULT:100},Xn=[{handler:{name:"singleTilde",handle:tn,priority:u.SINGLE_TILDE},optionKey:"singleTilde"},{handler:{name:"comparisonOperators",handle:E,priority:u.COMPARISON_OPERATORS},optionKey:"comparisonOperators"},{handler:{name:"htmlTags",handle:x,priority:u.HTML_TAGS},optionKey:"htmlTags"},{handler:{name:"setextHeadings",handle:ln,priority:u.SETEXT_HEADINGS},optionKey:"setextHeadings"},{handler:{name:"links",handle:B,priority:u.LINKS},optionKey:"links",earlyReturn:n=>n.endsWith("](streamdown:incomplete-link)")},{handler:{name:"boldItalic",handle:V,priority:u.BOLD_ITALIC},optionKey:"boldItalic"},{handler:{name:"bold",handle:j,priority:u.BOLD},optionKey:"bold"},{handler:{name:"italicDoubleUnderscore",handle:Q,priority:u.ITALIC_DOUBLE_UNDERSCORE},optionKey:"italic"},{handler:{name:"italicSingleAsterisk",handle:Z,priority:u.ITALIC_SINGLE_ASTERISK},optionKey:"italic"},{handler:{name:"italicSingleUnderscore",handle:J,priority:u.ITALIC_SINGLE_UNDERSCORE},optionKey:"italic"},{handler:{name:"inlineCode",handle:nn,priority:u.INLINE_CODE},optionKey:"inlineCode"},{handler:{name:"strikethrough",handle:an,priority:u.STRIKETHROUGH},optionKey:"strikethrough"},{handler:{name:"katex",handle:rn,priority:u.KATEX},optionKey:"katex"},{handler:{name:"inlineKatex",handle:sn,priority:u.INLINE_KATEX},optionKey:"inlineKatex"}],zn=n=>{var e;let r=(e=n==null?void 0:n.linkMode)!=null?e:"protocol";return Xn.filter(({handler:i,optionKey:s})=>i.name==="links"?S(n==null?void 0:n.links)||S(n==null?void 0:n.images):i.name==="inlineKatex"?Fn(n==null?void 0:n.inlineKatex):S(n==null?void 0:n[s])).map(({handler:i,earlyReturn:s})=>i.name==="links"?{handler:k(I({},i),{handle:o=>B(o,r)}),earlyReturn:r==="protocol"?s:void 0}:{handler:i,earlyReturn:s})},vn=(n,r)=>{var t;if(!n||typeof n!="string")return n;let e=n.endsWith(" ")&&!n.endsWith("  ")?n.slice(0,-1):n,i=zn(r),s=((t=r==null?void 0:r.handlers)!=null?t:[]).map(a=>{var l;return {handler:k(I({},a),{priority:(l=a.priority)!=null?l:u.DEFAULT}),earlyReturn:void 0}}),o=[...i,...s].sort((a,l)=>{var _,P;return ((_=a.handler.priority)!=null?_:0)-((P=l.handler.priority)!=null?P:0)});for(let{handler:a,earlyReturn:l}of o)if(e=a.handle(e),l!=null&&l(e))return e;return e},$e=vn;
+
 const MAX_COMMENT_LENGTH = 65536;
 const TRUNCATION_BUFFER = 4096;
 const SAFE_BODY_LENGTH = MAX_COMMENT_LENGTH - TRUNCATION_BUFFER;
-const SIMPLE_SUFFIX = '\n\n---\n**This message was truncated.**';
-function artifactSuffix(url) {
-    return `\n\n---\n**This message was truncated.** [Download full message](${url})`;
+const DEFAULT_SEPARATOR = '---';
+function terminateMarkdown(text) {
+    let result = $e(text);
+    const end = result.length - 1;
+    if (pn(result, end)) {
+        result += '\n```';
+    }
+    if (h(result, end)) {
+        result += '\n$$';
+    }
+    return result;
 }
-async function truncateMessage(message, mode, headerLength, messageId) {
+function simpleSuffix(separator) {
+    return `\n\n${separator}\n**This message was truncated.**`;
+}
+function artifactSuffix(url, separator) {
+    return `\n\n${separator}\n**This message was truncated.** [Download full message](${url})`;
+}
+async function truncateMessage(message, mode, headerLength, messageId, truncateSeparator) {
     const budget = SAFE_BODY_LENGTH - headerLength;
+    const separator = truncateSeparator || DEFAULT_SEPARATOR;
     if (message.length <= budget) {
         return { message, truncated: false };
     }
     warning(`Message length ${message.length} exceeds safe limit ${budget}, truncating`);
     if (mode === 'simple') {
-        const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX;
+        const suffix = simpleSuffix(separator);
+        const cut = terminateMarkdown(message.substring(0, budget - suffix.length));
+        const truncated = cut + suffix;
         return { message: truncated, truncated: true };
     }
     // artifact mode: upload full message, truncate comment with link
@@ -120402,13 +120444,16 @@ async function truncateMessage(message, mode, headerLength, messageId) {
         }
         const { repo, owner } = context$2.repo;
         const artifactUrl = `https://github.com/${owner}/${repo}/actions/runs/${context$2.runId}/artifacts/${id}`;
-        const suffix = artifactSuffix(artifactUrl);
-        const truncated = message.substring(0, budget - suffix.length) + suffix;
+        const suffix = artifactSuffix(artifactUrl, separator);
+        const cut = terminateMarkdown(message.substring(0, budget - suffix.length));
+        const truncated = cut + suffix;
         return { message: truncated, truncated: true, artifactUrl };
     }
     catch {
         warning('Failed to upload truncated message artifact, falling back to simple truncation');
-        const truncated = message.substring(0, budget - SIMPLE_SUFFIX.length) + SIMPLE_SUFFIX;
+        const suffix = simpleSuffix(separator);
+        const cut = terminateMarkdown(message.substring(0, budget - suffix.length));
+        const truncated = cut + suffix;
         return { message: truncated, truncated: true };
     }
 }
@@ -120543,7 +120588,7 @@ async function manageComment(adapter, options) {
 }
 const run = async () => {
     try {
-        const { allowRepeats, attachName, attachPath, attachText, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, truncate, } = await getInputs();
+        const { allowRepeats, attachName, attachPath, attachText, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, status, messageFind, messageReplace, truncate, truncateSeparator, } = await getInputs();
         const octokit = getOctokit(repoToken);
         let message = await getMessage({
             messagePath,
@@ -120571,7 +120616,7 @@ const run = async () => {
         }
         const headerLength = messageId.length + 2; // messageId + '\n\n' from addMessageHeader
         if (message) {
-            const truncateResult = await truncateMessage(message, truncate, headerLength, messageId);
+            const truncateResult = await truncateMessage(message, truncate, headerLength, messageId, truncateSeparator);
             message = truncateResult.message;
             setOutput('truncated', truncateResult.truncated ? 'true' : 'false');
             if (truncateResult.artifactUrl) {
