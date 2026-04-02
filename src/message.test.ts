@@ -42,6 +42,46 @@ describe('truncateMessage', () => {
     expect(fences.length % 2).toBe(0)
   })
 
+  it('breaks at a natural boundary instead of mid-word', async () => {
+    // Build a message where the cut point lands mid-word
+    // We use words separated by spaces so there's a clear breakpoint to find
+    const word = 'abcdefghij '
+    const longMessage = word.repeat(Math.ceil(70000 / word.length))
+
+    const result = await truncateMessage(longMessage, 'simple', 50)
+
+    expect(result.truncated).toBe(true)
+    const beforeSuffix = result.message.split('\n\n---\n**This message was truncated.**')[0]
+    // Should end at a complete word (remend trims trailing whitespace)
+    // The word is 'abcdefghij' — if we cut mid-word we'd see a partial like 'abcde'
+    expect(beforeSuffix).toMatch(/abcdefghij$/)
+  })
+
+  it('breaks at a newline when available', async () => {
+    // Build a message with lines separated by newlines
+    const line = 'x'.repeat(80) + '\n'
+    const longMessage = line.repeat(Math.ceil(70000 / line.length))
+
+    const result = await truncateMessage(longMessage, 'simple', 50)
+
+    expect(result.truncated).toBe(true)
+    const beforeSuffix = result.message.split('\n\n---\n**This message was truncated.**')[0]
+    // Should end at a line boundary
+    expect(beforeSuffix).toMatch(/\n$/)
+  })
+
+  it('falls back to hard cut when no breakpoint found within search range', async () => {
+    // A message with no spaces or newlines at all
+    const longMessage = 'x'.repeat(70000)
+
+    const result = await truncateMessage(longMessage, 'simple', 50)
+
+    expect(result.truncated).toBe(true)
+    // Should still truncate successfully even without a natural break
+    expect(result.message).toContain('**This message was truncated.**')
+    expect(result.message.length).toBeLessThanOrEqual(65536)
+  })
+
   it('terminates incomplete bold markdown after truncation', async () => {
     // Message with unclosed bold that gets cut
     const longMessage = `**bold text that is very long ${'x'.repeat(70000)}`
