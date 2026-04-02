@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.0](https://github.com/mshick/add-pr-comment/compare/v3.9.1...v3.10.0) (2026-04-02)
+
+
+### Features
+
+* add truncate-separator input and markdown termination ([#184](https://github.com/mshick/add-pr-comment/issues/184)) ([6bd445f](https://github.com/mshick/add-pr-comment/commit/6bd445f69b339d90b46389596c77466e3aeae755))
+
 ## [3.9.1](https://github.com/mshick/add-pr-comment/compare/v3.9.0...v3.9.1) (2026-03-31)
 
 
