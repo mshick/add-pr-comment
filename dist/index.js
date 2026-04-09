@@ -120599,8 +120599,11 @@ async function manageComment(adapter, options) {
         setOutput('comment-updated', 'true');
     }
     else {
-        comment = await adapter.create(body);
-        setOutput('comment-created', 'true');
+        if (deleteOnStatus && deleteOnStatus === status) ;
+        else {
+            comment = await adapter.create(body);
+            setOutput('comment-created', 'true');
+        }
     }
     if (comment) {
         setOutput('comment-id', comment.id);
