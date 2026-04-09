@@ -96958,7 +96958,7 @@ function require_setCacheAdd () {
  * @name has
  * @memberOf SetCache
  * @param {*} value The value to search for.
- * @returns {number} Returns `true` if `value` is found, else `false`.
+ * @returns {boolean} Returns `true` if `value` is found, else `false`.
  */
 
 var _setCacheHas;
