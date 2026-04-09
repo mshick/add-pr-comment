@@ -104,9 +104,8 @@ async function manageComment(
     }
     core.setOutput('comment-updated', 'true')
   } else {
-    // Skip creating comment on deleteOnStatus hit
     if (deleteOnStatus && deleteOnStatus === status) {
-      core.setOutput('comment-created', 'false')
+    // skip creating comment
     } else {
       comment = await adapter.create(body)
       core.setOutput('comment-created', 'true')
