@@ -30,6 +30,7 @@ and any other event where an issue can be found directly on the payload or via a
 - Supports [file attachments](#file-attachments) via GitHub Artifacts.
 - Automatic [message truncation](#message-truncation) for oversized messages (e.g., large Terraform plans).
 - Supports [commit comments](#commit-comments) in addition to PR/issue comments.
+- Supports [template variables](#template-variables) like `%NOW%` for dynamic content in messages.
 - Available as a [library](#programmatic-usage) for use in custom actions and scripts.
 
 ## Usage
@@ -569,6 +570,58 @@ jobs:
           message-failure: There was a failure
           delete-on-status: success
 ```
+
+### Template Variables
+
+Messages support template variables that are replaced with dynamic values at runtime. Template variables use the `%VARIABLE%` syntax.
+
+#### `%NOW%` — Current Date/Time
+
+Inserts the current date and time. By default it produces an ISO 8601 timestamp. You can customize the format inline using [date-fns format strings](https://date-fns.org/docs/format):
+
+```
+%NOW%                → 2026-04-23T14:32:01.000Z
+%NOW:yyyy-MM-dd%     → 2026-04-23
+%NOW:HH:mm:ss%       → 14:32:01
+%NOW:MMM d, yyyy%    → Apr 23, 2026
+```
+
+The format string goes between the colon and the closing `%`. Any valid date-fns format pattern works.
+
+**Example — timestamp in a sticky comment**
+
+```yaml
+on:
+  pull_request:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: mshick/add-pr-comment@v3
+        with:
+          message: |
+            ### Deploy Preview Ready
+
+            | Detail | Value |
+            | ------ | ----- |
+            | Status | Live |
+            | Updated | %NOW:MMM d, yyyy 'at' h:mm a% |
+```
+
+**Example — simple date footer**
+
+```yaml
+- uses: mshick/add-pr-comment@v3
+  with:
+    message: |
+      Tests passed!
+      <sub>Last run: %NOW:yyyy-MM-dd HH:mm:ss% UTC</sub>
+```
+
+> **Note:** Template variables are expanded after [find-and-replace](#find-and-replace) processing, so `%NOW%` tokens in replacement text will also be expanded. If an invalid format string is provided, the token is left as-is and a warning is logged.
 
 ## Programmatic Usage
 
