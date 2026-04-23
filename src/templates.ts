@@ -6,9 +6,9 @@ const NOW_PATTERN = /%NOW(?::([^%]+))?%/g
 export function replaceTemplateVariables(message: string): string {
   if (!message) return message
 
-  return message.replace(NOW_PATTERN, (match, formatStr?: string) => {
-    const now = new Date()
+  const now = new Date()
 
+  return message.replace(NOW_PATTERN, (match, formatStr?: string) => {
     if (!formatStr) {
       return now.toISOString()
     }

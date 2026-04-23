@@ -1,5 +1,8 @@
+import * as core from '@actions/core'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { replaceTemplateVariables } from './templates.js'
+
+vi.mock('@actions/core')
 
 // Lock timezone to UTC so date-fns format() produces deterministic output in any environment
 const originalTZ = process.env.TZ
@@ -64,5 +67,11 @@ describe('replaceTemplateVariables', () => {
   it('leaves unmatched %NOW:% token as-is', () => {
     const result = replaceTemplateVariables('Bad: %NOW:%')
     expect(result).toBe('Bad: %NOW:%')
+  })
+
+  it('warns and leaves token on invalid format string', () => {
+    const result = replaceTemplateVariables('Bad: %NOW:n%')
+    expect(result).toBe('Bad: %NOW:n%')
+    expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Invalid date format'))
   })
 })

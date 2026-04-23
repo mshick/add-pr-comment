@@ -97,6 +97,8 @@ async function manageComment(
     throw new Error('no message, check your message inputs')
   }
 
+  message = replaceTemplateVariables(message)
+
   const body = addMessageHeader(messageId, message)
 
   let comment: { id: number } | null | undefined
@@ -181,10 +183,6 @@ export const run = async (): Promise<void> => {
         message = (message ?? '') + attachment.markdown
         core.setOutput('artifact-url', attachment.url)
       }
-    }
-
-    if (message) {
-      message = replaceTemplateVariables(message)
     }
 
     const headerLength = messageId.length + 2 // messageId + '\n\n' from addMessageHeader
@@ -279,6 +277,8 @@ export const run = async (): Promise<void> => {
       if (!msg) {
         throw new Error('no message, check your message inputs')
       }
+
+      msg = replaceTemplateVariables(msg)
 
       const body = addMessageHeader(messageId, msg)
 
