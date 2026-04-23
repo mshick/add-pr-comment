@@ -40,6 +40,7 @@ type Inputs = {
   'commit-sha'?: string
   'delete-on-status'?: string
   preformatted?: string
+  'template-variables'?: string
   truncate?: string
   'truncate-separator'?: string
   find?: string
@@ -602,6 +603,37 @@ describe('add-pr-comment action', () => {
       'artifact-url',
       expect.stringContaining('/artifacts/9999'),
     )
+  })
+
+  it('replaces %NOW% template variables when template-variables is enabled', async () => {
+    const originalTZ = process.env.TZ
+    process.env.TZ = 'UTC'
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-04-23T14:32:01.000Z'))
+
+    inputs.message = 'Updated at %NOW:yyyy-MM-dd%'
+    inputs['allow-repeats'] = 'true'
+    inputs['template-variables'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('Updated at 2026-04-23')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+
+    vi.useRealTimers()
+    if (originalTZ === undefined) {
+      delete process.env.TZ
+    } else {
+      process.env.TZ = originalTZ
+    }
+  })
+
+  it('does not replace %NOW% template variables when template-variables is disabled', async () => {
+    inputs.message = 'Updated at %NOW:yyyy-MM-dd%'
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('Updated at %NOW:yyyy-MM-dd%')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 
   it('wraps a message in a codeblock if preformatted is true', async () => {

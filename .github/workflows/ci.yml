@@ -94,13 +94,16 @@ jobs:
 
       - uses: ./
         with:
+          template-variables: true
           message-id: text
           find: |
             Hello
             🌏
+            !
           replace: |
             Goodnight
             🌕
+            <sub>Updated at `%NOW:HH:mm:ss%`</sub>
 
       - name: Check for dogfood commit
         id: dogfood-check

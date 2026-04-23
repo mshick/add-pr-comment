@@ -69,6 +69,10 @@ inputs:
   preformatted:
     description: "Treat message text (from a file or input) as pre-formatted and place it in a codeblock."
     required: false
+  template-variables:
+    description: "Enable template variable expansion in messages (e.g. %NOW%, %NOW:yyyy-MM-dd%)."
+    default: "false"
+    required: false
   truncate:
     description: 'Truncation mode when the message exceeds the safe comment length. "artifact" (default) uploads the full message as a downloadable artifact and links it. "simple" truncates with a notice.'
     default: "artifact"

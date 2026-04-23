@@ -18,6 +18,7 @@ export interface Inputs {
   messageCancelled?: string
   messageSkipped?: string
   preformatted: boolean
+  templateVariables: boolean
   truncate: 'artifact' | 'simple'
   truncateSeparator?: string
   proxyUrl?: string
