@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.11.0](https://github.com/mshick/add-pr-comment/compare/v3.10.1...v3.11.0) (2026-04-23)
+
+
+### Features
+
+* add NOW template variable with configurable date format ([#193](https://github.com/mshick/add-pr-comment/issues/193)) ([87fe9ef](https://github.com/mshick/add-pr-comment/commit/87fe9efa28693e539af6dd6bdaa304fad69dcff5))
+
 ## [3.10.1](https://github.com/mshick/add-pr-comment/compare/v3.10.0...v3.10.1) (2026-04-23)
 
 
