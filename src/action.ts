@@ -72,10 +72,15 @@ async function manageComment(
     return
   }
 
-  if (deleteOnStatus && existingComment && deleteOnStatus === status) {
-    core.info('deleting existing comment because delete-comment-on-status matched')
-    await adapter.delete(existingComment.id)
-    core.setOutput('comment-deleted', 'true')
+  if (deleteOnStatus && deleteOnStatus === status) {
+    if (existingComment) {
+      core.info('deleting existing comment because delete-comment-on-status matched')
+      await adapter.delete(existingComment.id)
+      core.setOutput('comment-deleted', 'true')
+    } else {
+      core.info('skipping creating comment because delete-comment-on-status matched')
+      core.setOutput('comment-created', 'false')
+    }
     return
   }
 

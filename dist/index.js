@@ -120574,10 +120574,16 @@ async function manageComment(adapter, options) {
         setOutput('comment-created', 'false');
         return;
     }
-    if (deleteOnStatus && existingComment && deleteOnStatus === status) {
-        info('deleting existing comment because delete-comment-on-status matched');
-        await adapter.delete(existingComment.id);
-        setOutput('comment-deleted', 'true');
+    if (deleteOnStatus && deleteOnStatus === status) {
+        if (existingComment) {
+            info('deleting existing comment because delete-comment-on-status matched');
+            await adapter.delete(existingComment.id);
+            setOutput('comment-deleted', 'true');
+        }
+        else {
+            info('skipping creating comment because delete-comment-on-status matched');
+            setOutput('comment-created', 'false');
+        }
         return;
     }
     if (messageFind?.length && (messageReplace?.length || message) && existingComment?.body) {
