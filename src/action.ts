@@ -38,6 +38,7 @@ interface ManageCommentOptions {
   messageFind?: string[]
   messageReplace?: string[]
   message: string | undefined
+  templateVariables: boolean
 }
 
 async function manageComment(
@@ -54,6 +55,7 @@ async function manageComment(
     messageId,
     messageFind,
     messageReplace,
+    templateVariables,
   } = options
 
   let existingComment: { id: number; body?: string } | undefined
@@ -97,7 +99,9 @@ async function manageComment(
     throw new Error('no message, check your message inputs')
   }
 
-  message = replaceTemplateVariables(message)
+  if (templateVariables) {
+    message = replaceTemplateVariables(message)
+  }
 
   const body = addMessageHeader(messageId, message)
 
@@ -150,6 +154,7 @@ export const run = async (): Promise<void> => {
       messageSuccess,
       messageSkipped,
       preformatted,
+      templateVariables,
       status,
       messageFind,
       messageReplace,
@@ -214,6 +219,7 @@ export const run = async (): Promise<void> => {
       messageFind,
       messageReplace,
       message,
+      templateVariables,
     }
 
     if (commentTarget === 'commit') {
@@ -278,7 +284,9 @@ export const run = async (): Promise<void> => {
         throw new Error('no message, check your message inputs')
       }
 
-      msg = replaceTemplateVariables(msg)
+      if (templateVariables) {
+        msg = replaceTemplateVariables(msg)
+      }
 
       const body = addMessageHeader(messageId, msg)
 

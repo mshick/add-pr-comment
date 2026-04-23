@@ -40,6 +40,7 @@ type Inputs = {
   'commit-sha'?: string
   'delete-on-status'?: string
   preformatted?: string
+  'template-variables'?: string
   truncate?: string
   'truncate-separator'?: string
   find?: string
@@ -604,7 +605,7 @@ describe('add-pr-comment action', () => {
     )
   })
 
-  it('replaces %NOW% template variables in the message', async () => {
+  it('replaces %NOW% template variables when template-variables is enabled', async () => {
     const originalTZ = process.env.TZ
     process.env.TZ = 'UTC'
     vi.useFakeTimers()
@@ -612,6 +613,7 @@ describe('add-pr-comment action', () => {
 
     inputs.message = 'Updated at %NOW:yyyy-MM-dd%'
     inputs['allow-repeats'] = 'true'
+    inputs['template-variables'] = 'true'
 
     await expect(run()).resolves.not.toThrow()
     expect(messagePayload?.body).toContain('Updated at 2026-04-23')
@@ -623,6 +625,15 @@ describe('add-pr-comment action', () => {
     } else {
       process.env.TZ = originalTZ
     }
+  })
+
+  it('does not replace %NOW% template variables when template-variables is disabled', async () => {
+    inputs.message = 'Updated at %NOW:yyyy-MM-dd%'
+    inputs['allow-repeats'] = 'true'
+
+    await expect(run()).resolves.not.toThrow()
+    expect(messagePayload?.body).toContain('Updated at %NOW:yyyy-MM-dd%')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 
   it('wraps a message in a codeblock if preformatted is true', async () => {

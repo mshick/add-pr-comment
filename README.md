@@ -98,6 +98,7 @@ jobs:
 | update-only              | with     | Only update the comment if it already exists.                                                                                                                               | no       | false                              |
 | GITHUB_TOKEN             | env      | Valid GitHub token, can alternatively be defined in the env.                                                                                                                | no       |                                    |
 | preformatted             | with     | Treat message text as pre-formatted and place it in a codeblock                                                                                                             | no       |                                    |
+| template-variables       | with     | Enable [template variable](#template-variables) expansion in messages (e.g. `%NOW%`, `%NOW:yyyy-MM-dd%`).                                                                  | no       | false                              |
 | find                     | with     | Patterns to find in an existing message and replace with either `replace` text or a resolved `message`. See [Find-and-Replace](#find-and-replace) for more detail.          | no       |                                    |
 | replace                  | with     | Strings to replace a found pattern with. Each new line is a new replacement, or if you only have one pattern, you can replace with a multiline string.                      | no       |                                    |
 | attach-path              | with     | A file path or glob pattern for files to upload as artifacts and link in the comment. See [File Attachments](#file-attachments).                                            | no       |                                    |
@@ -573,7 +574,7 @@ jobs:
 
 ### Template Variables
 
-Messages support template variables that are replaced with dynamic values at runtime. Template variables use the `%VARIABLE%` syntax.
+Messages support template variables that are replaced with dynamic values at runtime. Template variables use the `%VARIABLE%` syntax and must be enabled by setting `template-variables: true`.
 
 #### `%NOW%` — Current Date/Time
 
@@ -602,6 +603,7 @@ jobs:
     steps:
       - uses: mshick/add-pr-comment@v3
         with:
+          template-variables: true
           message: |
             ### Deploy Preview Ready
 
@@ -616,6 +618,7 @@ jobs:
 ```yaml
 - uses: mshick/add-pr-comment@v3
   with:
+    template-variables: true
     message: |
       Tests passed!
       <sub>Last run: %NOW:yyyy-MM-dd HH:mm:ss% UTC</sub>
