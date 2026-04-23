@@ -101,7 +101,7 @@ jobs:
           replace: |
             Goodnight
             🌕
-
+            <sub>Updated at %NOW:HH:mm:ss%</sub>
       - name: Check for dogfood commit
         id: dogfood-check
         env:

@@ -605,6 +605,8 @@ describe('add-pr-comment action', () => {
   })
 
   it('replaces %NOW% template variables in the message', async () => {
+    const originalTZ = process.env.TZ
+    process.env.TZ = 'UTC'
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-04-23T14:32:01.000Z'))
 
@@ -616,6 +618,11 @@ describe('add-pr-comment action', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
 
     vi.useRealTimers()
+    if (originalTZ === undefined) {
+      delete process.env.TZ
+    } else {
+      process.env.TZ = originalTZ
+    }
   })
 
   it('wraps a message in a codeblock if preformatted is true', async () => {
