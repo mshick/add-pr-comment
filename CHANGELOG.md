@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.10.1](https://github.com/mshick/add-pr-comment/compare/v3.10.0...v3.10.1) (2026-04-23)
+
+
+### Bug Fixes
+
+* skip comment creation when `deleteOnStatus` matches `status` ([#187](https://github.com/mshick/add-pr-comment/issues/187)) ([f160eba](https://github.com/mshick/add-pr-comment/commit/f160ebae327be580d3cc32f820fd2001edb08c64))
+
 ## [3.10.0](https://github.com/mshick/add-pr-comment/compare/v3.9.1...v3.10.0) (2026-04-02)
 
 
