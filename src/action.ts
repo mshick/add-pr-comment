@@ -19,6 +19,7 @@ import {
   truncateMessage,
 } from './message.js'
 import { createCommentProxy } from './proxy.js'
+import { replaceTemplateVariables } from './templates.js'
 
 interface CommentAdapter {
   getExisting(): Promise<{ id: number; body?: string } | undefined>
@@ -180,6 +181,10 @@ export const run = async (): Promise<void> => {
         message = (message ?? '') + attachment.markdown
         core.setOutput('artifact-url', attachment.url)
       }
+    }
+
+    if (message) {
+      message = replaceTemplateVariables(message)
     }
 
     const headerLength = messageId.length + 2 // messageId + '\n\n' from addMessageHeader
