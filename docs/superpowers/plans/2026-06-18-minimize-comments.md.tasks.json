@@ -1,0 +1,33 @@
+{
+  "planPath": "docs/superpowers/plans/2026-06-18-minimize-comments.md",
+  "tasks": [
+    {
+      "id": 1,
+      "subject": "Task 1: Inputs, types, and config validation",
+      "status": "pending",
+      "description": "Parse/validate create-minimized, delete-method, minimize-reason; expose on Inputs; declare in action.yml.\n\n```json:metadata\n{\"files\": [\"src/types.ts\", \"src/config.ts\", \"action.yml\", \"src/action.test.ts\"], \"verifyCommand\": \"npm test -- src/action.test.ts -t \\\"minimize config validation\\\"\", \"acceptanceCriteria\": [\"Inputs extended\", \"validation errors\", \"classifier normalization\", \"action.yml inputs+output\"]}\n```"
+    },
+    {
+      "id": 2,
+      "subject": "Task 2: Minimize primitive + node_id plumbing",
+      "status": "pending",
+      "blockedBy": [1],
+      "description": "Add minimizeComment GraphQL helper and surface node_id through lookups. No behavior change yet.\n\n```json:metadata\n{\"files\": [\"src/minimize.ts\", \"src/comments.ts\", \"src/commit-comments.ts\", \"src/types.ts\", \"src/action.test.ts\"], \"verifyCommand\": \"npm test\", \"acceptanceCriteria\": [\"minimize helper\", \"node_id surfaced\", \"graphql handler + green suite\"]}\n```"
+    },
+    {
+      "id": 3,
+      "subject": "Task 3: Wire minimize into control flow",
+      "status": "pending",
+      "blockedBy": [2],
+      "description": "Wire inputs — minimize on creation (incl refresh recreate), minimize-instead-of-delete on status match, emit comment-minimized, reject on proxy path.\n\n```json:metadata\n{\"files\": [\"src/action.ts\", \"src/action.test.ts\"], \"verifyCommand\": \"npm test && npm run check && npm run build\", \"acceptanceCriteria\": [\"adapter minimize\", \"create-minimized behavior\", \"delete-method minimize\", \"classifier mapping\", \"proxy guard + commit\"]}\n```"
+    },
+    {
+      "id": 4,
+      "subject": "Task 4: Documentation",
+      "status": "pending",
+      "blockedBy": [3],
+      "description": "Document 3 new inputs, comment-minimized output, and proxy limitation in README.md.\n\n```json:metadata\n{\"files\": [\"README.md\"], \"verifyCommand\": \"npm run check\", \"acceptanceCriteria\": [\"input rows\", \"output row\", \"usage note\"]}\n```"
+    }
+  ],
+  "lastUpdated": "2026-06-18T00:00:00Z"
+}
