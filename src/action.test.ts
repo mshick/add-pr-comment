@@ -1061,5 +1061,7 @@ describe('delete on status', () => {
     await expect(run()).resolves.not.toThrow()
     expect(core.setFailed).not.toHaveBeenCalled()
     expect(core.warning).toHaveBeenCalled()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'false')
   })
 })

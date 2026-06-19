@@ -124442,12 +124442,12 @@ async function manageComment(adapter, options) {
     }
     if (deleteOnStatus && deleteOnStatus === status) {
         if (existingComment) {
-            info('deleting existing comment because delete-comment-on-status matched');
+            info('deleting existing comment because delete-on-status matched');
             await adapter.delete(existingComment.id);
             setOutput('comment-deleted', 'true');
         }
         else {
-            info('skipping creating comment because delete-comment-on-status matched');
+            info('skipping creating comment because delete-on-status matched');
             setOutput('comment-created', 'false');
         }
         return;
@@ -124577,9 +124577,11 @@ const run = async () => {
             if (deleteOnStatus && deleteOnStatus === status) {
                 if (existingComment) {
                     warning('delete-on-status matched but deleting comments is not supported when using a proxy; leaving the existing comment in place');
+                    setOutput('comment-created', 'false');
+                    setOutput('comment-updated', 'false');
                 }
                 else {
-                    info('skipping creating comment because delete-comment-on-status matched');
+                    info('skipping creating comment because delete-on-status matched');
                     setOutput('comment-created', 'false');
                 }
                 return;
