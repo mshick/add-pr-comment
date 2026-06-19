@@ -1,5 +1,7 @@
 import type { Endpoints } from '@octokit/types'
 
+export type MinimizeReason = 'ABUSE' | 'DUPLICATE' | 'OFF_TOPIC' | 'OUTDATED' | 'RESOLVED' | 'SPAM'
+
 export interface Inputs {
   allowRepeats: boolean
   attachName: string
@@ -30,6 +32,9 @@ export interface Inputs {
   owner: string
   updateOnly: boolean
   deleteOnStatus?: string
+  createMinimized: boolean
+  deleteMethod: 'delete' | 'minimize'
+  minimizeReason: MinimizeReason
 }
 
 export type CreateIssueCommentResponseData =

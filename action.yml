@@ -93,11 +93,25 @@ inputs:
     description: "A replacement to use, overrides the message. Multple lines can replace same-indexed find patterns."
   delete-on-status:
     description: "Delete comment on specified status."
+  create-minimized:
+    description: "Minimize (collapse) the comment immediately after it is created. Applies only on creation, not updates. Not supported with proxy-url."
+    default: "false"
+    required: false
+  delete-method:
+    description: 'What to do when delete-on-status matches. "delete" (default) removes the comment, "minimize" collapses it. Not supported with proxy-url.'
+    default: "delete"
+    required: false
+  minimize-reason:
+    description: 'Reason shown when a comment is minimized. One of: outdated (default), resolved, off-topic, duplicate, spam, abuse.'
+    default: "outdated"
+    required: false
 outputs:
   comment-created:
     description: "Whether a comment was created."
   comment-updated:
     description: "Whether a comment was updated."
+  comment-minimized:
+    description: "Whether a comment was minimized."
   comment-id:
     description: "If a comment was created or updated, the comment id."
   artifact-url:

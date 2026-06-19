@@ -1,6 +1,25 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import type { Inputs } from './types.js'
+import type { Inputs, MinimizeReason } from './types.js'
+
+const MINIMIZE_REASONS = [
+  'ABUSE',
+  'DUPLICATE',
+  'OFF_TOPIC',
+  'OUTDATED',
+  'RESOLVED',
+  'SPAM',
+] as const
+
+function normalizeMinimizeReason(input: string): MinimizeReason {
+  const normalized = input.trim().toUpperCase().replace(/-/g, '_')
+  if (!(MINIMIZE_REASONS as readonly string[]).includes(normalized)) {
+    throw new Error(
+      `Invalid minimize-reason: "${input}". Must be one of: outdated, resolved, off-topic, duplicate, spam, abuse.`,
+    )
+  }
+  return normalized as MinimizeReason
+}
 
 export async function getInputs(): Promise<Inputs> {
   const messageIdInput = core.getInput('message-id', { required: false })
@@ -33,6 +52,19 @@ export async function getInputs(): Promise<Inputs> {
   const truncate = truncateInput as 'artifact' | 'simple'
   const truncateSeparator = core.getInput('truncate-separator', { required: false })
   const deleteOnStatus = core.getInput('delete-on-status', { required: false })
+
+  const createMinimized = core.getInput('create-minimized', { required: false }) === 'true'
+
+  const deleteMethodInput = core.getInput('delete-method', { required: false }) || 'delete'
+  if (deleteMethodInput !== 'delete' && deleteMethodInput !== 'minimize') {
+    throw new Error(
+      `Invalid delete-method: "${deleteMethodInput}". Must be "delete" or "minimize".`,
+    )
+  }
+  const deleteMethod = deleteMethodInput as 'delete' | 'minimize'
+
+  const minimizeReasonInput = core.getInput('minimize-reason', { required: false }) || 'outdated'
+  const minimizeReason = normalizeMinimizeReason(minimizeReasonInput)
 
   const commentTarget = core.getInput('comment-target', { required: false }) || 'pr'
   if (commentTarget !== 'pr' && commentTarget !== 'commit') {
@@ -77,5 +109,8 @@ export async function getInputs(): Promise<Inputs> {
     repo: repoName || payload.repo.repo,
     updateOnly: updateOnly,
     deleteOnStatus,
+    createMinimized,
+    deleteMethod,
+    minimizeReason,
   }
 }

@@ -1030,3 +1030,25 @@ describe('delete on status', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
   })
 })
+
+describe('minimize config validation', () => {
+  it('fails with an invalid delete-method value', async () => {
+    inputs['delete-method'] = 'archive'
+    inputs.message = simpleMessage
+
+    await run()
+    expect(core.setFailed).toHaveBeenCalledWith(
+      'Invalid delete-method: "archive". Must be "delete" or "minimize".',
+    )
+  })
+
+  it('fails with an invalid minimize-reason value', async () => {
+    inputs['minimize-reason'] = 'whatever'
+    inputs.message = simpleMessage
+
+    await run()
+    expect(core.setFailed).toHaveBeenCalledWith(
+      'Invalid minimize-reason: "whatever". Must be one of: outdated, resolved, off-topic, duplicate, spam, abuse.',
+    )
+  })
+})
