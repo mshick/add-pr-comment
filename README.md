@@ -91,6 +91,9 @@ jobs:
 | repo-token               | with     | Valid GitHub token, either the temporary token GitHub provides or a personal access token.                                                                                  | no       | {{ github.token }}                 |
 | message-id               | with     | Message id to use when searching existing comments. If found, updates the existing (sticky comment).                                                                        | no       |                                    |
 | delete-on-status         | with     | If specified and a comment exists and the status is matching the value of this option, the comment will be deleted                                                          | no       |                                    |
+| delete-method            | with     | What to do when `delete-on-status` matches: `delete` removes the comment, `minimize` collapses it. See [Minimizing comments](#minimizing-comments). Not supported with `proxy-url`. | no       | delete                             |
+| create-minimized         | with     | Minimize (collapse) the comment immediately after it is created. Applies only on creation, not updates. See [Minimizing comments](#minimizing-comments). Not supported with `proxy-url`. | no       | false                              |
+| minimize-reason          | with     | Reason shown when a comment is minimized: `outdated`, `resolved`, `off-topic`, `duplicate`, `spam`, or `abuse`.                                                              | no       | outdated                           |
 | refresh-message-position | with     | Should the sticky message be the last one in the PR's feed.                                                                                                                 | no       | false                              |
 | allow-repeats            | with     | Boolean flag to allow identical messages to be posted each time this action is run.                                                                                         | no       | false                              |
 | proxy-url                | with     | String for your proxy service URL if you'd like this to work with fork-based PRs.                                                                                           | no       |                                    |
@@ -114,6 +117,7 @@ jobs:
 | ----------------- | ----------------------------------------------------------------- |
 | `comment-created` | `"true"` if a new comment was created, `"false"` otherwise.       |
 | `comment-updated` | `"true"` if an existing comment was updated, `"false"` otherwise. |
+| `comment-minimized` | `"true"` if a comment was minimized, omitted otherwise.        |
 | `comment-id`      | The numeric ID of the created or updated comment.                 |
 | `artifact-url`    | If files were attached, the URL to download the artifact.         |
 | `truncated`       | `"true"` if the message was truncated, `"false"` otherwise.      |
@@ -571,6 +575,25 @@ jobs:
           message-failure: There was a failure
           delete-on-status: success
 ```
+
+### Minimizing comments
+
+Instead of removing a comment, you can collapse (minimize) it. Set `delete-method: minimize`
+alongside `delete-on-status` to minimize the comment when the status matches, or set
+`create-minimized: true` to post a comment that starts collapsed. Use `minimize-reason` to
+control the label GitHub shows (`outdated` by default).
+
+```yaml
+- uses: mshick/add-pr-comment@v3
+  with:
+    message: "Heads up — this is supplementary."
+    create-minimized: true
+    minimize-reason: outdated
+```
+
+Minimizing uses GitHub's GraphQL API and requires write permissions, so it is **not**
+available through `proxy-url` (the fork-PR path). It works for both PR/issue comments and
+commit comments.
 
 ### Template Variables
 
