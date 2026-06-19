@@ -69,8 +69,9 @@ let issueNumber = defaultIssueNumber
 let getCommitPullsResponse: Record<string, unknown>[] | undefined
 let getIssueCommentsResponse: Record<string, unknown>[] | undefined
 let getCommitCommentsResponse: Record<string, unknown>[] | undefined
-let postIssueCommentsResponse = {
+let postIssueCommentsResponse: { id: number; node_id?: string } = {
   id: 42,
+  node_id: 'NODE_42',
 }
 const deleteIssueCommentResponse = {}
 
@@ -80,6 +81,8 @@ type MessagePayload = {
 }
 
 let messagePayload: MessagePayload | undefined
+
+let graphqlPayload: { query: string; variables: Record<string, unknown> } | undefined
 
 vi.mock('@actions/core')
 
@@ -164,6 +167,15 @@ const handlers = [
   http.delete('https://api.github.com/repos/:repoUser/:repoName/comments/:commentId', () => {
     return new HttpResponse(null, { status: 204 })
   }),
+  http.post('https://api.github.com/graphql', async ({ request }) => {
+    graphqlPayload = (await request.json()) as {
+      query: string
+      variables: Record<string, unknown>
+    }
+    return HttpResponse.json({
+      data: { minimizeComment: { minimizedComment: { isMinimized: true } } },
+    })
+  }),
 ]
 
 const server = setupServer(...handlers)
@@ -178,6 +190,7 @@ beforeEach(() => {
   inputs = { ...defaultInputs }
   issueNumber = defaultIssueNumber
   messagePayload = undefined
+  graphqlPayload = undefined
   getCommitCommentsResponse = undefined
 
   vi.resetModules()
@@ -1050,5 +1063,103 @@ describe('minimize config validation', () => {
     expect(core.setFailed).toHaveBeenCalledWith(
       'Invalid minimize-reason: "whatever". Must be one of: outdated, resolved, off-topic, duplicate, spam, abuse.',
     )
+  })
+})
+
+describe('minimize comments', () => {
+  it('minimizes a comment after creating it when create-minimized is true', async () => {
+    inputs.message = simpleMessage
+    inputs['create-minimized'] = 'true'
+    inputs['allow-repeats'] = 'true'
+    postIssueCommentsResponse = { id: 42, node_id: 'NODE_42' }
+
+    await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-minimized', 'true')
+    expect(graphqlPayload?.variables).toMatchObject({ id: 'NODE_42', classifier: 'OUTDATED' })
+  })
+
+  it('does not minimize when updating an existing comment', async () => {
+    inputs.message = simpleMessage
+    inputs['create-minimized'] = 'true'
+    const commentId = 123
+    getIssueCommentsResponse = [
+      {
+        id: commentId,
+        node_id: 'NODE_123',
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\nold`,
+      },
+    ]
+    postIssueCommentsResponse = { id: commentId, node_id: 'NODE_123' }
+
+    await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).not.toHaveBeenCalledWith('comment-minimized', 'true')
+    expect(graphqlPayload).toBeUndefined()
+  })
+
+  it('minimizes instead of deleting when delete-method is minimize and status matches', async () => {
+    inputs['delete-on-status'] = 'success'
+    inputs.status = 'success'
+    inputs['delete-method'] = 'minimize'
+    inputs.message = 'hello'
+    const commentId = 123
+    getIssueCommentsResponse = [
+      {
+        id: commentId,
+        node_id: 'NODE_123',
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\nhi`,
+      },
+    ]
+
+    await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-minimized', 'true')
+    expect(core.setOutput).not.toHaveBeenCalledWith('comment-deleted', 'true')
+    expect(graphqlPayload?.variables).toMatchObject({ id: 'NODE_123', classifier: 'OUTDATED' })
+  })
+
+  it('passes a custom minimize-reason classifier', async () => {
+    inputs.message = simpleMessage
+    inputs['create-minimized'] = 'true'
+    inputs['minimize-reason'] = 'off-topic'
+    inputs['allow-repeats'] = 'true'
+    postIssueCommentsResponse = { id: 42, node_id: 'NODE_42' }
+
+    await run()
+
+    expect(graphqlPayload?.variables).toMatchObject({ classifier: 'OFF_TOPIC' })
+  })
+
+  it('fails when create-minimized is combined with proxy-url', async () => {
+    inputs.message = simpleMessage
+    inputs['create-minimized'] = 'true'
+    inputs['proxy-url'] = 'https://proxy.example.com'
+    getIssueCommentsResponse = []
+
+    await run()
+
+    expect(core.setFailed).toHaveBeenCalledWith(
+      'create-minimized and delete-method: minimize are not supported with proxy-url, which is used for fork PRs that lack the write permissions minimize requires.',
+    )
+  })
+
+  it('minimizes a commit comment when create-minimized is true', async () => {
+    inputs['comment-target'] = 'commit'
+    inputs.message = simpleMessage
+    inputs['create-minimized'] = 'true'
+    inputs['allow-repeats'] = 'true'
+    github.context.payload = {
+      ...github.context.payload,
+      pull_request: undefined,
+    } as WebhookPayload
+    postIssueCommentsResponse = { id: 42, node_id: 'COMMIT_NODE_42' }
+
+    await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-minimized', 'true')
+    expect(graphqlPayload?.variables).toMatchObject({ id: 'COMMIT_NODE_42' })
   })
 })

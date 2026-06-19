@@ -18,14 +18,17 @@ import {
   removeMessageHeader,
   truncateMessage,
 } from './message.js'
+import { minimizeComment } from './minimize.js'
 import { createCommentProxy } from './proxy.js'
 import { replaceTemplateVariables } from './templates.js'
+import type { MinimizeReason } from './types.js'
 
 interface CommentAdapter {
-  getExisting(): Promise<{ id: number; body?: string } | undefined>
-  create(body: string): Promise<{ id: number }>
-  update(id: number, body: string): Promise<{ id: number }>
+  getExisting(): Promise<{ id: number; nodeId: string; body?: string } | undefined>
+  create(body: string): Promise<{ id: number; nodeId: string }>
+  update(id: number, body: string): Promise<{ id: number; nodeId: string }>
   delete(id: number): Promise<void>
+  minimize(nodeId: string, reason: MinimizeReason): Promise<void>
 }
 
 interface ManageCommentOptions {
@@ -39,6 +42,9 @@ interface ManageCommentOptions {
   messageReplace?: string[]
   message: string | undefined
   templateVariables: boolean
+  createMinimized: boolean
+  deleteMethod: 'delete' | 'minimize'
+  minimizeReason: MinimizeReason
 }
 
 async function manageComment(
@@ -56,9 +62,12 @@ async function manageComment(
     messageFind,
     messageReplace,
     templateVariables,
+    createMinimized,
+    deleteMethod,
+    minimizeReason,
   } = options
 
-  let existingComment: { id: number; body?: string } | undefined
+  let existingComment: { id: number; nodeId: string; body?: string } | undefined
 
   if (!allowRepeats) {
     core.debug('repeat comments are disallowed, checking for existing')
@@ -77,9 +86,15 @@ async function manageComment(
 
   if (deleteOnStatus && deleteOnStatus === status) {
     if (existingComment) {
-      core.info('deleting existing comment because delete-comment-on-status matched')
-      await adapter.delete(existingComment.id)
-      core.setOutput('comment-deleted', 'true')
+      if (deleteMethod === 'minimize') {
+        core.info('minimizing existing comment because delete-on-status matched')
+        await adapter.minimize(existingComment.nodeId, minimizeReason)
+        core.setOutput('comment-minimized', 'true')
+      } else {
+        core.info('deleting existing comment because delete-comment-on-status matched')
+        await adapter.delete(existingComment.id)
+        core.setOutput('comment-deleted', 'true')
+      }
     } else {
       core.info('skipping creating comment because delete-comment-on-status matched')
       core.setOutput('comment-created', 'false')
@@ -105,23 +120,30 @@ async function manageComment(
 
   const body = addMessageHeader(messageId, message)
 
-  let comment: { id: number } | null | undefined
+  let comment: { id: number; nodeId: string } | null | undefined
+  let created = false
 
   if (existingComment?.id) {
     if (refreshMessagePosition) {
       await adapter.delete(existingComment.id)
       comment = await adapter.create(body)
+      created = true
     } else {
       comment = await adapter.update(existingComment.id, body)
     }
     core.setOutput('comment-updated', 'true')
   } else {
     comment = await adapter.create(body)
+    created = true
     core.setOutput('comment-created', 'true')
   }
 
   if (comment) {
     core.setOutput('comment-id', comment.id)
+    if (created && createMinimized) {
+      await adapter.minimize(comment.nodeId, minimizeReason)
+      core.setOutput('comment-minimized', 'true')
+    }
   } else {
     core.setOutput('comment-created', 'false')
     core.setOutput('comment-updated', 'false')
@@ -149,6 +171,9 @@ export const run = async (): Promise<void> => {
       owner,
       updateOnly,
       deleteOnStatus,
+      createMinimized,
+      deleteMethod,
+      minimizeReason,
       messageCancelled,
       messageFailure,
       messageSuccess,
@@ -220,15 +245,36 @@ export const run = async (): Promise<void> => {
       messageReplace,
       message,
       templateVariables,
+      createMinimized,
+      deleteMethod,
+      minimizeReason,
     }
 
     if (commentTarget === 'commit') {
       await manageComment(
         {
-          getExisting: () => getExistingCommitComment(octokit, owner, repo, commitSha, messageId),
-          create: (body) => createCommitComment(octokit, owner, repo, commitSha, body),
-          update: (id, body) => updateCommitComment(octokit, owner, repo, id, body),
+          getExisting: async () => {
+            const existing = await getExistingCommitComment(
+              octokit,
+              owner,
+              repo,
+              commitSha,
+              messageId,
+            )
+            return existing
+              ? { id: existing.id, nodeId: existing.node_id, body: existing.body }
+              : undefined
+          },
+          create: async (body) => {
+            const c = await createCommitComment(octokit, owner, repo, commitSha, body)
+            return { id: c.id, nodeId: c.node_id }
+          },
+          update: async (id, body) => {
+            const c = await updateCommitComment(octokit, owner, repo, id, body)
+            return { id: c.id, nodeId: c.node_id }
+          },
           delete: (id) => deleteCommitComment(octokit, owner, repo, id),
+          minimize: (nodeId, reason) => minimizeComment(octokit, nodeId, reason),
         },
         commentOptions,
       )
@@ -257,6 +303,12 @@ export const run = async (): Promise<void> => {
     }
 
     if (proxyUrl) {
+      if (createMinimized || deleteMethod === 'minimize') {
+        throw new Error(
+          'create-minimized and delete-method: minimize are not supported with proxy-url, which is used for fork PRs that lack the write permissions minimize requires.',
+        )
+      }
+
       // Proxy has its own create/update flow, so it's handled separately
       let existingComment: { id: number; body?: string } | undefined
 
@@ -313,12 +365,24 @@ export const run = async (): Promise<void> => {
 
     await manageComment(
       {
-        getExisting: () => getExistingComment(octokit, owner, repo, issueNumber, messageId),
-        create: (body) => createComment(octokit, owner, repo, issueNumber, body),
-        update: (id, body) => updateComment(octokit, owner, repo, id, body),
+        getExisting: async () => {
+          const existing = await getExistingComment(octokit, owner, repo, issueNumber, messageId)
+          return existing
+            ? { id: existing.id, nodeId: existing.node_id, body: existing.body ?? undefined }
+            : undefined
+        },
+        create: async (body) => {
+          const c = await createComment(octokit, owner, repo, issueNumber, body)
+          return { id: c.id, nodeId: c.node_id }
+        },
+        update: async (id, body) => {
+          const c = await updateComment(octokit, owner, repo, id, body)
+          return { id: c.id, nodeId: c.node_id }
+        },
         delete: async (id) => {
           await deleteComment(octokit, owner, repo, id)
         },
+        minimize: (nodeId, reason) => minimizeComment(octokit, nodeId, reason),
       },
       commentOptions,
     )
