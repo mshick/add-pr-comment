@@ -124574,6 +124574,16 @@ const run = async () => {
                 setOutput('comment-created', 'false');
                 return;
             }
+            if (deleteOnStatus && deleteOnStatus === status) {
+                if (existingComment) {
+                    warning('delete-on-status matched but deleting comments is not supported when using a proxy; leaving the existing comment in place');
+                }
+                else {
+                    info('skipping creating comment because delete-comment-on-status matched');
+                    setOutput('comment-created', 'false');
+                }
+                return;
+            }
             let msg = message;
             if (messageFind?.length && (messageReplace?.length || msg) && existingComment?.body) {
                 msg = findAndReplaceInMessage(messageFind, messageReplace?.length ? messageReplace : [msg], removeMessageHeader(existingComment.body));
