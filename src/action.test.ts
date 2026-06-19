@@ -1100,6 +1100,27 @@ describe('minimize comments', () => {
     expect(graphqlPayload).toBeUndefined()
   })
 
+  it('minimizes the recreated comment when refresh-message-position and create-minimized are set', async () => {
+    inputs.message = simpleMessage
+    inputs['create-minimized'] = 'true'
+    inputs['refresh-message-position'] = 'true'
+    const commentId = 123
+    getIssueCommentsResponse = [
+      {
+        id: commentId,
+        node_id: 'NODE_123',
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\nold`,
+      },
+    ]
+    postIssueCommentsResponse = { id: 42, node_id: 'NODE_NEW_42' }
+
+    await run()
+
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'true')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-minimized', 'true')
+    expect(graphqlPayload?.variables).toMatchObject({ id: 'NODE_NEW_42', classifier: 'OUTDATED' })
+  })
+
   it('minimizes instead of deleting when delete-method is minimize and status matches', async () => {
     inputs['delete-on-status'] = 'success'
     inputs.status = 'success'
