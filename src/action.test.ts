@@ -1162,4 +1162,39 @@ describe('minimize comments', () => {
     expect(core.setOutput).toHaveBeenCalledWith('comment-minimized', 'true')
     expect(graphqlPayload?.variables).toMatchObject({ id: 'COMMIT_NODE_42' })
   })
+
+  it('skips creating comment in proxy mode when delete-on-status matches and no comment exists', async () => {
+    inputs['proxy-url'] = 'https://proxy.example.com'
+    inputs['delete-on-status'] = 'success'
+    inputs.status = 'success'
+    // Only a failure message is configured, so on success there is no message —
+    // this previously threw "no message, check your message inputs" (issue #195)
+    inputs['message-failure'] = 'tests failed'
+
+    getIssueCommentsResponse = []
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setFailed).not.toHaveBeenCalled()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
+  })
+
+  it('warns in proxy mode when delete-on-status matches but a comment exists (proxy cannot delete)', async () => {
+    inputs['proxy-url'] = 'https://proxy.example.com'
+    inputs['delete-on-status'] = 'success'
+    inputs.status = 'success'
+    inputs.message = 'hello'
+
+    getIssueCommentsResponse = [
+      {
+        id: 123,
+        body: `<!-- add-pr-comment:${inputs['message-id']} -->\n\nhello`,
+      },
+    ]
+
+    await expect(run()).resolves.not.toThrow()
+    expect(core.setFailed).not.toHaveBeenCalled()
+    expect(core.warning).toHaveBeenCalled()
+    expect(core.setOutput).toHaveBeenCalledWith('comment-created', 'false')
+    expect(core.setOutput).toHaveBeenCalledWith('comment-updated', 'false')
+  })
 })
