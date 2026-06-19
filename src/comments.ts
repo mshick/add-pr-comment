@@ -36,8 +36,8 @@ export async function getExistingComment(
   }
 
   if (found) {
-    const { id, body } = found
-    return { id, body }
+    const { id, body, node_id } = found
+    return { id, body, node_id }
   }
 
   return

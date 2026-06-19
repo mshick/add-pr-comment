@@ -43,7 +43,7 @@ export type CreateIssueCommentResponseData =
 export type ExistingIssueCommentResponseData =
   Endpoints['GET /repos/{owner}/{repo}/issues/{issue_number}/comments']['response']['data'][0]
 
-export type ExistingIssueComment = Pick<ExistingIssueCommentResponseData, 'id' | 'body'>
+export type ExistingIssueComment = Pick<ExistingIssueCommentResponseData, 'id' | 'body' | 'node_id'>
 
 export type CreateCommitCommentResponseData =
   Endpoints['POST /repos/{owner}/{repo}/commits/{commit_sha}/comments']['response']['data']
@@ -51,4 +51,7 @@ export type CreateCommitCommentResponseData =
 export type ExistingCommitCommentResponseData =
   Endpoints['GET /repos/{owner}/{repo}/commits/{commit_sha}/comments']['response']['data'][0]
 
-export type ExistingCommitComment = Pick<ExistingCommitCommentResponseData, 'id' | 'body'>
+export type ExistingCommitComment = Pick<
+  ExistingCommitCommentResponseData,
+  'id' | 'body' | 'node_id'
+>

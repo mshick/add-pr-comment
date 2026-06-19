@@ -16,7 +16,7 @@ export async function getExistingCommitComment(
     per_page: 100,
   }
 
-  let found: { id: number; body?: string | undefined } | undefined
+  let found: { id: number; body?: string | undefined; node_id: string } | undefined
 
   for await (const comments of octokit.paginate.iterator(
     octokit.rest.repos.listCommentsForCommit,
@@ -32,8 +32,8 @@ export async function getExistingCommitComment(
   }
 
   if (found) {
-    const { id, body = '' } = found
-    return { id, body }
+    const { id, body = '', node_id } = found
+    return { id, body, node_id }
   }
 
   return
