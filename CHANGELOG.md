@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.12.0](https://github.com/mshick/add-pr-comment/compare/v3.11.0...v3.12.0) (2026-06-19)
+
+
+### Features
+
+* support minimizing (hiding) comments ([#201](https://github.com/mshick/add-pr-comment/issues/201)) ([6a876db](https://github.com/mshick/add-pr-comment/commit/6a876dbd97fc8d23cc301cdeb8bf405a50ddb17c))
+
+
+### Bug Fixes
+
+* handle delete-on-status in proxy comment path ([#199](https://github.com/mshick/add-pr-comment/issues/199)) ([4361959](https://github.com/mshick/add-pr-comment/commit/436195938e01dd649bc3cb17aca524d2d6f43d96))
+
 ## [3.11.0](https://github.com/mshick/add-pr-comment/compare/v3.10.1...v3.11.0) (2026-04-23)
 
 
