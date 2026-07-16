@@ -20,6 +20,7 @@ import {
 } from './message.js'
 import { minimizeComment } from './minimize.js'
 import { createCommentProxy } from './proxy.js'
+import { parseSecretValues, redactSecretsInMessage } from './redact.js'
 import { replaceTemplateVariables } from './templates.js'
 import type { MinimizeReason } from './types.js'
 
@@ -45,6 +46,8 @@ interface ManageCommentOptions {
   createMinimized: boolean
   deleteMethod: 'delete' | 'minimize'
   minimizeReason: MinimizeReason
+  redactSecrets: boolean
+  secretValues: string[]
 }
 
 async function manageComment(
@@ -65,6 +68,8 @@ async function manageComment(
     createMinimized,
     deleteMethod,
     minimizeReason,
+    redactSecrets,
+    secretValues,
   } = options
 
   let existingComment: { id: number; nodeId: string; body?: string } | undefined
@@ -116,6 +121,10 @@ async function manageComment(
 
   if (templateVariables) {
     message = replaceTemplateVariables(message)
+  }
+
+  if (redactSecrets) {
+    message = redactSecretsInMessage(message, secretValues)
   }
 
   const body = addMessageHeader(messageId, message)
@@ -174,6 +183,8 @@ export const run = async (): Promise<void> => {
       createMinimized,
       deleteMethod,
       minimizeReason,
+      redactSecrets,
+      githubSecretsJson,
       messageCancelled,
       messageFailure,
       messageSuccess,
@@ -188,6 +199,7 @@ export const run = async (): Promise<void> => {
     } = await getInputs()
 
     const octokit = github.getOctokit(repoToken)
+    const secretValues = redactSecrets ? parseSecretValues(githubSecretsJson) : []
 
     let message = await getMessage({
       messagePath,
@@ -248,6 +260,8 @@ export const run = async (): Promise<void> => {
       createMinimized,
       deleteMethod,
       minimizeReason,
+      redactSecrets,
+      secretValues,
     }
 
     if (commentTarget === 'commit') {
@@ -352,6 +366,10 @@ export const run = async (): Promise<void> => {
 
       if (templateVariables) {
         msg = replaceTemplateVariables(msg)
+      }
+
+      if (redactSecrets) {
+        msg = redactSecretsInMessage(msg, secretValues)
       }
 
       const body = addMessageHeader(messageId, msg)

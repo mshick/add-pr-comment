@@ -35,6 +35,8 @@ export interface Inputs {
   createMinimized: boolean
   deleteMethod: 'delete' | 'minimize'
   minimizeReason: MinimizeReason
+  redactSecrets: boolean
+  githubSecretsJson?: string
 }
 
 export type CreateIssueCommentResponseData =

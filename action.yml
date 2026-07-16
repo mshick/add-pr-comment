@@ -105,6 +105,13 @@ inputs:
     description: 'Reason shown when a comment is minimized. One of: outdated (default), resolved, off-topic, duplicate, spam, abuse.'
     default: "outdated"
     required: false
+  redact-secrets:
+    description: 'Redact GitHub Actions secret values from the comment body. Requires "github-secrets" to be set to ${{ toJSON(secrets) }}.'
+    default: "false"
+    required: false
+  github-secrets:
+    description: 'JSON-encoded secrets context, e.g. ${{ toJSON(secrets) }}. Used to find and redact secret values from the comment body when "redact-secrets" is true.'
+    required: false
 outputs:
   comment-created:
     description: "Whether a comment was created."
