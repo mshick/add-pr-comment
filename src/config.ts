@@ -66,6 +66,9 @@ export async function getInputs(): Promise<Inputs> {
   const minimizeReasonInput = core.getInput('minimize-reason', { required: false }) || 'outdated'
   const minimizeReason = normalizeMinimizeReason(minimizeReasonInput)
 
+  const redactSecrets = core.getInput('redact-secrets', { required: false }) === 'true'
+  const githubSecretsJson = core.getInput('github-secrets', { required: false })
+
   const commentTarget = core.getInput('comment-target', { required: false }) || 'pr'
   if (commentTarget !== 'pr' && commentTarget !== 'commit') {
     throw new Error(`Invalid comment-target: "${commentTarget}". Must be "pr" or "commit".`)
@@ -112,5 +115,7 @@ export async function getInputs(): Promise<Inputs> {
     createMinimized,
     deleteMethod,
     minimizeReason,
+    redactSecrets,
+    githubSecretsJson: githubSecretsJson || undefined,
   }
 }

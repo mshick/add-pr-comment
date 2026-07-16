@@ -110,6 +110,8 @@ jobs:
 | truncate                 | with     | Truncation mode when the message exceeds the safe comment length. See [Message Truncation](#message-truncation).                                                            | no       | artifact                           |
 | comment-target           | with     | Where to post the comment. Use `pr` for pull request/issue comments or `commit` for commit comments. See [Commit Comments](#commit-comments).                              | no       | pr                                 |
 | commit-sha               | with     | The commit SHA to comment on when `comment-target` is `commit`. Defaults to the current commit.                                                                             | no       | {{ github.sha }}                   |
+| redact-secrets           | with     | Redact secret values from the comment body. Requires `github-secrets`. See [Redacting Secrets](#redacting-secrets).                                                         | no       | false                               |
+| github-secrets           | with     | JSON-encoded secrets context, e.g. `${{ toJSON(secrets) }}`. Used to find and redact secret values when `redact-secrets` is true.                                           | no       |                                    |
 
 ## Outputs
 
@@ -594,6 +596,28 @@ control the label GitHub shows (`outdated` by default).
 Minimizing uses GitHub's GraphQL API and requires write permissions, so it is **not**
 available through `proxy-url` (the fork-PR path). It works for both PR/issue comments and
 commit comments.
+
+### Redacting Secrets
+
+GitHub doesn't let an action enumerate a workflow's secrets — the actual values
+are only visible to this action if you explicitly pass them in. Set `redact-secrets: true`
+and pass `github-secrets: ${{ toJSON(secrets) }}` to have any secret value that appears
+in the final comment body (including values pulled in via `find`/`replace` or
+`message-path`) replaced with `***` before the comment is posted.
+
+```yaml
+- uses: mshick/add-pr-comment@v3
+  with:
+    message: |
+      Deploy log:
+      ${{ steps.deploy.outputs.log }}
+    redact-secrets: true
+    github-secrets: ${{ toJSON(secrets) }}
+```
+
+Values shorter than 4 characters are ignored to avoid mass-redacting short, common substrings.
+This only catches secrets present in the `secrets` context passed in — it won't redact
+sensitive values that never flow through `secrets.*` (e.g. values generated at runtime).
 
 ### Template Variables
 

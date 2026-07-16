@@ -119308,6 +119308,8 @@ async function getInputs() {
     const deleteMethod = deleteMethodInput;
     const minimizeReasonInput = getInput('minimize-reason', { required: false }) || 'outdated';
     const minimizeReason = normalizeMinimizeReason(minimizeReasonInput);
+    const redactSecrets = getInput('redact-secrets', { required: false }) === 'true';
+    const githubSecretsJson = getInput('github-secrets', { required: false });
     const commentTarget = getInput('comment-target', { required: false }) || 'pr';
     if (commentTarget !== 'pr' && commentTarget !== 'commit') {
         throw new Error(`Invalid comment-target: "${commentTarget}". Must be "pr" or "commit".`);
@@ -119351,6 +119353,8 @@ async function getInputs() {
         createMinimized,
         deleteMethod,
         minimizeReason,
+        redactSecrets,
+        githubSecretsJson: githubSecretsJson || undefined,
     };
 }
 
@@ -121670,6 +121674,35 @@ async function createCommentProxy(params) {
         'temporary-github-token': repoToken,
     });
     return response.result;
+}
+
+const MIN_SECRET_LENGTH = 4;
+const REDACTED = '***';
+function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+function parseSecretValues(githubSecretsJson) {
+    if (!githubSecretsJson)
+        return [];
+    let parsed;
+    try {
+        parsed = JSON.parse(githubSecretsJson);
+    }
+    catch {
+        warning('redact-secrets: github-secrets is not valid JSON, skipping redaction');
+        return [];
+    }
+    if (!parsed || typeof parsed !== 'object')
+        return [];
+    return Object.values(parsed).filter((value) => typeof value === 'string' && value.length >= MIN_SECRET_LENGTH);
+}
+function redactSecretsInMessage(message, secretValues) {
+    if (!message || secretValues.length === 0)
+        return message;
+    // Longest first so a secret that's a substring of another doesn't leave a partial match behind
+    const unique = [...new Set(secretValues)].sort((a, b) => b.length - a.length);
+    const pattern = unique.map(escapeRegExp).join('|');
+    return message.replace(new RegExp(pattern, 'g'), REDACTED);
 }
 
 /**
@@ -124468,7 +124501,7 @@ function replaceTemplateVariables(message) {
 
 async function manageComment(adapter, options) {
     let { message } = options;
-    const { allowRepeats, updateOnly, refreshMessagePosition, deleteOnStatus, status, messageId, messageFind, messageReplace, templateVariables, createMinimized, deleteMethod, minimizeReason, } = options;
+    const { allowRepeats, updateOnly, refreshMessagePosition, deleteOnStatus, status, messageId, messageFind, messageReplace, templateVariables, createMinimized, deleteMethod, minimizeReason, redactSecrets, secretValues, } = options;
     let existingComment;
     if (!allowRepeats) {
         debug('repeat comments are disallowed, checking for existing');
@@ -124510,6 +124543,9 @@ async function manageComment(adapter, options) {
     if (templateVariables) {
         message = replaceTemplateVariables(message);
     }
+    if (redactSecrets) {
+        message = redactSecretsInMessage(message, secretValues);
+    }
     const body = addMessageHeader(messageId, message);
     let comment;
     let created = false;
@@ -124543,8 +124579,9 @@ async function manageComment(adapter, options) {
 }
 const run = async () => {
     try {
-        const { allowRepeats, attachName, attachPath, attachText, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, createMinimized, deleteMethod, minimizeReason, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, templateVariables, status, messageFind, messageReplace, truncate, truncateSeparator, } = await getInputs();
+        const { allowRepeats, attachName, attachPath, attachText, commentTarget, messagePath, messageInput, messageId, refreshMessagePosition, repoToken, proxyUrl, issue, pullRequestNumber, commitSha, repo, owner, updateOnly, deleteOnStatus, createMinimized, deleteMethod, minimizeReason, redactSecrets, githubSecretsJson, messageCancelled, messageFailure, messageSuccess, messageSkipped, preformatted, templateVariables, status, messageFind, messageReplace, truncate, truncateSeparator, } = await getInputs();
         const octokit = getOctokit(repoToken);
+        const secretValues = redactSecrets ? parseSecretValues(githubSecretsJson) : [];
         let message = await getMessage({
             messagePath,
             messageInput,
@@ -124595,6 +124632,8 @@ const run = async () => {
             createMinimized,
             deleteMethod,
             minimizeReason,
+            redactSecrets,
+            secretValues,
         };
         if (commentTarget === 'commit') {
             await manageComment({
@@ -124669,6 +124708,9 @@ const run = async () => {
             }
             if (templateVariables) {
                 msg = replaceTemplateVariables(msg);
+            }
+            if (redactSecrets) {
+                msg = redactSecretsInMessage(msg, secretValues);
             }
             const body = addMessageHeader(messageId, msg);
             const comment = await createCommentProxy({
